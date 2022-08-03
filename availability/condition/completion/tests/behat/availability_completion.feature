@@ -52,5 +52,5 @@ Feature: availability_completion
     Then I should not see "Page 2" in the "region-main" "region"
 
     # Mark page 1 complete
-    When I toggle the manual completion state of "Page 1"
+    When I click on ".togglecompletion .icon" "css_element"
     Then I should see "Page 2" in the "region-main" "region"

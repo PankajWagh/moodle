@@ -378,9 +378,7 @@ class file_system_filedir extends file_system {
         // Let's try to prevent some race conditions.
 
         $prev = ignore_user_abort(true);
-        if (file_exists($hashfile.'.tmp')) {
-            @unlink($hashfile.'.tmp');
-        }
+        @unlink($hashfile.'.tmp');
         if (!copy($pathname, $hashfile.'.tmp')) {
             // Borked permissions or out of disk space.
             @unlink($hashfile.'.tmp');
@@ -402,10 +400,7 @@ class file_system_filedir extends file_system {
             throw new file_exception('storedfilecannotcreatefile');
         }
         chmod($hashfile, $this->filepermissions); // Fix permissions if needed.
-        if (file_exists($hashfile.'.tmp')) {
-            // Just in case anything fails in a weird way.
-            @unlink($hashfile.'.tmp');
-        }
+        @unlink($hashfile.'.tmp'); // Just in case anything fails in a weird way.
         ignore_user_abort($prev);
 
         return array($contenthash, $filesize, $newfile);
@@ -486,10 +481,7 @@ class file_system_filedir extends file_system {
             throw new file_exception('storedfilecannotcreatefile');
         }
         chmod($hashfile, $this->filepermissions); // Fix permissions if needed.
-        if (file_exists($hashfile.'.tmp')) {
-            // Just in case anything fails in a weird way.
-            @unlink($hashfile.'.tmp');
-        }
+        @unlink($hashfile.'.tmp'); // Just in case anything fails in a weird way.
         ignore_user_abort($prev);
 
         return array($contenthash, $filesize, $newfile);

@@ -117,7 +117,7 @@ class step_testcase extends advanced_testcase {
      */
     public function test_fetch() {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods(['reload_from_record'])
+            ->setMethods(['reload_from_record'])
             ->getMock()
             ;
 
@@ -185,7 +185,7 @@ class step_testcase extends advanced_testcase {
      */
     public function test_is_first_step($sortorder, $count, $isfirst, $islast) {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods(['get_sortorder'])
+            ->setMethods(['get_sortorder'])
             ->getMock();
 
         $step->expects($this->once())
@@ -207,11 +207,11 @@ class step_testcase extends advanced_testcase {
      */
     public function test_is_last_step($sortorder, $count, $isfirst, $islast) {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods(['get_sortorder', 'get_tour'])
+            ->setMethods(['get_sortorder', 'get_tour'])
             ->getMock();
 
         $tour = $this->getMockBuilder(\tool_usertours\tour::class)
-            ->onlyMethods(['count_steps'])
+            ->setMethods(['count_steps'])
             ->getMock();
 
         $step->expects($this->once())
@@ -362,7 +362,7 @@ class step_testcase extends advanced_testcase {
      */
     public function test_get_config_valid_keys($values, $key, $default, $tourconfig, $isforced, $forcedvalue, $expected) {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods(['get_target', 'get_targettype', 'get_tour'])
+            ->setMethods(['get_target', 'get_targettype', 'get_tour'])
             ->getMock();
 
         $rc = new \ReflectionClass(\tool_usertours\step::class);
@@ -494,7 +494,7 @@ class step_testcase extends advanced_testcase {
      */
     public function test_persist_non_dirty() {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'to_record',
                     'reload',
                 ])
@@ -525,7 +525,7 @@ class step_testcase extends advanced_testcase {
 
         // Mock the tour.
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'to_record',
                     'calculate_sortorder',
                     'reload',
@@ -574,7 +574,7 @@ class step_testcase extends advanced_testcase {
 
         // Mock the tour.
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'to_record',
                     'calculate_sortorder',
                     'reload',
@@ -616,7 +616,7 @@ class step_testcase extends advanced_testcase {
 
         // Mock the tour.
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'to_record',
                     'calculate_sortorder',
                     'reload',
@@ -668,7 +668,7 @@ class step_testcase extends advanced_testcase {
 
         // Mock the tour.
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'to_record',
                     'calculate_sortorder',
                     'reload',
@@ -707,7 +707,7 @@ class step_testcase extends advanced_testcase {
      */
     public function test_remove_non_persisted() {
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([])
+            ->setMethods(null)
             ->getMock()
             ;
 
@@ -727,7 +727,7 @@ class step_testcase extends advanced_testcase {
         $id = rand(1, 100);
 
         $tour = $this->getMockBuilder(\tool_usertours\tour::class)
-            ->onlyMethods([
+            ->setMethods([
                     'reset_step_sortorder',
                 ])
             ->getMock()
@@ -738,7 +738,7 @@ class step_testcase extends advanced_testcase {
             ;
 
         $step = $this->getMockBuilder(\tool_usertours\step::class)
-            ->onlyMethods([
+            ->setMethods([
                     'get_tour',
                 ])
             ->getMock()

@@ -96,6 +96,7 @@ class core_phpunit_basic_testcase extends basic_testcase {
         $this->assertEquals(1, '1');
         $this->assertEquals(null, '');
 
+        $this->assertNotEquals(1, '1 ');
         $this->assertNotEquals(0, '');
         $this->assertNotEquals(null, '0');
         $this->assertNotEquals(array(), '');

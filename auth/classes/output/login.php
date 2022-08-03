@@ -70,8 +70,6 @@ class login implements renderable, templatable {
     public $signupurl;
     /** @var string The user name to pre-fill the form with. */
     public $username;
-    /** @var string The language selector menu. */
-    public $languagemenu;
     /** @var string The csrf token to limit login to requests that come from the login form. */
     public $logintoken;
     /** @var string Maintenance message, if Maintenance is enabled. */
@@ -84,13 +82,10 @@ class login implements renderable, templatable {
      * @param string $username The username to display.
      */
     public function __construct(array $authsequence, $username = '') {
-        global $CFG, $OUTPUT, $PAGE;
+        global $CFG;
 
         $this->username = $username;
 
-        $languagedata = new \core\output\language_menu($PAGE);
-
-        $this->languagemenu = $languagedata->export_for_action_menu($OUTPUT);
         $this->canloginasguest = $CFG->guestloginbutton and !isguestuser();
         $this->canloginbyemail = !empty($CFG->authloginviaemail);
         $this->cansignup = $CFG->registerauth == 'email' || !empty($CFG->registerauth);
@@ -116,12 +111,8 @@ class login implements renderable, templatable {
             $this->instructions = get_string('loginsteps', 'core', 'signup.php');
         }
 
-        if ($CFG->maintenance_enabled == true) {
-            if (!empty($CFG->maintenance_message)) {
-                $this->maintenance = $CFG->maintenance_message;
-            } else {
-                $this->maintenance = get_string('sitemaintenance', 'admin');
-            }
+        if ($CFG->maintenance_enabled == true && !empty($CFG->maintenance_message)) {
+            $this->maintenance = $CFG->maintenance_message;
         }
 
         // Identity providers.
@@ -139,19 +130,20 @@ class login implements renderable, templatable {
     }
 
     public function export_for_template(renderer_base $output) {
-
+		global $OUTPUT;
         $identityproviders = \auth_plugin_base::prepare_identity_providers_for_output($this->identityproviders, $output);
 
         $data = new stdClass();
         $data->autofocusform = $this->autofocusform;
         $data->canloginasguest = $this->canloginasguest;
         $data->canloginbyemail = $this->canloginbyemail;
-        $data->cansignup = $this->cansignup;
+       // $data->cansignup = $this->cansignup;
         $data->cookieshelpicon = $this->cookieshelpicon->export_for_template($output);
         $data->error = $this->error;
+        $data->logourl = $OUTPUT->get_logo_url()->out(false);
         $data->forgotpasswordurl = $this->forgotpasswordurl->out(false);
         $data->hasidentityproviders = !empty($this->identityproviders);
-        $data->hasinstructions = !empty($this->instructions) || $this->cansignup;
+      //  $data->hasinstructions = !empty($this->instructions) || $this->cansignup;
         $data->identityproviders = $identityproviders;
         list($data->instructions, $data->instructionsformat) = external_format_text($this->instructions, FORMAT_MOODLE,
             context_system::instance()->id);
@@ -161,8 +153,7 @@ class login implements renderable, templatable {
         $data->username = $this->username;
         $data->logintoken = $this->logintoken;
         $data->maintenance = format_text($this->maintenance, FORMAT_MOODLE);
-        $data->languagemenu = $this->languagemenu;
-
+		//print_object($data);
         return $data;
     }
 }

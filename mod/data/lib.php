@@ -35,9 +35,6 @@ define ('DATA_TIMEMODIFIED', -4);
 define ('DATA_TAGS', -5);
 
 define ('DATA_CAP_EXPORT', 'mod/data:viewalluserpresets');
-// Users having assigned the default role "Non-editing teacher" can export database records
-// Using the mod/data capability "viewalluserpresets" existing in Moodle 1.9.x.
-// In Moodle >= 2, new roles may be introduced and used instead.
 
 define('DATA_PRESET_COMPONENT', 'mod_data');
 define('DATA_PRESET_FILEAREA', 'site_presets');
@@ -46,7 +43,9 @@ define('DATA_PRESET_CONTEXT', SYSCONTEXTID);
 define('DATA_EVENT_TYPE_OPEN', 'open');
 define('DATA_EVENT_TYPE_CLOSE', 'close');
 
-require_once(__DIR__ . '/deprecatedlib.php');
+// Users having assigned the default role "Non-editing teacher" can export database records
+// Using the mod/data capability "viewalluserpresets" existing in Moodle 1.9.x.
+// In Moodle >= 2, new roles may be introduced and used instead.
 
 /**
  * @package   mod_data
@@ -353,12 +352,10 @@ class data_field_base {     // Base class for Database Field Types (see field/*/
 
         require_once($CFG->dirroot.'/mod/data/field/'.$this->type.'/mod.html');
 
-        echo html_writer::start_div('mt-3');
-        echo html_writer::tag('input', null, array('type' => 'submit', 'value' => $savebutton,
-            'class' => 'btn btn-primary'));
-        echo html_writer::tag('input', null, array('type' => 'submit', 'name' => 'cancel',
-            'value' => get_string('cancel'), 'class' => 'btn btn-secondary ml-2'));
-        echo html_writer::end_div();
+        echo '<div class="mdl-align">';
+        echo '<input type="submit" class="btn btn-primary" value="'.$savebutton.'" />'."\n";
+        echo '<input type="submit" class="btn btn-secondary" name="cancel" value="'.get_string('cancel').'" />'."\n";
+        echo '</div>';
 
         echo '</form>';
 
@@ -1198,9 +1195,9 @@ function data_user_outline($course, $user, $mod, $data) {
         $result->time = $lastrecord->timemodified;
         if ($grade) {
             if (!$grade->hidden || has_capability('moodle/grade:viewhidden', context_course::instance($course->id))) {
-                $result->info .= ', ' . get_string('gradenoun') . ': ' . $grade->str_long_grade;
+                $result->info .= ', ' . get_string('grade') . ': ' . $grade->str_long_grade;
             } else {
-                $result->info = get_string('gradenoun') . ': ' . get_string('hidden', 'grades');
+                $result->info = get_string('grade') . ': ' . get_string('hidden', 'grades');
             }
         }
         return $result;
@@ -1209,9 +1206,9 @@ function data_user_outline($course, $user, $mod, $data) {
             'time' => grade_get_date_for_user_grade($grade, $user),
         ];
         if (!$grade->hidden || has_capability('moodle/grade:viewhidden', context_course::instance($course->id))) {
-            $result->info = get_string('gradenoun') . ': ' . $grade->str_long_grade;
+            $result->info = get_string('grade') . ': ' . $grade->str_long_grade;
         } else {
-            $result->info = get_string('gradenoun') . ': ' . get_string('hidden', 'grades');
+            $result->info = get_string('grade') . ': ' . get_string('hidden', 'grades');
         }
 
         return $result;
@@ -1236,12 +1233,12 @@ function data_user_complete($course, $user, $mod, $data) {
     if (!empty($grades->items[0]->grades)) {
         $grade = reset($grades->items[0]->grades);
         if (!$grade->hidden || has_capability('moodle/grade:viewhidden', context_course::instance($course->id))) {
-            echo $OUTPUT->container(get_string('gradenoun') . ': ' . $grade->str_long_grade);
+            echo $OUTPUT->container(get_string('grade').': '.$grade->str_long_grade);
             if ($grade->str_feedback) {
                 echo $OUTPUT->container(get_string('feedback').': '.$grade->str_feedback);
             }
         } else {
-            echo $OUTPUT->container(get_string('gradenoun') . ': ' . get_string('hidden', 'grades'));
+            echo $OUTPUT->container(get_string('grade') . ': ' . get_string('hidden', 'grades'));
         }
     }
 
@@ -1422,16 +1419,8 @@ function data_print_template($template, $records, $data, $search='', $page=0, $r
         $patterns[]='##edit##';
         $patterns[]='##delete##';
         if (data_user_can_manage_entry($record, $data, $context)) {
-            $backtourlparams = [
-                'd' => $data->id,
-            ];
-            if ($template === 'singletemplate') {
-                $backtourlparams['mode'] = 'single';
-            }
-            $backtourl = new \moodle_url('/mod/data/view.php', $backtourlparams);
             $replacement[] = '<a href="'.$CFG->wwwroot.'/mod/data/edit.php?d='
-                             .$data->id.'&amp;rid='.$record->id.'&amp;sesskey='.sesskey().'&amp;backto='
-                             . urlencode($backtourl->out(false)) .'">' .
+                             .$data->id.'&amp;rid='.$record->id.'&amp;sesskey='.sesskey().'">' .
                              $OUTPUT->pix_icon('t/edit', get_string('edit')) . '</a>';
             $replacement[] = '<a href="'.$CFG->wwwroot.'/mod/data/view.php?d='
                              .$data->id.'&amp;delete='.$record->id.'&amp;sesskey='.sesskey().'">' .
@@ -2312,16 +2301,25 @@ function data_delete_site_preset($name) {
  * @param stdClass $cm
  * @param stdClass $data
  * @param string $currenttab
- * @param string $actionbar
  */
-function data_print_header($course, $cm, $data, $currenttab='', string $actionbar = '') {
+function data_print_header($course, $cm, $data, $currenttab='') {
 
-    global $CFG, $displaynoticegood, $displaynoticebad, $OUTPUT, $PAGE, $USER;
+    global $CFG, $displaynoticegood, $displaynoticebad, $OUTPUT, $PAGE;
 
     $PAGE->set_title($data->name);
     echo $OUTPUT->header();
+    echo $OUTPUT->heading(format_string($data->name), 2);
+    echo $OUTPUT->box(format_module_intro('data', $data, $cm->id), 'generalbox', 'intro');
 
-    echo $actionbar;
+    // Groups needed for Add entry tab
+    $currentgroup = groups_get_activity_group($cm);
+    $groupmode = groups_get_activity_groupmode($cm);
+
+    // Print the tabs
+
+    if ($currenttab) {
+        include('tabs.php');
+    }
 
     // Print any notices
 
@@ -2518,8 +2516,7 @@ abstract class data_preset_importer {
      * @return stdClass
      */
     public function get_preset_settings() {
-        global $DB, $CFG;
-        require_once($CFG->libdir.'/xmlize.php');
+        global $DB;
 
         $fs = $fileobj = null;
         if (!is_directory_a_preset($this->directory)) {
@@ -3029,7 +3026,7 @@ function data_get_extra_capabilities() {
 
 /**
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed True if module supports feature, false if not, null if doesn't know or string for the module purpose.
+ * @return mixed True if module supports feature, null if doesn't know
  */
 function data_supports($feature) {
     switch($feature) {
@@ -3044,7 +3041,6 @@ function data_supports($feature) {
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
         case FEATURE_COMMENT:                 return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_COLLABORATION;
 
         default: return null;
     }
@@ -3601,22 +3597,16 @@ function data_extend_settings_navigation(settings_navigation $settings, navigati
         } else {
             $addstring = get_string('editentry', 'data');
         }
-        $addentrynode = $datanode->add($addstring,
-            new moodle_url('/mod/data/edit.php', array('d' => $PAGE->cm->instance)));
-        $addentrynode->set_show_in_secondary_navigation(false);
+        $datanode->add($addstring, new moodle_url('/mod/data/edit.php', array('d'=>$PAGE->cm->instance)));
     }
 
     if (has_capability(DATA_CAP_EXPORT, $PAGE->cm->context)) {
         // The capability required to Export database records is centrally defined in 'lib.php'
         // and should be weaker than those required to edit Templates, Fields and Presets.
-        $exportentriesnode = $datanode->add(get_string('exportentries', 'data'),
-            new moodle_url('/mod/data/export.php', array('d' => $data->id)));
-        $exportentriesnode->set_show_in_secondary_navigation(false);
+        $datanode->add(get_string('exportentries', 'data'), new moodle_url('/mod/data/export.php', array('d'=>$data->id)));
     }
     if (has_capability('mod/data:manageentries', $PAGE->cm->context)) {
-        $importentriesnode = $datanode->add(get_string('importentries', 'data'),
-            new moodle_url('/mod/data/import.php', array('d' => $data->id)));
-        $importentriesnode->set_show_in_secondary_navigation(false);
+        $datanode->add(get_string('importentries', 'data'), new moodle_url('/mod/data/import.php', array('d'=>$data->id)));
     }
 
     if (has_capability('mod/data:managetemplates', $PAGE->cm->context)) {
@@ -3631,11 +3621,15 @@ function data_extend_settings_navigation(settings_navigation $settings, navigati
             $defaultemplate = 'singletemplate';
         }
 
-        $datanode->add(get_string('fields', 'data'),
-            new moodle_url('/mod/data/field.php', array('d' => $data->id)));
-        $datanode->add(get_string('templates', 'data'),
-            new moodle_url('/mod/data/templates.php', array('d' => $data->id)));
-        $datanode->add(get_string('presets', 'data'), new moodle_url('/mod/data/preset.php', array('d' => $data->id)));
+        $templates = $datanode->add(get_string('templates', 'data'));
+
+        $templatelist = array ('listtemplate', 'singletemplate', 'asearchtemplate', 'addtemplate', 'rsstemplate', 'csstemplate', 'jstemplate');
+        foreach ($templatelist as $template) {
+            $templates->add(get_string($template, 'data'), new moodle_url('/mod/data/templates.php', array('d'=>$data->id,'mode'=>$template)));
+        }
+
+        $datanode->add(get_string('fields', 'data'), new moodle_url('/mod/data/field.php', array('d'=>$data->id)));
+        $datanode->add(get_string('presets', 'data'), new moodle_url('/mod/data/preset.php', array('d'=>$data->id)));
     }
 
     if (!empty($CFG->enablerssfeeds) && !empty($CFG->data_enablerssfeeds) && $data->rssarticles > 0) {
@@ -4124,8 +4118,9 @@ function data_get_recordids($alias, $searcharray, $dataid, $recordids) {
 function data_get_advanced_search_sql($sort, $data, $recordids, $selectdata, $sortorder) {
     global $DB;
 
-    $userfieldsapi = \core_user\fields::for_userpic()->excluding('id');
-    $namefields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+    $namefields = user_picture::fields('u');
+    // Remove the id from the string. This already exists in the sql statement.
+    $namefields = str_replace('u.id,', '', $namefields);
 
     if ($sort == 0) {
         $nestselectsql = 'SELECT r.id, r.approved, r.timecreated, r.timemodified, r.userid, ' . $namefields . '
@@ -4476,6 +4471,40 @@ function data_update_completion_state($data, $course, $cm) {
 }
 
 /**
+ * Obtains the automatic completion state for this database item based on any conditions
+ * on its settings. The call for this is in completion lib where the modulename is appended
+ * to the function name. This is why there are unused parameters.
+ *
+ * @since Moodle 3.3
+ * @param stdClass $course Course
+ * @param cm_info|stdClass $cm course-module
+ * @param int $userid User ID
+ * @param bool $type Type of comparison (or/and; can be used as return value if no conditions)
+ * @return bool True if completed, false if not, $type if conditions not set.
+ */
+function data_get_completion_state($course, $cm, $userid, $type) {
+    global $DB, $PAGE;
+    $result = $type; // Default return value
+    // Get data details.
+    if (isset($PAGE->cm->id) && $PAGE->cm->id == $cm->id) {
+        $data = $PAGE->activityrecord;
+    } else {
+        $data = $DB->get_record('data', array('id' => $cm->instance), '*', MUST_EXIST);
+    }
+    // If completion option is enabled, evaluate it and return true/false.
+    if ($data->completionentries) {
+        $numentries = data_numentries($data, $userid);
+        // Check the number of entries required against the number of entries already made.
+        if ($numentries >= $data->completionentries) {
+            $result = true;
+        } else {
+            $result = false;
+        }
+    }
+    return $result;
+}
+
+/**
  * Mark the activity completed (if required) and trigger the course_module_viewed event.
  *
  * @param  stdClass $data       data object
@@ -4796,27 +4825,4 @@ function mod_data_core_calendar_event_timestart_updated(\calendar_event $event, 
         $event = \core\event\course_module_updated::create_from_cm($coursemodule, $context);
         $event->trigger();
     }
-}
-
-/**
- * Callback to fetch the activity event type lang string.
- *
- * @param string $eventtype The event type.
- * @return lang_string The event type lang string.
- */
-function mod_data_core_calendar_get_event_action_string(string $eventtype): string {
-    $modulename = get_string('modulename', 'data');
-
-    switch ($eventtype) {
-        case DATA_EVENT_TYPE_OPEN:
-            $identifier = 'calendarstart';
-            break;
-        case DATA_EVENT_TYPE_CLOSE:
-            $identifier = 'calendarend';
-            break;
-        default:
-            return get_string('requiresaction', 'calendar', $modulename);
-    }
-
-    return get_string($identifier, 'data', $modulename);
 }

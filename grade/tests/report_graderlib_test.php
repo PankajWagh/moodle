@@ -261,7 +261,7 @@ class core_grade_report_graderlib_testcase extends advanced_testcase {
 
         // Set current user.
         $this->setUser($manager);
-        $USER->editing = false;
+        $USER->gradeediting[$course->id] = false;
 
         // Get the report.
         $report = $this->create_report($course);

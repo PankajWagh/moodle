@@ -224,8 +224,7 @@ class exporter {
      * @param   array           $tagsbypostid List of tags for each post indexed by post id
      * @param   rating[]        $ratingbypostid List of ratings for each post indexed by post id
      * @param   bool            $includehtml Include some pre-constructed HTML in the export
-     * @param   array           $inlineattachmentsbypostid List of attachments for each post indexed by post id
-     * @return  posts_exporter
+     * @return  post_exporter
      */
     public function get_posts_exporter(
         stdClass $user,
@@ -239,8 +238,7 @@ class exporter {
         post_read_receipt_collection_entity $readreceiptcollection = null,
         array $tagsbypostid = [],
         array $ratingbypostid = [],
-        bool $includehtml = false,
-        array $inlineattachmentsbypostid = []
+        bool $includehtml = false
     ) : posts_exporter {
         return new posts_exporter(
             $posts,
@@ -259,8 +257,7 @@ class exporter {
                 'context' => $forum->get_context(),
                 'readreceiptcollection' => $readreceiptcollection,
                 'includehtml' => $includehtml
-            ],
-            $inlineattachmentsbypostid
+            ]
         );
     }
 

@@ -160,6 +160,8 @@ if (!empty($forum)) {
             );
     }
 
+    $SESSION->fromurl = get_local_referer(false);
+
     // Load up the $post variable.
 
     $post = new stdClass();
@@ -462,9 +464,7 @@ if (!empty($forum)) {
             }
 
             echo $OUTPUT->header();
-            if (!$PAGE->has_secondary_navigation()) {
-                echo $OUTPUT->heading(format_string($forum->name), 2);
-            }
+            echo $OUTPUT->heading(format_string($forum->name), 2);
             echo $OUTPUT->confirm(get_string("deletesureplural", "forum", $replycount + 1),
                 "post.php?delete=$delete&confirm=$delete",
                 $CFG->wwwroot.'/mod/forum/discuss.php?d='.$post->discussion.'#p'.$post->id);
@@ -487,9 +487,7 @@ if (!empty($forum)) {
             echo $postsrenderer->render($USER, [$forumentity], [$discussionentity], $postentities);
         } else {
             echo $OUTPUT->header();
-            if (!$PAGE->has_secondary_navigation()) {
-                echo $OUTPUT->heading(format_string($forum->name), 2);
-            }
+            echo $OUTPUT->heading(format_string($forum->name), 2);
             echo $OUTPUT->confirm(get_string("deletesure", "forum", $replycount),
                 "post.php?delete=$delete&confirm=$delete",
                 $CFG->wwwroot.'/mod/forum/discuss.php?d='.$post->discussion.'#p'.$post->id);
@@ -636,9 +634,7 @@ if (!empty($forum)) {
         $PAGE->set_title(format_string($discussion->name).": ".format_string($post->subject));
         $PAGE->set_heading($course->fullname);
         echo $OUTPUT->header();
-        if (!$PAGE->has_secondary_navigation()) {
-            echo $OUTPUT->heading(format_string($forum->name), 2);
-        }
+        echo $OUTPUT->heading(format_string($forum->name), 2);
         echo $OUTPUT->heading(get_string('pruneheading', 'forum'), 3);
 
         $prunemform->display();
@@ -784,7 +780,11 @@ if ($mformpost->is_cancelled()) {
     }
 } else if ($mformpost->is_submitted() && !$mformpost->no_submit_button_pressed() && $fromform = $mformpost->get_data()) {
 
-    $errordestination = get_local_referer(false) ?: $urlfactory->get_forum_view_url_from_forum($forumentity);
+    if (empty($SESSION->fromurl)) {
+        $errordestination = $urlfactory->get_forum_view_url_from_forum($forumentity);
+    } else {
+        $errordestination = $SESSION->fromurl;
+    }
 
     $fromform->itemid        = $fromform->message['itemid'];
     $fromform->messageformat = $fromform->message['format'];
@@ -1087,13 +1087,9 @@ if ($edit) {
 
 $PAGE->set_title("{$course->shortname}: {$strdiscussionname}{$titlesubject}");
 $PAGE->set_heading($course->fullname);
-$PAGE->set_secondary_active_tab("modulepage");
-$activityheaderconfig['hidecompletion'] = true;
-if (!empty($parententity)) {
-        $activityheaderconfig['description'] = '';
-}
-$PAGE->activityheader->set_attrs($activityheaderconfig);
+
 echo $OUTPUT->header();
+echo $OUTPUT->heading(format_string($forum->name), 2);
 
 // Checkup.
 if (!empty($parententity) && !$capabilitymanager->can_view_post($USER, $discussionentity, $parententity)) {
@@ -1136,6 +1132,10 @@ if (!empty($parententity)) {
     $rendererfactory = mod_forum\local\container::get_renderer_factory();
     $postsrenderer = $rendererfactory->get_single_discussion_posts_renderer(FORUM_MODE_THREADED, true);
     echo $postsrenderer->render($USER, [$forumentity], [$discussionentity], $postentities);
+} else {
+    if (!empty($forum->intro)) {
+        echo $OUTPUT->box(format_module_intro('forum', $forum, $cm->id), 'generalbox', 'intro');
+    }
 }
 
 // Call print disclosure for enabled plagiarism plugins.

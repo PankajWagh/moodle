@@ -28,4 +28,5 @@
  */
 
 $courserenderer = $PAGE->get_renderer('format_singleactivity');
+
 echo $courserenderer->display($course, $section != 0);

@@ -22,7 +22,7 @@ class ManagerFactory implements ManagerFactoryInterface
     /** @var InternalEntityFactory */
     protected $entityFactory;
 
-    /** @var HelperFactory */
+    /** @var HelperFactory $helperFactory */
     protected $helperFactory;
 
     /**

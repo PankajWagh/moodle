@@ -63,13 +63,6 @@ define('MESSAGE_DEFAULT_MAX_POLL_IN_SECONDS', 2 * MINSECS);
 define('MESSAGE_DEFAULT_TIMEOUT_POLL_IN_SECONDS', 5 * MINSECS);
 
 /**
- * To get only read, unread or both messages or notifications.
- */
-define('MESSAGE_GET_UNREAD', 0);
-define('MESSAGE_GET_READ', 1);
-define('MESSAGE_GET_READ_AND_UNREAD', 2);
-
-/**
  * Returns the count of unread messages for user. Either from a specific user or from all users.
  *
  * @deprecated since 3.10
@@ -190,8 +183,7 @@ function message_search_users($courseids, $searchtext, $sort='', $exceptions='')
     }
 
     $fullname = $DB->sql_fullname();
-    $userfieldsapi = \core_user\fields::for_userpic();
-    $ufields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+    $ufields = user_picture::fields('u');
 
     if (!empty($sort)) {
         $order = ' ORDER BY '. $sort;
@@ -559,29 +551,23 @@ function message_page_type_list(string $pagetype, ?context $parentcontext, ?cont
  * @param  int      $useridto       the user id who received the message
  * @param  int      $useridfrom     the user id who sent the message. -10 or -20 for no-reply or support user
  * @param  int      $notifications  1 for retrieving notifications, 0 for messages, -1 for both
- * @param  int      $read           Either MESSAGE_GET_READ, MESSAGE_GET_UNREAD or MESSAGE_GET_READ_AND_UNREAD.
+ * @param  bool     $read           true for retrieving read messages, false for unread
  * @param  string   $sort           the column name to order by including optionally direction
  * @param  int      $limitfrom      limit from
  * @param  int      $limitnum       limit num
  * @return external_description
  * @since  2.8
  */
-function message_get_messages($useridto, $useridfrom = 0, $notifications = -1, $read = MESSAGE_GET_READ,
+function message_get_messages($useridto, $useridfrom = 0, $notifications = -1, $read = true,
                                 $sort = 'mr.timecreated DESC', $limitfrom = 0, $limitnum = 0) {
     global $DB;
 
-    if (is_bool($read)) {
-        // Backwards compatibility, this parameter was a bool before 4.0.
-        $read = (int) $read;
-    }
-
     // If the 'useridto' value is empty then we are going to retrieve messages sent by the useridfrom to any user.
-    $userfieldsapi = \core_user\fields::for_name();
     if (empty($useridto)) {
-        $userfields = $userfieldsapi->get_sql('u', false, 'userto', '', false)->selects;
+        $userfields = get_all_user_name_fields(true, 'u', '', 'userto');
         $messageuseridtosql = 'u.id as useridto';
     } else {
-        $userfields = $userfieldsapi->get_sql('u', false, 'userfrom', '', false)->selects;
+        $userfields = get_all_user_name_fields(true, 'u', '', 'userfrom');
         $messageuseridtosql = "$useridto as useridto";
     }
 
@@ -664,9 +650,9 @@ function message_get_messages($useridto, $useridfrom = 0, $notifications = -1, $
             $notificationsparams[] = $useridfrom;
         }
     }
-    if ($read === MESSAGE_GET_READ) {
+    if ($read) {
         $notificationsql .= "AND mr.timeread IS NOT NULL ";
-    } else if ($read === MESSAGE_GET_UNREAD) {
+    } else {
         $notificationsql .= "AND mr.timeread IS NULL ";
     }
     $messagesql .= "ORDER BY $sort";
@@ -675,16 +661,14 @@ function message_get_messages($useridto, $useridfrom = 0, $notifications = -1, $
     // Handle messages if needed.
     if ($notifications === -1 || $notifications === 0) {
         $messages = $DB->get_records_sql($messagesql, $messageparams, $limitfrom, $limitnum);
-        if ($read !== MESSAGE_GET_READ_AND_UNREAD) {
-            // Get rid of the messages that have either been read or not read depending on the value of $read.
-            $messages = array_filter($messages, function ($message) use ($read) {
-                if ($read === MESSAGE_GET_READ) {
-                    return !is_null($message->timeread);
-                }
+        // Get rid of the messages that have either been read or not read depending on the value of $read.
+        $messages = array_filter($messages, function ($message) use ($read) {
+            if ($read) {
+                return !is_null($message->timeread);
+            }
 
-                return is_null($message->timeread);
-            });
-        }
+            return is_null($message->timeread);
+        });
     }
 
     // All.

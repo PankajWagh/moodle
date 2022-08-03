@@ -47,7 +47,6 @@ $workshop = new workshop($workshop, $cm, $course);
 $PAGE->set_url($workshop->exsubmission_url($id), array('edit' => $edit));
 $PAGE->set_title($workshop->name);
 $PAGE->set_heading($course->fullname);
-$PAGE->set_secondary_active_tab('modulepage');
 if ($edit) {
     $PAGE->navbar->add(get_string('exampleediting', 'workshop'));
 } else {
@@ -174,9 +173,7 @@ if ($edit and $canmanage) {
 
 // Output starts here
 echo $output->header();
-if (!$PAGE->has_secondary_navigation()) {
-    echo $output->heading(format_string($workshop->name), 2);
-}
+echo $output->heading(format_string($workshop->name), 2);
 
 // show instructions for submitting as they may contain some list of questions and we need to know them
 // while reading the submitted answer

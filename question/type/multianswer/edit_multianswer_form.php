@@ -202,7 +202,7 @@ class qtype_multianswer_edit_form extends question_edit_form {
                     }
 
                     $mform->addElement('static', 'sub_'.$sub.'_fraction['.$key.']',
-                            get_string('gradenoun'));
+                            get_string('grade'));
 
                     $mform->addElement('static', 'sub_'.$sub.'_feedback['.$key.']',
                             get_string('feedback', 'question'));

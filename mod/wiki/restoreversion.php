@@ -74,7 +74,7 @@ if ($confirm) {
 
 } else {
 
-    $wikipage = new page_wiki_restoreversion($wiki, $subwiki, $cm, 'modulepage');
+    $wikipage = new page_wiki_restoreversion($wiki, $subwiki, $cm);
     $wikipage->set_page($page);
     $wikipage->set_versionid($versionid);
 

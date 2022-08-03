@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die;
 /**
  * List of features supported in URL module
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed True if module supports feature, false if not, null if doesn't know or string for the module purpose.
+ * @return mixed True if module supports feature, false if not, null if doesn't know
  */
 function url_supports($feature) {
     switch($feature) {
@@ -41,7 +41,6 @@ function url_supports($feature) {
         case FEATURE_GRADE_OUTCOMES:          return false;
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_CONTENT;
 
         default: return null;
     }
@@ -243,8 +242,6 @@ function url_get_coursemodule_info($coursemodule) {
         // Convert intro to html. Do not filter cached version, filters run at display time.
         $info->content = format_module_intro('url', $url, $coursemodule->id, false);
     }
-
-    $info->customdata['display'] = $display;
 
     return $info;
 }

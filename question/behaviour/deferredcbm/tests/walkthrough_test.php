@@ -209,11 +209,10 @@ class qbehaviour_deferredcbm_walkthrough_test extends qbehaviour_walkthrough_tes
                 $this->get_contains_incorrect_expectation());
         $this->assertEquals('A [' . question_cbm::get_short_string(question_cbm::HIGH) . ']',
                 $this->quba->get_right_answer_summary($this->slot));
-        $this->assertMatchesRegularExpression('/' . preg_quote($mc->questiontext, '/') . '/',
+        $this->assertRegExp('/' . preg_quote($mc->questiontext, '/') . '/',
                 $this->quba->get_question_summary($this->slot));
-        $this->assertMatchesRegularExpression(
-            '/(B|C) \[' . preg_quote(question_cbm::get_short_string(question_cbm::MED), '/') . '\]/',
-            $this->quba->get_response_summary($this->slot));
+        $this->assertRegExp('/(B|C) \[' . preg_quote(question_cbm::get_short_string(question_cbm::MED), '/') . '\]/',
+                $this->quba->get_response_summary($this->slot));
 
         // Save the old attempt.
         $oldqa = $this->quba->get_question_attempt($this->slot);
@@ -235,7 +234,7 @@ class qbehaviour_deferredcbm_walkthrough_test extends qbehaviour_walkthrough_tes
                 $this->get_does_not_contain_correctness_expectation());
         $this->assertEquals('A [' . question_cbm::get_short_string(question_cbm::HIGH) . ']',
                 $this->quba->get_right_answer_summary($this->slot));
-        $this->assertMatchesRegularExpression('/' . preg_quote($mc->questiontext, '/') . '/',
+        $this->assertRegExp('/' . preg_quote($mc->questiontext, '/') . '/',
                 $this->quba->get_question_summary($this->slot));
         $this->assertNull($this->quba->get_response_summary($this->slot));
 
@@ -250,9 +249,8 @@ class qbehaviour_deferredcbm_walkthrough_test extends qbehaviour_walkthrough_tes
                 $this->get_contains_mc_radio_expectation($rightindex, false, true),
                 $this->get_contains_cbm_radio_expectation(question_cbm::HIGH, false, true),
                 $this->get_contains_correct_expectation());
-        $this->assertMatchesRegularExpression(
-            '/(A) \[' . preg_quote(question_cbm::get_short_string(question_cbm::HIGH), '/') . '\]/',
-            $this->quba->get_response_summary($this->slot));
+        $this->assertRegExp('/(A) \[' . preg_quote(question_cbm::get_short_string(question_cbm::HIGH), '/') . '\]/',
+                $this->quba->get_response_summary($this->slot));
     }
 
     public function test_deferred_cbm_truefalse_no_certainty_feedback_when_not_answered() {

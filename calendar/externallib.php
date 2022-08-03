@@ -408,7 +408,6 @@ class core_calendar_external extends external_api {
                 'limittononsuspendedevents' => new external_value(PARAM_BOOL,
                         'Limit the events to courses the user is not suspended in', VALUE_DEFAULT, false),
                 'userid' => new external_value(PARAM_INT, 'The user id', VALUE_DEFAULT, null),
-                'searchvalue' => new external_value(PARAM_TEXT, 'The value a user wishes to search against', VALUE_DEFAULT, null)
             )
         );
     }
@@ -422,12 +421,11 @@ class core_calendar_external extends external_api {
      * @param null|int $aftereventid Get events with ids greater than this one
      * @param int $limitnum Limit the number of results to this value
      * @param null|int $userid The user id
-     * @param string|null $searchvalue The value a user wishes to search against
      * @return array
      */
     public static function get_calendar_action_events_by_timesort($timesortfrom = 0, $timesortto = null,
                                                        $aftereventid = 0, $limitnum = 20, $limittononsuspendedevents = false,
-                                                       $userid = null, ?string $searchvalue = null) {
+                                                       $userid = null) {
         global $PAGE, $USER;
 
         $params = self::validate_parameters(
@@ -439,7 +437,6 @@ class core_calendar_external extends external_api {
                 'limitnum' => $limitnum,
                 'limittononsuspendedevents' => $limittononsuspendedevents,
                 'userid' => $userid,
-                'searchvalue' => $searchvalue
             ]
         );
         if ($params['userid']) {
@@ -466,8 +463,7 @@ class core_calendar_external extends external_api {
             $params['aftereventid'],
             $params['limitnum'],
             $params['limittononsuspendedevents'],
-            $user,
-            $params['searchvalue']
+            $user
         );
 
         $exportercache = new events_related_objects_cache($events);
@@ -498,8 +494,7 @@ class core_calendar_external extends external_api {
                 'timesortfrom' => new external_value(PARAM_INT, 'Time sort from', VALUE_DEFAULT, null),
                 'timesortto' => new external_value(PARAM_INT, 'Time sort to', VALUE_DEFAULT, null),
                 'aftereventid' => new external_value(PARAM_INT, 'The last seen event id', VALUE_DEFAULT, 0),
-                'limitnum' => new external_value(PARAM_INT, 'Limit number', VALUE_DEFAULT, 20),
-                'searchvalue' => new external_value(PARAM_TEXT, 'The value a user wishes to search against', VALUE_DEFAULT, null)
+                'limitnum' => new external_value(PARAM_INT, 'Limit number', VALUE_DEFAULT, 20)
             )
         );
     }
@@ -513,11 +508,10 @@ class core_calendar_external extends external_api {
      * @param null|int $timesortto Events before this time (inclusive)
      * @param null|int $aftereventid Get events with ids greater than this one
      * @param int $limitnum Limit the number of results to this value
-     * @param string|null $searchvalue The value a user wishes to search against
      * @return array
      */
     public static function get_calendar_action_events_by_course(
-        $courseid, $timesortfrom = null, $timesortto = null, $aftereventid = 0, $limitnum = 20, ?string $searchvalue = null) {
+        $courseid, $timesortfrom = null, $timesortto = null, $aftereventid = 0, $limitnum = 20) {
 
         global $PAGE, $USER;
 
@@ -530,7 +524,6 @@ class core_calendar_external extends external_api {
                 'timesortto' => $timesortto,
                 'aftereventid' => $aftereventid,
                 'limitnum' => $limitnum,
-                'searchvalue' => $searchvalue
             ]
         );
         $context = \context_user::instance($USER->id);
@@ -554,8 +547,7 @@ class core_calendar_external extends external_api {
             $params['timesortfrom'],
             $params['timesortto'],
             $params['aftereventid'],
-            $params['limitnum'],
-            $params['searchvalue']
+            $params['limitnum']
         );
 
         $exportercache = new events_related_objects_cache($events, $courses);
@@ -586,8 +578,7 @@ class core_calendar_external extends external_api {
                 ),
                 'timesortfrom' => new external_value(PARAM_INT, 'Time sort from', VALUE_DEFAULT, null),
                 'timesortto' => new external_value(PARAM_INT, 'Time sort to', VALUE_DEFAULT, null),
-                'limitnum' => new external_value(PARAM_INT, 'Limit number', VALUE_DEFAULT, 10),
-                'searchvalue' => new external_value(PARAM_TEXT, 'The value a user wishes to search against', VALUE_DEFAULT, null)
+                'limitnum' => new external_value(PARAM_INT, 'Limit number', VALUE_DEFAULT, 10)
             )
         );
     }
@@ -600,11 +591,10 @@ class core_calendar_external extends external_api {
      * @param null|int $timesortfrom Events after this time (inclusive)
      * @param null|int $timesortto Events before this time (inclusive)
      * @param int $limitnum Limit the number of results per course to this value
-     * @param string|null $searchvalue The value a user wishes to search against
      * @return array
      */
     public static function get_calendar_action_events_by_courses(
-        array $courseids, $timesortfrom = null, $timesortto = null, $limitnum = 10, ?string $searchvalue = null) {
+        array $courseids, $timesortfrom = null, $timesortto = null, $limitnum = 10) {
 
         global $PAGE, $USER;
 
@@ -616,7 +606,6 @@ class core_calendar_external extends external_api {
                 'timesortfrom' => $timesortfrom,
                 'timesortto' => $timesortto,
                 'limitnum' => $limitnum,
-                'searchvalue' => $searchvalue
             ]
         );
         $context = \context_user::instance($USER->id);
@@ -638,8 +627,7 @@ class core_calendar_external extends external_api {
             $courses,
             $params['timesortfrom'],
             $params['timesortto'],
-            $params['limitnum'],
-            $params['searchvalue']
+            $params['limitnum']
         );
 
         if (empty($events)) {
@@ -815,10 +803,10 @@ class core_calendar_external extends external_api {
         $warnings = array();
 
         $eventvault = event_container::get_event_vault();
-        if ($event = $eventvault->get_event_by_id($params['eventid'])) {
+        if ($event = $eventvault->get_event_by_id($eventid)) {
             $mapper = event_container::get_event_mapper();
             if (!calendar_view_event_allowed($mapper->from_event_to_legacy_event($event))) {
-                throw new moodle_exception('nopermissiontoviewcalendar', 'error');
+                $event = null;
             }
         }
 
@@ -826,7 +814,7 @@ class core_calendar_external extends external_api {
             // We can't return a warning in this case because the event is not optional.
             // We don't know the context for the event and it's not worth loading it.
             $syscontext = context_system::instance();
-            throw new \required_capability_exception($syscontext, 'moodle/course:view', 'nopermissions', 'error');
+            throw new \required_capability_exception($syscontext, 'moodle/course:view', 'nopermission', '');
         }
 
         $cache = new events_related_objects_cache([$event]);
@@ -1000,18 +988,16 @@ class core_calendar_external extends external_api {
     /**
      * Get data for the monthly calendar view.
      *
-     * @param int $year The year to be shown
-     * @param int $month The month to be shown
-     * @param int $courseid The course to be included
-     * @param int $categoryid The category to be included
-     * @param bool $includenavigation Whether to include navigation
-     * @param bool $mini Whether to return the mini month view or not
-     * @param int $day The day we want to keep as the current day
-     * @param string|null $view The view mode for the calendar.
+     * @param   int     $year The year to be shown
+     * @param   int     $month The month to be shown
+     * @param   int     $courseid The course to be included
+     * @param   int     $categoryid The category to be included
+     * @param   bool    $includenavigation Whether to include navigation
+     * @param   bool    $mini Whether to return the mini month view or not
+     * @param   int     $day The day we want to keep as the current day
      * @return  array
      */
-    public static function get_calendar_monthly_view($year, $month, $courseid, $categoryid, $includenavigation, $mini, $day,
-            ?string $view = null) {
+    public static function get_calendar_monthly_view($year, $month, $courseid, $categoryid, $includenavigation, $mini, $day) {
         global $USER, $PAGE;
 
         // Parameter validation.
@@ -1023,7 +1009,6 @@ class core_calendar_external extends external_api {
             'includenavigation' => $includenavigation,
             'mini' => $mini,
             'day' => $day,
-            'view' => $view,
         ]);
 
         $context = \context_user::instance($USER->id);
@@ -1036,7 +1021,7 @@ class core_calendar_external extends external_api {
         $calendar = \calendar_information::create($time, $params['courseid'], $params['categoryid']);
         self::validate_context($calendar->context);
 
-        $view = $params['view'] ?? ($params['mini'] ? 'mini' : 'month');
+        $view = $params['mini'] ? 'mini' : 'month';
         list($data, $template) = calendar_get_view($calendar, $view, $params['includenavigation']);
 
         return $data;
@@ -1069,7 +1054,6 @@ class core_calendar_external extends external_api {
                     NULL_ALLOWED
                 ),
                 'day' => new external_value(PARAM_INT, 'Day to be viewed', VALUE_DEFAULT, 1),
-                'view' => new external_value(PARAM_ALPHA, 'The view mode of the calendar', VALUE_DEFAULT, 'month', NULL_ALLOWED),
             ]
         );
     }

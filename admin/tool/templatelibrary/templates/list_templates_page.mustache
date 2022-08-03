@@ -75,11 +75,7 @@
             <select id="selectcomponent" name="component" class="form-control" data-field="component">
                 <option value="">{{#str}}all, tool_templatelibrary{{/str}}</option>
                 {{#allcomponents}}
-                    <optgroup label="{{type}}">
-                        {{#plugins}}
-                            <option value="{{component}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                        {{/plugins}}
-                    </optgroup>
+                    <option value="{{component}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                 {{/allcomponents}}
             </select>
         {{/element}}

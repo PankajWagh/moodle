@@ -131,12 +131,9 @@ class mod_quiz_external extends external_api {
                                                     'reviewspecificfeedback', 'reviewgeneralfeedback', 'reviewrightanswer',
                                                     'reviewoverallfeedback', 'questionsperpage', 'navmethod',
                                                     'browsersecurity', 'delay1', 'delay2', 'showuserpicture', 'showblocks',
-                                                    'completionattemptsexhausted', 'overduehandling',
+                                                    'completionattemptsexhausted', 'completionpass', 'overduehandling',
                                                     'graceperiod', 'canredoquestions', 'allowofflineattempts');
                         $viewablefields = array_merge($viewablefields, $additionalfields);
-
-                        // Any course module fields that previously existed in quiz.
-                        $quizdetails['completionpass'] = $quizobj->get_cm()->completionpassgrade;
                     }
 
                     // Fields only for managers.
@@ -466,8 +463,6 @@ class mod_quiz_external extends external_api {
                 'timecheckstate' => new external_value(PARAM_INT, 'Next time quiz cron should check attempt for
                                                         state changes.  NULL means never check.', VALUE_OPTIONAL),
                 'sumgrades' => new external_value(PARAM_FLOAT, 'Total marks for this attempt.', VALUE_OPTIONAL),
-                'gradednotificationsenttime' => new external_value(PARAM_INT,
-                    'Time when the student was notified that manual grading of their attempt was complete.', VALUE_OPTIONAL),
             )
         );
     }
@@ -511,8 +506,7 @@ class mod_quiz_external extends external_api {
      * @since Moodle 3.1
      */
     public static function get_user_best_grade($quizid, $userid = 0) {
-        global $DB, $USER, $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
+        global $DB, $USER;
 
         $warnings = array();
 
@@ -562,17 +556,6 @@ class mod_quiz_external extends external_api {
             $result['hasgrade'] = true;
             $result['grade'] = $grade;
         }
-
-        // Inform user of the grade to pass if non-zero.
-        $gradinginfo = grade_get_grades($course->id, 'mod', 'quiz', $quiz->id, $user->id);
-        if (!empty($gradinginfo->items)) {
-            $item = $gradinginfo->items[0];
-
-            if ($item && grade_floats_different($item->gradepass, 0)) {
-                $result['gradetopass'] = $item->gradepass;
-            }
-        }
-
         $result['warnings'] = $warnings;
         return $result;
     }
@@ -588,7 +571,6 @@ class mod_quiz_external extends external_api {
             array(
                 'hasgrade' => new external_value(PARAM_BOOL, 'Whether the user has a grade on the given quiz.'),
                 'grade' => new external_value(PARAM_FLOAT, 'The grade (only if the user has a grade).', VALUE_OPTIONAL),
-                'gradetopass' => new external_value(PARAM_FLOAT, 'The grade to pass the quiz (only if set).', VALUE_OPTIONAL),
                 'warnings' => new external_warnings(),
             )
         );
@@ -921,6 +903,7 @@ class mod_quiz_external extends external_api {
                 'slot' => new external_value(PARAM_INT, 'slot number'),
                 'type' => new external_value(PARAM_ALPHANUMEXT, 'question type, i.e: multichoice'),
                 'page' => new external_value(PARAM_INT, 'page of the quiz this question appears on'),
+                'sectionhtml' => new external_value(PARAM_RAW, 'the question section html rendered'),
                 'html' => new external_value(PARAM_RAW, 'the question rendered'),
                 'responsefileareas' => new external_multiple_structure(
                     new external_single_structure(
@@ -936,7 +919,7 @@ class mod_quiz_external extends external_api {
                 'hasautosavedstep' => new external_value(PARAM_BOOL, 'whether this question attempt has autosaved data',
                                                             VALUE_OPTIONAL),
                 'flagged' => new external_value(PARAM_BOOL, 'whether the question is flagged or not'),
-                'number' => new external_value(PARAM_INT, 'question ordering number in the quiz', VALUE_OPTIONAL),
+                'number' => new external_value(PARAM_FLOAT, 'question ordering number in the quiz', VALUE_OPTIONAL),
                 'state' => new external_value(PARAM_ALPHA, 'the state where the question is in.
                     It will not be returned if the user cannot see it due to the quiz display correctness settings.',
                     VALUE_OPTIONAL),
@@ -969,7 +952,7 @@ class mod_quiz_external extends external_api {
         $displayoptions = $attemptobj->get_display_options($review);
         $renderer = $PAGE->get_renderer('mod_quiz');
         $contextid = $attemptobj->get_quizobj()->get_context()->id;
-
+		$category = '';
         foreach ($attemptobj->get_slots($page) as $slot) {
             $qtype = $attemptobj->get_question_type_name($slot);
             $qattempt = $attemptobj->get_question_attempt($slot);
@@ -997,12 +980,33 @@ class mod_quiz_external extends external_api {
 
             // Check display settings for question.
             $settings = $questiondef->get_question_definition_for_external_rendering($qattempt, $displayoptions);
-
+			/*********** added by Pankaj Wagh 16/Jul/2022 ***************/
+			global $DB;
+			$sectionhtml = '';/*********** added by Pankaj Wagh 16/Jul/2022 ***************/
+			
+			$question_slot = $DB->get_record('quiz_slots',Array('slot'=>$slot,'quizid'=>$attemptobj->get_quiz()->id));
+           //  print_object( $question_slot);
+            $question = $DB->get_record('question',Array('id'=>$question_slot->questionid));
+			
+           //  print_object( $question);
+           if($category =='' || $category != $question->category)
+            {
+                $rec_category = $DB->get_record('question_categories',Array('id'=>$question->category));
+                $category = $question->category;
+				//$sectionhtml ="**test by pankaj****";
+                if(trim($rec_category->info) !=''){
+					
+					$sectionhtml =  $rec_category->info;
+					
+                }
+            }
+			/*********** added by Pankaj Wagh 16/Jul/2022 ***************/
             $question = array(
                 'slot' => $slot,
                 'type' => $qtype,
                 'page' => $attemptobj->get_question_page($slot),
                 'flagged' => $attemptobj->is_question_flagged($slot),
+				'sectionhtml' => $sectionhtml,
                 'html' => $attemptobj->render_question($slot, $review, $renderer) . $PAGE->requires->get_end_code(),
                 'responsefileareas' => $responsefileareas,
                 'sequencecheck' => $qattempt->get_sequence_check_count(),

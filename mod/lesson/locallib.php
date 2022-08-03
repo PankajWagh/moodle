@@ -570,8 +570,6 @@ function lesson_menu_block_contents($cmid, $lesson) {
 /**
  * Adds header buttons to the page for the lesson
  *
- * @deprecated since Moodle 4.0 in favour of tertiary navigation.
- * @todo MDL-73545 This will be deleted in Moodle 4.4
  * @param object $cm
  * @param object $context
  * @param bool $extraeditbuttons
@@ -579,9 +577,6 @@ function lesson_menu_block_contents($cmid, $lesson) {
  */
 function lesson_add_header_buttons($cm, $context, $extraeditbuttons=false, $lessonpageid=null) {
     global $CFG, $PAGE, $OUTPUT;
-
-    debugging('lesson_add_header_buttons() is deprecated in favour of tertiary navigation.', DEBUG_DEVELOPER);
-
     if (has_capability('mod/lesson:edit', $context) && $extraeditbuttons) {
         if ($lessonpageid === null) {
             print_error('invalidpageid', 'lesson');
@@ -662,14 +657,14 @@ function lesson_process_group_deleted_in_course($courseid, $groupid = null) {
     if ($groupid) {
         $params['groupid'] = $groupid;
         // We just update the group that was deleted.
-        $sql = "SELECT o.id, o.lessonid, o.groupid
+        $sql = "SELECT o.id, o.lessonid
                   FROM {lesson_overrides} o
                   JOIN {lesson} lesson ON lesson.id = o.lessonid
                  WHERE lesson.course = :courseid
                    AND o.groupid = :groupid";
     } else {
         // No groupid, we update all orphaned group overrides for all lessons in course.
-        $sql = "SELECT o.id, o.lessonid, o.groupid
+        $sql = "SELECT o.id, o.lessonid
                   FROM {lesson_overrides} o
                   JOIN {lesson} lesson ON lesson.id = o.lessonid
              LEFT JOIN {groups} grp ON grp.id = o.groupid
@@ -677,15 +672,11 @@ function lesson_process_group_deleted_in_course($courseid, $groupid = null) {
                    AND o.groupid IS NOT NULL
                    AND grp.id IS NULL";
     }
-    $records = $DB->get_records_sql($sql, $params);
+    $records = $DB->get_records_sql_menu($sql, $params);
     if (!$records) {
         return; // Nothing to do.
     }
     $DB->delete_records_list('lesson_overrides', 'id', array_keys($records));
-    $cache = cache::make('mod_lesson', 'overrides');
-    foreach ($records as $record) {
-        $cache->delete("{$record->lessonid}_g_{$record->groupid}");
-    }
 }
 
 /**
@@ -714,14 +705,12 @@ function lesson_get_overview_report_table_and_data(lesson $lesson, $currentgroup
         list($esql, $params) = get_enrolled_sql($context, '', $currentgroup, true);
         list($sort, $sortparams) = users_order_by_sql('u');
 
-        // TODO Does not support custom user profile fields (MDL-70456).
-        $userfieldsapi = \core_user\fields::for_identity($context, false)->with_userpic();
-        $ufields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
-        $extrafields = $userfieldsapi->get_required_fields([\core_user\fields::PURPOSE_IDENTITY]);
+        $extrafields = get_extra_user_fields($context);
 
         $params['a1lessonid'] = $lesson->id;
         $params['b1lessonid'] = $lesson->id;
         $params['c1lessonid'] = $lesson->id;
+        $ufields = user_picture::fields('u', $extrafields);
         $sql = "SELECT DISTINCT $ufields
                 FROM {user} u
                 JOIN (
@@ -912,7 +901,7 @@ function lesson_get_overview_report_table_and_data(lesson $lesson, $currentgroup
     $headers = [get_string('name')];
 
     foreach ($extrafields as $field) {
-        $headers[] = \core_user\fields::get_display_name($field);
+        $headers[] = get_user_field_name($field);
     }
 
     $caneditlesson = has_capability('mod/lesson:edit', $context);
@@ -1746,10 +1735,8 @@ class lesson extends lesson_base {
                 'instance' => $this->properties->id);
         if (isset($override->userid)) {
             $conds['userid'] = $override->userid;
-            $cachekey = "{$cm->instance}_u_{$override->userid}";
         } else {
             $conds['groupid'] = $override->groupid;
-            $cachekey = "{$cm->instance}_g_{$override->groupid}";
         }
         $events = $DB->get_records('event', $conds);
         foreach ($events as $event) {
@@ -1758,7 +1745,6 @@ class lesson extends lesson_base {
         }
 
         $DB->delete_records('lesson_overrides', array('id' => $overrideid));
-        cache::make('mod_lesson', 'overrides')->delete($cachekey);
 
         // Set the common parameters for one of the events we will be triggering.
         $params = array(

@@ -70,8 +70,6 @@ $coursecontext = context_course::instance($course->id);
 
 require_login($course, true, $cm);
 
-$actionbar = new \mod_feedback\output\responses_action_bar($cm->id, $url);
-
 if (($formdata = data_submitted()) AND !confirm_sesskey()) {
     print_error('invalidsesskey');
 }
@@ -137,15 +135,10 @@ if ($action == 'sendmessage' AND $canbulkmessaging) {
 /// Print the page header
 $PAGE->set_heading($course->fullname);
 $PAGE->set_title($feedback->name);
-$PAGE->activityheader->set_attrs([
-    'hidecompletion' => true,
-    'description' => ''
-]);
 echo $OUTPUT->header();
+echo $OUTPUT->heading(format_string($feedback->name));
 
-/** @var \mod_feedback\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('mod_feedback');
-echo $renderer->main_action_bar($actionbar);
+require('tabs.php');
 
 /// Print the main part of the page
 ///////////////////////////////////////////////////////////////////////////

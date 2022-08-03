@@ -2081,7 +2081,7 @@ class mod_assign_external extends external_api {
      * @return null
      * @since Moodle 2.7
      */
-    public static function save_grades($assignmentid, $applytoall, $grades) {
+    public static function save_grades($assignmentid, $applytoall = false, $grades) {
         global $CFG, $USER;
 
         $params = self::validate_parameters(self::save_grades_parameters(),
@@ -2688,7 +2688,6 @@ class mod_assign_external extends external_api {
                 $userdetails['submitted'] = $record->submitted;
                 $userdetails['requiregrading'] = $record->requiregrading;
                 $userdetails['grantedextension'] = $record->grantedextension;
-                $userdetails['submissionstatus'] = $record->submissionstatus;
                 if (!empty($record->groupid)) {
                     $userdetails['groupid'] = $record->groupid;
                 }
@@ -2766,8 +2765,6 @@ class mod_assign_external extends external_api {
             'submitted' => new external_value(PARAM_BOOL, 'have they submitted their assignment'),
             'requiregrading' => new external_value(PARAM_BOOL, 'is their submission waiting for grading'),
             'grantedextension' => new external_value(PARAM_BOOL, 'have they been granted an extension'),
-            'submissionstatus' => new external_value(PARAM_ALPHA, 'The submission status (new, draft, reopened or submitted).
-                Empty when not submitted.', VALUE_OPTIONAL),
             'groupid' => new external_value(PARAM_INT, 'for group assignments this is the group id', VALUE_OPTIONAL),
             'groupname' => new external_value(PARAM_NOTAGS, 'for group assignments this is the group name', VALUE_OPTIONAL),
         ];
@@ -2834,7 +2831,6 @@ class mod_assign_external extends external_api {
             'submitted' => $participant->submitted,
             'requiregrading' => $participant->requiregrading,
             'grantedextension' => $participant->grantedextension,
-            'submissionstatus' => $participant->submissionstatus,
             'blindmarking' => $assign->is_blind_marking(),
             'allowsubmissionsfromdate' => $assign->get_instance($userid)->allowsubmissionsfromdate,
             'duedate' => $assign->get_instance($userid)->duedate,
@@ -2884,8 +2880,6 @@ class mod_assign_external extends external_api {
             'duedatestr' => new external_value(PARAM_TEXT, 'duedate for the user'),
             'groupid' => new external_value(PARAM_INT, 'for group assignments this is the group id', VALUE_OPTIONAL),
             'groupname' => new external_value(PARAM_NOTAGS, 'for group assignments this is the group name', VALUE_OPTIONAL),
-            'submissionstatus' => new external_value(PARAM_ALPHA, 'The submission status (new, draft, reopened or submitted).
-                Empty when not submitted.', VALUE_OPTIONAL),
             'user' => $userdescription,
         ));
     }

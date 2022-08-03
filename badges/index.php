@@ -73,13 +73,12 @@ if ($course = $DB->get_record('course', array('id' => $courseid))) {
 $hdr = get_string('managebadges', 'badges');
 $returnurl = new moodle_url('/badges/index.php', $urlparams);
 $PAGE->set_url($returnurl);
-$PAGE->add_body_class('limitedwidth');
 
 if ($type == BADGE_TYPE_SITE) {
     $title = get_string('sitebadges', 'badges');
     $PAGE->set_context(context_system::instance());
     $PAGE->set_pagelayout('admin');
-    $PAGE->set_heading(get_string('administrationsite'));
+    $PAGE->set_heading($title . ': ' . $hdr);
     navigation_node::override_active_url(new moodle_url('/badges/index.php', array('type' => BADGE_TYPE_SITE)), true);
 } else {
     require_login($course);
@@ -87,7 +86,7 @@ if ($type == BADGE_TYPE_SITE) {
     $title = get_string('coursebadges', 'badges');
     $PAGE->set_context($coursecontext);
     $PAGE->set_pagelayout('incourse');
-    $PAGE->set_heading(format_string($course->fullname, true, array('context' => $coursecontext)));
+    $PAGE->set_heading(format_string($course->fullname, true, array('context' => $coursecontext)) . ': ' . $hdr);
     navigation_node::override_active_url(
         new moodle_url('/badges/index.php', array('type' => BADGE_TYPE_COURSE, 'id' => $course->id))
     );
@@ -105,6 +104,7 @@ if (!has_any_capability(array(
 }
 
 $PAGE->set_title($hdr);
+badges_local_backpack_js(true);
 $output = $PAGE->get_renderer('core', 'badges');
 
 if (($delete || $archive) && has_capability('moodle/badges:deletebadge', $PAGE->context)) {
@@ -153,22 +153,19 @@ if ($deactivate && has_capability('moodle/badges:configuredetails', $PAGE->conte
 }
 
 echo $OUTPUT->header();
-$backurl = $type == BADGE_TYPE_SITE ? null : new moodle_url('/badges/view.php', ['type' => $type, 'id' => $courseid]);
-$actionbar = new \core_badges\output\standard_action_bar($PAGE, $type, false, true, $backurl);
-echo $output->render_tertiary_navigation($actionbar);
-
 if ($type == BADGE_TYPE_SITE) {
-    echo $OUTPUT->heading_with_help($hdr, 'sitebadges', 'badges');
+    echo $OUTPUT->heading_with_help($PAGE->heading, 'sitebadges', 'badges');
 } else {
-    echo $OUTPUT->heading($hdr);
+    echo $OUTPUT->heading($PAGE->heading);
 }
-
 echo $OUTPUT->box('', 'notifyproblem hide', 'check_connection');
 
 $totalcount = count(badges_get_badges($type, $courseid, '', '' , 0, 0));
 $records = badges_get_badges($type, $courseid, $sortby, $sorthow, $page, BADGE_PERPAGE);
 
 if ($totalcount) {
+    echo $output->heading(get_string('badgestoearn', 'badges', $totalcount), 4);
+
     if ($course && $course->startdate > time()) {
         echo $OUTPUT->box(get_string('error:notifycoursedate', 'badges'), 'generalbox notifyproblem');
     }
@@ -190,7 +187,12 @@ if ($totalcount) {
 
     echo $output->render($badges);
 } else {
-    echo $output->notification(get_string('nobadges', 'badges'), 'info');
+    echo $output->notification(get_string('nobadges', 'badges'));
+
+    if (has_capability('moodle/badges:createbadge', $PAGE->context)) {
+        echo $OUTPUT->box($OUTPUT->single_button(new moodle_url('newbadge.php', array('type' => $type, 'id' => $courseid)),
+            get_string('newbadge', 'badges')));
+    }
 }
 
 echo $OUTPUT->footer();

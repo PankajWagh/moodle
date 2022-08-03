@@ -22,7 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['adduserkey'] = 'Add user key';
 $string['createnewkey'] = 'Create a new user key';
 $string['createuserkey'] = 'Create user key';
 $string['deletekeyconfirm'] = 'Do you really want to delete this user key?';

@@ -14,38 +14,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A user tour.
+ * Manage user tours in Moodle.
  *
  * @module tool_usertours/tour
  * @copyright  2018 Andrew Nicols <andrew@nicols.co.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * A list of steps.
- *
- * @typedef {Object[]} StepList
- * @property {Number} stepId The id of the step in the database
- * @property {Number} position The position of the step within the tour (zero-indexed)
- */
-
 import $ from 'jquery';
 import * as Aria from 'core/aria';
 import Popper from 'core/popper';
-import {dispatchEvent} from 'core/event_dispatcher';
-import {eventTypes} from './events';
-import {get_string as getString} from 'core/str';
-import {prefetchStrings} from 'core/prefetch';
 
 /**
- * A user tour.
+ * A Tour.
  *
- * @class tool_usertours/tour
- * @property {boolean} tourRunning Whether the tour is currently running.
+ * @class
  */
-const Tour = class {
-    tourRunning = false;
-
+export default class Tour {
     /**
      * @param   {object}    config  The configuration object.
      */
@@ -81,11 +66,6 @@ const Tour = class {
             this.storage = false;
             this.storageKey = '';
         }
-
-        prefetchStrings('tool_usertours', [
-            'nextstep_sequence',
-            'skip_tour'
-        ]);
 
         return this;
     }
@@ -235,7 +215,7 @@ const Tour = class {
      * Retrieve the current step number.
      *
      * @method  getCurrentStepNumber
-     * @return  {Number}                   The current step number
+     * @return  {Integer}                   The current step number
      */
     getCurrentStepNumber() {
         return parseInt(this.currentStepNumber, 10);
@@ -245,7 +225,7 @@ const Tour = class {
      * Store the current step number.
      *
      * @method  setCurrentStepNumber
-     * @param   {Number}   stepNumber      The current step number
+     * @param   {Integer}   stepNumber      The current step number
      * @chainable
      */
     setCurrentStepNumber(stepNumber) {
@@ -265,8 +245,8 @@ const Tour = class {
      * Get the next step number after the currently displayed step.
      *
      * @method  getNextStepNumber
-     * @param   {Number}   stepNumber      The current step number
-     * @return  {Number}    The next step number to display
+     * @param   {Integer}   stepNumber      The current step number
+     * @return  {Integer}    The next step number to display
      */
     getNextStepNumber(stepNumber) {
         if (typeof stepNumber === 'undefined') {
@@ -289,8 +269,8 @@ const Tour = class {
      * Get the previous step number before the currently displayed step.
      *
      * @method  getPreviousStepNumber
-     * @param   {Number}   stepNumber      The current step number
-     * @return  {Number}    The previous step number to display
+     * @param   {Integer}   stepNumber      The current step number
+     * @return  {Integer}    The previous step number to display
      */
     getPreviousStepNumber(stepNumber) {
         if (typeof stepNumber === 'undefined') {
@@ -313,13 +293,26 @@ const Tour = class {
      * Is the step the final step number?
      *
      * @method  isLastStep
-     * @param   {Number}   stepNumber  Step number to test
+     * @param   {Integer}   stepNumber  Step number to test
      * @return  {Boolean}               Whether the step is the final step
      */
     isLastStep(stepNumber) {
         let nextStepNumber = this.getNextStepNumber(stepNumber);
 
         return nextStepNumber === null;
+    }
+
+    /**
+     * Is the step the first step number?
+     *
+     * @method  isFirstStep
+     * @param   {Integer}   stepNumber  Step number to test
+     * @return  {Boolean}               Whether the step is the first step
+     */
+    isFirstStep(stepNumber) {
+        let previousStepNumber = this.getPreviousStepNumber(stepNumber);
+
+        return previousStepNumber === null;
     }
 
     /**
@@ -352,26 +345,6 @@ const Tour = class {
 
         // Not theoretically, or actually visible.
         return false;
-    }
-
-    /**
-     * Get potentially visible steps in a tour.
-     *
-     * @returns {StepList} A list of ordered steps
-     */
-    getPotentiallyVisibleSteps() {
-        let position = 1;
-        let result = [];
-        // Checking the total steps.
-        for (let stepNumber = 0; stepNumber < this.steps.length; stepNumber++) {
-            const stepConfig = this.getStepConfig(stepNumber);
-            if (this.isStepPotentiallyVisible(stepConfig)) {
-                result[stepNumber] = {stepId: stepConfig.stepid, position: position};
-                position++;
-            }
-        }
-
-        return result;
     }
 
     /**
@@ -422,14 +395,10 @@ const Tour = class {
      * Go to the specified step in the tour.
      *
      * @method  gotoStep
-     * @param   {Number}   stepNumber     The step number to display
-     * @param   {Number}   direction      Next or previous step
+     * @param   {Integer}   stepNumber     The step number to display
+     * @param   {Integer}   direction      Next or previous step
      * @chainable
      * @return {Object} this.
-     * @fires tool_usertours/stepRender
-     * @fires tool_usertours/stepRendered
-     * @fires tool_usertours/stepHide
-     * @fires tool_usertours/stepHidden
      */
     gotoStep(stepNumber, direction) {
         if (stepNumber < 0) {
@@ -461,11 +430,9 @@ const Tour = class {
 
         this.hide();
 
-        const stepRenderEvent = this.dispatchEvent(eventTypes.stepRender, {stepConfig}, true);
-        if (!stepRenderEvent.defaultPrevented) {
-            this.renderStep(stepConfig);
-            this.dispatchEvent(eventTypes.stepRendered, {stepConfig});
-        }
+        this.fireEventHandlers('beforeRender', stepConfig);
+        this.renderStep(stepConfig);
+        this.fireEventHandlers('afterRender', stepConfig);
 
         return this;
     }
@@ -474,7 +441,7 @@ const Tour = class {
      * Fetch the normalised step configuration for the specified step number.
      *
      * @method  getStepConfig
-     * @param   {Number}   stepNumber      The step number to fetch configuration for
+     * @param   {Integer}   stepNumber      The step number to fetch configuration for
      * @return  {Object}                    The step configuration
      */
     getStepConfig(stepNumber) {
@@ -546,23 +513,21 @@ const Tour = class {
     /**
      * Fire any event handlers for the specified event.
      *
-     * @param {String} eventName The name of the event
-     * @param {Object} [detail={}] Any additional details to pass into the eveent
-     * @param {Boolean} [cancelable=false] Whether preventDefault() can be called
-     * @returns {CustomEvent}
+     * @param   {String}    eventName       The name of the event to handle
+     * @param   {Object}    data            Any data to pass to the event
+     * @chainable
+     * @return {Object} this.
      */
-    dispatchEvent(
-        eventName,
-        detail = {},
-        cancelable = false
-    ) {
-        return dispatchEvent(eventName, {
-            // Add the tour to the detail.
-            tour: this,
-            ...detail,
-        }, document, {
-            cancelable,
-        });
+    fireEventHandlers(eventName, data) {
+        if (typeof this.eventHandlers[eventName] === 'undefined') {
+            return this;
+        }
+
+        this.eventHandlers[eventName].forEach(function(thisEvent) {
+            thisEvent.call(this, data);
+        }, this);
+
+        return this;
     }
 
     /**
@@ -591,10 +556,13 @@ const Tour = class {
      */
     processStepListeners(stepConfig) {
         this.listeners.push(
-        // Next button.
+        // Next/Previous buttons.
         {
             node: this.currentStepNode,
             args: ['click', '[data-role="next"]', $.proxy(this.next, this)]
+        }, {
+            node: this.currentStepNode,
+            args: ['click', '[data-role="previous"]', $.proxy(this.previous, this)]
         },
 
         // Close and end tour buttons.
@@ -678,39 +646,24 @@ const Tour = class {
         template.find('[data-placeholder="body"]')
             .html(stepConfig.body);
 
-        // Buttons.
-        const nextBtn = template.find('[data-role="next"]');
-        const endBtn = template.find('[data-role="end"]');
+        // Is this the first step?
+        if (this.isFirstStep(stepConfig.stepNumber)) {
+            template.find('[data-role="previous"]').hide();
+        } else {
+            template.find('[data-role="previous"]').prop('disabled', false);
+        }
 
         // Is this the final step?
         if (this.isLastStep(stepConfig.stepNumber)) {
-            nextBtn.hide();
-            endBtn.removeClass("btn-secondary").addClass("btn-primary");
+            template.find('[data-role="next"]').hide();
+            template.find('[data-role="end"]').removeClass("btn-secondary").addClass("btn-primary");
         } else {
-            nextBtn.prop('disabled', false);
-            // Use Skip tour label for the End tour button.
-            getString('skip_tour', 'tool_usertours').then(value => {
-                endBtn.html(value);
-                return;
-            }).catch();
+            template.find('[data-role="next"]').prop('disabled', false);
         }
 
-        nextBtn.attr('role', 'button');
-        endBtn.attr('role', 'button');
-
-        if (this.originalConfiguration.displaystepnumbers) {
-            const stepsPotentiallyVisible = this.getPotentiallyVisibleSteps();
-            const totalStepsPotentiallyVisible = stepsPotentiallyVisible.length;
-            const position = stepsPotentiallyVisible[stepConfig.stepNumber].position;
-            if (totalStepsPotentiallyVisible > 1) {
-                // Change the label of the Next button to include the sequence.
-                getString('nextstep_sequence', 'tool_usertours',
-                    {position: position, total: totalStepsPotentiallyVisible}).then(value => {
-                    nextBtn.html(value);
-                    return;
-                }).catch();
-            }
-        }
+        template.find('[data-role="previous"]').attr('role', 'button');
+        template.find('[data-role="next"]').attr('role', 'button');
+        template.find('[data-role="end"]').attr('role', 'button');
 
         // Replace the template with the updated version.
         stepConfig.template = template;
@@ -755,10 +708,6 @@ const Tour = class {
 
         if (this.isStepActuallyVisible(stepConfig)) {
             let targetNode = this.getStepTarget(stepConfig);
-
-            if (targetNode.parents('[data-usertour="scroller"]').length) {
-                animationTarget = targetNode.parents('[data-usertour="scroller"]');
-            }
 
             targetNode.data('flexitour', 'target');
 
@@ -1019,11 +968,9 @@ const Tour = class {
      * Start the current tour.
      *
      * @method  startTour
-     * @param   {Number} startAt Which step number to start at. If not specified, starts at the last point.
+     * @param   {Integer}   startAt     Which step number to start at. If not specified, starts at the last point.
      * @chainable
      * @return {Object} this.
-     * @fires tool_usertours/tourStart
-     * @fires tool_usertours/tourStarted
      */
     startTour(startAt) {
         if (this.storage && typeof startAt === 'undefined') {
@@ -1040,12 +987,9 @@ const Tour = class {
             startAt = this.getCurrentStepNumber();
         }
 
-        const tourStartEvent = this.dispatchEvent(eventTypes.tourStart, {startAt}, true);
-        if (!tourStartEvent.defaultPrevented) {
-            this.gotoStep(startAt);
-            this.tourRunning = true;
-            this.dispatchEvent(eventTypes.tourStarted, {startAt});
-        }
+        this.fireEventHandlers('beforeStart', startAt);
+        this.gotoStep(startAt);
+        this.fireEventHandlers('afterStart', startAt);
 
         return this;
     }
@@ -1067,14 +1011,9 @@ const Tour = class {
      * @method  endTour
      * @chainable
      * @return {Object} this.
-     * @fires tool_usertours/tourEnd
-     * @fires tool_usertours/tourEnded
      */
     endTour() {
-        const tourEndEvent = this.dispatchEvent(eventTypes.tourEnd, {}, true);
-        if (tourEndEvent.defaultPrevented) {
-            return this;
-        }
+        this.fireEventHandlers('beforeEnd');
 
         if (this.currentStepConfig) {
             let previousTarget = this.getStepTarget(this.currentStepConfig);
@@ -1088,8 +1027,7 @@ const Tour = class {
 
         this.hide(true);
 
-        this.tourRunning = false;
-        this.dispatchEvent(eventTypes.tourEnded);
+        this.fireEventHandlers('afterEnd');
 
         return this;
     }
@@ -1101,14 +1039,9 @@ const Tour = class {
      * @param {Bool} transition Animate the visibility change
      * @chainable
      * @return {Object} this.
-     * @fires tool_usertours/stepHide
-     * @fires tool_usertours/stepHidden
      */
     hide(transition) {
-        const stepHideEvent = this.dispatchEvent(eventTypes.stepHide, {}, true);
-        if (stepHideEvent.defaultPrevented) {
-            return this;
-        }
+        this.fireEventHandlers('beforeHide');
 
         if (this.currentStepNode && this.currentStepNode.length) {
             this.currentStepNode.hide();
@@ -1165,7 +1098,7 @@ const Tour = class {
 
         this.accessibilityHide();
 
-        this.dispatchEvent(eventTypes.stepHidden);
+        this.fireEventHandlers('afterHide');
 
         this.currentStepNode = null;
         this.currentStepPopper = null;
@@ -1204,21 +1137,16 @@ const Tour = class {
      * @return  {Number}
      */
     calculateScrollTop(stepConfig) {
+        let scrollTop = $(window).scrollTop();
         let viewportHeight = $(window).height();
         let targetNode = this.getStepTarget(stepConfig);
-
-        let scrollParent = $(window);
-        if (targetNode.parents('[data-usertour="scroller"]').length) {
-            scrollParent = targetNode.parents('[data-usertour="scroller"]');
-        }
-        let scrollTop = scrollParent.scrollTop();
 
         if (stepConfig.placement === 'top') {
             // If the placement is top, center scroll at the top of the target.
             scrollTop = targetNode.offset().top - (viewportHeight / 2);
         } else if (stepConfig.placement === 'bottom') {
             // If the placement is bottom, center scroll at the bottom of the target.
-            scrollTop = targetNode.offset().top + targetNode.height() + scrollTop - (viewportHeight / 2);
+            scrollTop = targetNode.offset().top + targetNode.height() - (viewportHeight / 2);
         } else if (targetNode.height() <= (viewportHeight * 0.8)) {
             // If the placement is left/right, and the target fits in the viewport, centre screen on the target
             scrollTop = targetNode.offset().top - ((viewportHeight - targetNode.height()) / 2);
@@ -1419,10 +1347,7 @@ const Tour = class {
             if (this.isStepActuallyVisible(stepConfig)) {
                 // The step has a visible target.
                 // Punch a hole through the backdrop.
-                let background = $('[data-flexitour="step-background"]');
-                if (!background.length) {
-                    background = $('<div data-flexitour="step-background"></div>');
-                }
+                let background = $('<div data-flexitour="step-background"></div>');
 
                 let targetNode = this.getStepTarget(stepConfig);
 
@@ -1433,19 +1358,11 @@ const Tour = class {
                     colorNode = $('body');
                 }
 
-                let drawertop = 0;
-                if (targetNode.parents('[data-usertour="scroller"]').length) {
-                    drawertop = targetNode.parents('[data-usertour="scroller"]').scrollTop();
-                    background.css({
-                       position: 'fixed'
-                    });
-                }
-
                 background.css({
                     width: targetNode.outerWidth() + buffer + buffer,
                     height: targetNode.outerHeight() + buffer + buffer,
                     left: targetNode.offset().left - buffer,
-                    top: targetNode.offset().top + drawertop - buffer,
+                    top: targetNode.offset().top - buffer,
                     backgroundColor: this.calculateInherittedBackgroundColor(colorNode),
                 });
 
@@ -1456,7 +1373,7 @@ const Tour = class {
                     });
                 }
 
-                if ((targetNode.offset().top + drawertop) < buffer) {
+                if (targetNode.offset().top < buffer) {
                     background.css({
                         height: targetNode.outerHeight() + targetNode.offset().top + buffer,
                         top: targetNode.offset().top,
@@ -1481,11 +1398,6 @@ const Tour = class {
                     opacity: backdrop.css('opacity'),
                 });
                 fader.attr('data-flexitour', 'step-background-fader');
-
-                if (targetNode.parents('[data-region="fixed-drawer"]').length) {
-                    let targetClone = targetNode.clone();
-                    background.append(targetClone);
-                }
 
                 if (stepConfig.zIndex) {
                     if (stepConfig.attachPoint === 'append') {
@@ -1649,6 +1561,4 @@ const Tour = class {
             showFunction($(node));
         });
     }
-};
-
-export default Tour;
+}

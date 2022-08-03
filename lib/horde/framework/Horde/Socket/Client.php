@@ -91,7 +91,7 @@ class Client
             $secure = false;
         }
 
-        $context = array_replace_recursive(
+        $context = array_merge_recursive(
             array(
                 'ssl' => array(
                     'verify_peer' => false,

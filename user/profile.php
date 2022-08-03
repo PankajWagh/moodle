@@ -83,7 +83,6 @@ if (!user_can_view_profile($user, null, $context)) {
     $PAGE->set_title("$SITE->shortname: $struser");  // Do not leak the name.
     $PAGE->set_heading($struser);
     $PAGE->set_pagelayout('mypublic');
-    $PAGE->add_body_class('limitedwidth');
     $PAGE->set_url('/user/profile.php', array('id' => $userid));
     $PAGE->navbar->add($struser);
     echo $OUTPUT->header();
@@ -99,7 +98,6 @@ if (!$currentpage = my_get_page($userid, MY_PAGE_PUBLIC)) {
 
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('mypublic');
-$PAGE->add_body_class('limitedwidth');
 $PAGE->set_pagetype('user-profile');
 
 // Set up block editing capabilities.
@@ -186,10 +184,7 @@ if ($PAGE->user_allowed_editing()) {
     }
 
     $url = new moodle_url("$CFG->wwwroot/user/profile.php", $params);
-    $button = '';
-    if (!$PAGE->theme->haseditswitch) {
-        $button = $OUTPUT->single_button($url, $editstring);
-    }
+    $button = $OUTPUT->single_button($url, $editstring);
     $PAGE->set_button($resetbutton . $button);
 
 } else {

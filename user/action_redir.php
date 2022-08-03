@@ -93,27 +93,19 @@ if ($formaction == 'bulkchange.php') {
                         'lastname' => get_string('lastname'),
                     );
 
-                    // Get the list of fields we have to hide.
-                    $hiddenfields = [];
-                    if (!has_capability('moodle/course:viewhiddenuserfields', $context)) {
-                        $hiddenfields = array_flip(explode(',', $CFG->hiddenuserfields));
-                    }
+                    $identityfields = get_extra_user_fields($context);
+                    $identityfieldsselect = '';
 
-                    // Retrieve all identity fields required for users.
-                    $userfieldsapi = \core_user\fields::for_identity($context);
-                    $userfields = $userfieldsapi->get_sql('u', true, '', '', false);
-
-                    $identityfields = array_keys($userfields->mappings);
                     foreach ($identityfields as $field) {
-                        $columnnames[$field] = \core_user\fields::get_display_name($field);
+                        $columnnames[$field] = get_string($field);
+                        $identityfieldsselect .= ', u.' . $field . ' ';
                     }
 
                     // Ensure users are enrolled in this course context, further limiting them by selected userids.
                     [$enrolledsql, $enrolledparams] = get_enrolled_sql($context);
                     [$useridsql, $useridparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
-                    [$userordersql, $userorderparams] = users_order_by_sql('u', null, $context);
 
-                    $params = array_merge($userfields->params, $enrolledparams, $useridparams, $userorderparams);
+                    $params = array_merge($enrolledparams, $useridparams);
 
                     // If user can only view their own groups then they can only export users from those groups too.
                     $groupmode = groups_get_course_groupmode($course);
@@ -129,26 +121,11 @@ if ($formaction == 'bulkchange.php') {
                         $groupmemberjoin = '';
                     }
 
-                    // Add column for groups if the user can view them.
-                    if (!isset($hiddenfields['groups'])) {
-                        $columnnames['groupnames'] = get_string('groups');
-                        $userfields->selects .= ', gcn.groupnames';
-
-                        [$groupconcatnamesql, $groupconcatnameparams] = groups_get_names_concat_sql($course->id);
-                        $groupconcatjoin = "LEFT JOIN ({$groupconcatnamesql}) gcn ON gcn.userid = u.id";
-                        $params = array_merge($params, $groupconcatnameparams);
-                    } else {
-                        $groupconcatjoin = '';
-                    }
-
-                    $sql = "SELECT u.firstname, u.lastname, {$userfields->selects}
+                    $sql = "SELECT u.firstname, u.lastname" . $identityfieldsselect . "
                               FROM {user} u
-                                   {$userfields->joins}
                               JOIN ({$enrolledsql}) je ON je.id = u.id
                                    {$groupmemberjoin}
-                                   {$groupconcatjoin}
-                             WHERE u.id {$useridsql}
-                          ORDER BY {$userordersql}";
+                             WHERE u.id {$useridsql}";
 
                     $rs = $DB->get_recordset_sql($sql, $params);
 

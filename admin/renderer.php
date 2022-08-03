@@ -284,7 +284,6 @@ class core_admin_renderer extends plugin_renderer_base {
      * @param bool $croninfrequent If true, warn that cron hasn't run in the past few minutes
      * @param bool $showcampaigncontent Whether the campaign content should be visible or not.
      * @param bool $showfeedbackencouragement Whether the feedback encouragement content should be displayed or not.
-     * @param bool $showservicesandsupport Whether the services and support content should be displayed or not.
      *
      * @return string HTML to output.
      */
@@ -293,7 +292,7 @@ class core_admin_renderer extends plugin_renderer_base {
             $buggyiconvnomb, $registered, array $cachewarnings = array(), $eventshandlers = 0,
             $themedesignermode = false, $devlibdir = false, $mobileconfigured = false,
             $overridetossl = false, $invalidforgottenpasswordurl = false, $croninfrequent = false,
-            $showcampaigncontent = false, bool $showfeedbackencouragement = false, bool $showservicesandsupport = false) {
+            $showcampaigncontent = false, bool $showfeedbackencouragement = false) {
 
         global $CFG;
         $output = '';
@@ -318,7 +317,6 @@ class core_admin_renderer extends plugin_renderer_base {
         $output .= $this->mobile_configuration_warning($mobileconfigured);
         $output .= $this->forgotten_password_url_warning($invalidforgottenpasswordurl);
         $output .= $this->userfeedback_encouragement($showfeedbackencouragement);
-        $output .= $this->services_and_support_content($showservicesandsupport);
         $output .= $this->campaign_content($showcampaigncontent);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -897,35 +895,7 @@ class core_admin_renderer extends plugin_renderer_base {
             return '';
         }
 
-        $lang = current_language();
-        $url = "https://campaign.moodle.org/current/lms/{$lang}/install/";
-        $params = [
-            'url' => $url,
-            'iframeid' => 'campaign-content'
-        ];
-
-        return $this->render_from_template('core/external_content_banner', $params);
-    }
-
-    /**
-     * Display services and support content.
-     *
-     * @param bool $showservicesandsupport Whether the services and support content should be visible or not.
-     * @return string the campaign content raw html.
-     */
-    protected function services_and_support_content(bool $showservicesandsupport): string {
-        if (!$showservicesandsupport) {
-            return '';
-        }
-
-        $lang = current_language();
-        $url = "https://campaign.moodle.org/current/lms/{$lang}/servicesandsupport/";
-        $params = [
-            'url' => $url,
-            'iframeid' => 'services-support-content'
-        ];
-
-        return $this->render_from_template('core/external_content_banner', $params);
+        return $this->render_from_template('core/campaign_content', ['lang' => current_language()]);
     }
 
     /**

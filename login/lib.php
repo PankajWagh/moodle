@@ -357,11 +357,6 @@ function core_login_get_return_url() {
                 $urltogo = $CFG->wwwroot.'/my/';
             }
         }
-        if ($homepage === HOMEPAGE_MYCOURSES && !isguestuser()) {
-            if ($urltogo == $CFG->wwwroot or $urltogo == $CFG->wwwroot.'/' or $urltogo == $CFG->wwwroot.'/index.php') {
-                $urltogo = $CFG->wwwroot.'/my/courses.php';
-            }
-        }
     }
     return $urltogo;
 }

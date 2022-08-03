@@ -452,22 +452,10 @@ function upgrade_plugin_savepoint($result, $version, $type, $plugin, $allowabort
  *
  * @return bool true means borked upgrade, false means previous PHP files were properly removed
  */
-function upgrade_stale_php_files_present(): bool {
+function upgrade_stale_php_files_present() {
     global $CFG;
 
-    $someexamplesofremovedfiles = [
-        // Removed in 4.0.
-        '/admin/classes/task_log_table.php',
-        '/admin/cli/mysql_engine.php',
-        '/lib/babel-polyfill/polyfill.js',
-        '/lib/typo3/class.t3lib_cs.php',
-        '/question/tests/category_class_test.php',
-        // Removed in 3.11.
-        '/customfield/edit.php',
-        '/lib/phpunit/classes/autoloader.php',
-        '/lib/xhprof/README',
-        '/message/defaultoutputs.php',
-        '/user/files_form.php',
+    $someexamplesofremovedfiles = array(
         // Removed in 3.10.
         '/grade/grading/classes/privacy/gradingform_provider.php',
         '/lib/coursecatlib.php',
@@ -558,7 +546,7 @@ function upgrade_stale_php_files_present(): bool {
         // Removed in 2.0.
         '/blocks/admin/block_admin.php',
         '/blocks/admin_tree/block_admin_tree.php',
-    ];
+    );
 
     foreach ($someexamplesofremovedfiles as $file) {
         if (file_exists($CFG->dirroot.$file)) {
@@ -1223,7 +1211,6 @@ function external_update_descriptions($component) {
         $function = $functions[$dbfunction->name];
         unset($functions[$dbfunction->name]);
         $function['classpath'] = empty($function['classpath']) ? null : $function['classpath'];
-        $function['methodname'] = $function['methodname'] ?? 'execute';
 
         $update = false;
         if ($dbfunction->classname != $function['classname']) {
@@ -1273,7 +1260,7 @@ function external_update_descriptions($component) {
         $dbfunction = new stdClass();
         $dbfunction->name       = $fname;
         $dbfunction->classname  = $function['classname'];
-        $dbfunction->methodname = $function['methodname'] ?? 'execute';
+        $dbfunction->methodname = $function['methodname'];
         $dbfunction->classpath  = empty($function['classpath']) ? null : $function['classpath'];
         $dbfunction->component  = $component;
         $dbfunction->capabilities = array_key_exists('capabilities', $function)?$function['capabilities']:'';

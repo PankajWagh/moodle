@@ -197,7 +197,7 @@ class condition extends \core_availability\condition {
                         $this->customfield);
             }
         } else {
-            $translatedfieldname = \core_user\fields::get_display_name($this->standardfield);
+            $translatedfieldname = get_user_field_name($this->standardfield);
         }
         $a = new \stdClass();
         // Not safe to call format_string here; use the special function to call it later.

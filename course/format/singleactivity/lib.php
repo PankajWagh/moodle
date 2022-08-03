@@ -32,7 +32,7 @@ require_once($CFG->dirroot. '/course/format/lib.php');
  * @copyright  2012 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class format_singleactivity extends core_courseformat\base {
+class format_singleactivity extends format_base {
     /** @var cm_info the current activity. Use get_activity() to retrieve it. */
     private $activity = false;
 
@@ -400,8 +400,10 @@ class format_singleactivity extends core_courseformat\base {
             }
         }
         if ($count > 1) {
+             
             return true;
         } else {
+          
             // Get the single item.
             $itemmetadata = $metadata[array_search('mod_' . $modname, array_column($metadata, 'componentname'))];
             $urlbase = new \moodle_url('/course/mod.php', ['id' => $this->get_course()->id]);

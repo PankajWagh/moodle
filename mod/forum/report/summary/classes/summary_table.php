@@ -543,9 +543,8 @@ class summary_table extends table_sql {
     protected function define_base_sql(): void {
         global $USER;
 
-        // TODO Does not support custom user profile fields (MDL-70456).
-        $userfieldsapi = \core_user\fields::for_identity($this->userfieldscontext, false)->with_userpic();
-        $userfieldssql = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $userfields = get_extra_user_fields($this->userfieldscontext);
+        $userfieldssql = \user_picture::fields('u', $userfields);
 
         // Define base SQL query format.
         $this->sql->basefields = ' u.id AS userid,

@@ -370,8 +370,6 @@ class manager {
             $tour->set_description($data->description);
             $tour->set_pathmatch($data->pathmatch);
             $tour->set_enabled(!empty($data->enabled));
-            $tour->set_endtourlabel($data->endtourlabel);
-            $tour->set_display_step_numbers(!empty($data->displaystepnumbers));
 
             foreach (configuration::get_defaultable_keys() as $key) {
                 $tour->set_config($key, $data->$key);
@@ -624,12 +622,25 @@ class manager {
      * @return  array
      */
     public static function get_matching_tours(\moodle_url $pageurl): array {
-        global $PAGE;
+        global $PAGE, $USER;
 
-        if (\core_user::awaiting_action()) {
-            // User not fully ready to use the site. Don't show any tours, we need the user to get properly set up so
-            // that all require_login() and other bits work as expected.
+        // The following three checks make sure that the user is fully ready to use the site. If not, we do not show any tours.
+        // We need the user to get properly set up so that all require_login() and other bits work as expected.
+
+        if (user_not_fully_set_up($USER)) {
             return [];
+        }
+
+        if (get_user_preferences('auth_forcepasswordchange', false)) {
+            return [];
+        }
+
+        if (empty($USER->policyagreed) && !is_siteadmin()) {
+            $manager = new \core_privacy\local\sitepolicy\manager();
+
+            if ($manager->is_defined(isguestuser())) {
+                return [];
+            }
         }
 
         $tours = cache::get_matching_tourdata($pageurl);
@@ -874,12 +885,6 @@ class manager {
             // Formerly included in Moodle 3.6.0.
             '36_dashboard.json' => 3,
             '36_messaging.json' => 3,
-
-            // Formerly included in Moodle 3.11.0.
-            '311_activity_information_activity_page_student.json' => 2,
-            '311_activity_information_activity_page_teacher.json' => 2,
-            '311_activity_information_course_page_student.json' => 2,
-            '311_activity_information_course_page_teacher.json' => 2,
         ];
 
         $existingtourrecords = $DB->get_recordset('tool_usertours_tours');

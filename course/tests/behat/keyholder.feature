@@ -29,7 +29,8 @@ Feature: Keyholder role is listed as course contact
     And the following "courses" exist:
       | fullname | shortname | format | coursedisplay | numsections | category |
       | Course 1 | C1 | topics | 0 | 5 | CAT1 |
-    And I add "Self enrolment" enrolment method in "Course 1" with:
+    And I am on "Course 1" course homepage
+    And I add "Self enrolment" enrolment method with:
       | Custom instance name | Test student enrolment |
       | Enrolment key | letmein |
     And I log out

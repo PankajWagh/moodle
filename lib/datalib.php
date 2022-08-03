@@ -218,8 +218,7 @@ function search_users($courseid, $groupid, $searchtext, $sort='', array $excepti
  *     built. May be ''.
  * @param bool $searchanywhere If true (default), searches in the middle of
  *     names, otherwise only searches at start
- * @param array $extrafields Array of extra user fields to include in search, must be prefixed with table alias if they are not in
- *     the user table.
+ * @param array $extrafields Array of extra user fields to include in search
  * @param array $exclude Array of user ids to exclude (empty = don't exclude)
  * @param array $includeonly If specified, only returns users that have ids
  *     incldued in this array (empty = don't restrict)
@@ -227,8 +226,8 @@ function search_users($courseid, $groupid, $searchtext, $sort='', array $excepti
  *     where clause the query, and an associative array containing any required
  *     parameters (using named placeholders).
  */
-function users_search_sql(string $search, string $u = 'u', bool $searchanywhere = true, array $extrafields = [],
-        array $exclude = null, array $includeonly = null): array {
+function users_search_sql($search, $u = 'u', $searchanywhere = true, array $extrafields = array(),
+        array $exclude = null, array $includeonly = null) {
     global $DB, $CFG;
     $params = array();
     $tests = array();
@@ -244,8 +243,7 @@ function users_search_sql(string $search, string $u = 'u', bool $searchanywhere 
             $conditions[] = $u . 'lastname'
         );
         foreach ($extrafields as $field) {
-            // Add the table alias for the user table if the field doesn't already have an alias.
-            $conditions[] = strpos($field, '.') !== false ? $field : $u . $field;
+            $conditions[] = $u . $field;
         }
         if ($searchanywhere) {
             $searchparam = '%' . $search . '%';
@@ -307,7 +305,7 @@ function users_search_sql(string $search, string $u = 'u', bool $searchanywhere 
  *  - firstname
  *  - lastname
  *  - $DB->sql_fullname
- *  - those returned by \core_user\fields::get_identity_fields or those included in $customfieldmappings
+ *  - those returned by get_extra_user_fields
  *
  * If named parameters are used (which is the default, and highly recommended),
  * then the parameter names are like :usersortexactN, where N is an int.
@@ -336,15 +334,13 @@ function users_search_sql(string $search, string $u = 'u', bool $searchanywhere 
  * @param string $usertablealias (optional) any table prefix for the {users} table. E.g. 'u'.
  * @param string $search (optional) a current search string. If given,
  *      any exact matches to this string will be sorted first.
- * @param context|null $context the context we are in. Used by \core_user\fields::get_identity_fields.
+ * @param context $context the context we are in. Use by get_extra_user_fields.
  *      Defaults to $PAGE->context.
- * @param array $customfieldmappings associative array of mappings for custom fields returned by \core_user\fields::get_sql.
  * @return array with two elements:
  *      string SQL fragment to use in the ORDER BY clause. For example, "firstname, lastname".
- *      array of parameters used in the SQL fragment. If $search is not given, this is guaranteed to be an empty array.
+ *      array of parameters used in the SQL fragment.
  */
-function users_order_by_sql(string $usertablealias = '', string $search = null, context $context = null,
-        array $customfieldmappings = []) {
+function users_order_by_sql($usertablealias = '', $search = null, context $context = null) {
     global $DB, $PAGE;
 
     if ($usertablealias) {
@@ -372,17 +368,9 @@ function users_order_by_sql(string $usertablealias = '', string $search = null, 
     $params[$paramkey] = $search;
     $paramkey++;
 
-    if ($customfieldmappings) {
-        $fieldstocheck = array_merge([$tableprefix . 'firstname', $tableprefix . 'lastname'], array_values($customfieldmappings));
-    } else {
-        $fieldstocheck = array_merge(['firstname', 'lastname'], \core_user\fields::get_identity_fields($context, false));
-        $fieldstocheck = array_map(function($field) use ($tableprefix) {
-            return $tableprefix . $field;
-        }, $fieldstocheck);
-    }
-
+    $fieldstocheck = array_merge(array('firstname', 'lastname'), get_extra_user_fields($context));
     foreach ($fieldstocheck as $key => $field) {
-        $exactconditions[] = 'LOWER(' . $field . ') = LOWER(:' . $paramkey . ')';
+        $exactconditions[] = 'LOWER(' . $tableprefix . $field . ') = LOWER(:' . $paramkey . ')';
         $params[$paramkey] = $search;
         $paramkey++;
     }
@@ -491,7 +479,7 @@ function get_users_listing($sort='lastaccess', $dir='ASC', $page=0, $recordsperp
 
     $fullname  = $DB->sql_fullname();
 
-    $select = "deleted <> 1 AND u.id <> :guestid";
+    $select = "deleted <> 1 AND id <> :guestid";
     $params = array('guestid' => $CFG->siteguest);
 
     if (!empty($search)) {
@@ -514,10 +502,6 @@ function get_users_listing($sort='lastaccess', $dir='ASC', $page=0, $recordsperp
     }
 
     if ($extraselect) {
-        // The extra WHERE clause may refer to the 'id' column which can now be ambiguous because we
-        // changed the query to include joins, so replace any 'id' that is on its own (no alias)
-        // with 'u.id'.
-        $extraselect = preg_replace('~([ =]|^)id([ =]|$)~', '$1u.id$2', $extraselect);
         $select .= " AND $extraselect";
         $params = $params + (array)$extraparams;
     }
@@ -527,21 +511,21 @@ function get_users_listing($sort='lastaccess', $dir='ASC', $page=0, $recordsperp
     }
 
     // If a context is specified, get extra user fields that the current user
-    // is supposed to see, otherwise just get the name fields.
-    $userfields = \core_user\fields::for_name();
+    // is supposed to see.
+    $extrafields = '';
     if ($extracontext) {
-        $userfields->with_identity($extracontext, true);
+        $extrafields = get_extra_user_fields_sql($extracontext, '', '',
+                array('id', 'username', 'email', 'firstname', 'lastname', 'city', 'country',
+                'lastaccess', 'confirmed', 'mnethostid'));
     }
-    $userfields->excluding('id', 'username', 'email', 'city', 'country', 'lastaccess', 'confirmed', 'mnethostid');
-    ['selects' => $selects, 'joins' => $joins, 'params' => $joinparams] =
-            (array)$userfields->get_sql('u', true);
+    $namefields = get_all_user_name_fields(true);
+    $extrafields = "$extrafields, $namefields";
 
     // warning: will return UNCONFIRMED USERS
-    return $DB->get_records_sql("SELECT u.id, username, email, city, country, lastaccess, confirmed, mnethostid, suspended $selects
-                                   FROM {user} u
-                                        $joins
+    return $DB->get_records_sql("SELECT id, username, email, city, country, lastaccess, confirmed, mnethostid, suspended $extrafields
+                                   FROM {user}
                                   WHERE $select
-                                  $sort", array_merge($params, $joinparams), $page, $recordsperpage);
+                                  $sort", $params, $page, $recordsperpage);
 
 }
 

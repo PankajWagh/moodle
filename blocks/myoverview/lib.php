@@ -101,7 +101,7 @@ function block_myoverview_user_preferences() {
 
     $preferences['block_myoverview_user_sort_preference'] = array(
         'null' => NULL_NOT_ALLOWED,
-        'default' => BLOCK_MYOVERVIEW_SORTING_LASTACCESSED,
+        'default' => BLOCK_MYOVERVIEW_SORTING_TITLE,
         'type' => PARAM_ALPHA,
         'choices' => array(
             BLOCK_MYOVERVIEW_SORTING_TITLE,

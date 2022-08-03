@@ -31,7 +31,6 @@ use cm_info;
 /**
  * Class to prepare a course module name for display and in-place editing
  *
- * @deprecated since Moodle 4.0 MDL-72656 - please do not use this class any more.
  * @package   core_course
  * @copyright 2016 Marina Glancy
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -52,10 +51,6 @@ class course_module_name extends \core\output\inplace_editable {
      * @param array $displayoptions
      */
     public function __construct(cm_info $cm, $editable, $displayoptions = array()) {
-        debugging(
-            'course_section_cm_list is deprecated. Use core_courseformat\\output\\local\\cm\\cmname instead',
-            DEBUG_DEVELOPER
-        );
         $this->cm = $cm;
         $this->displayoptions = $displayoptions;
         $value = $cm->name;
@@ -95,9 +90,8 @@ class course_module_name extends \core\output\inplace_editable {
         // Check access.
         \external_api::validate_context($context);
         require_capability('moodle/course:manageactivities', $context);
-
-        // Trim module name and Update value.
-        set_coursemodule_name($itemid, trim($newvalue));
+        // Update value.
+        set_coursemodule_name($itemid, $newvalue);
         $coursemodulerecord = get_coursemodule_from_id('', $itemid, 0, false, MUST_EXIST);
         // Return instance.
         $cm = get_fast_modinfo($coursemodulerecord->course)->get_cm($itemid);

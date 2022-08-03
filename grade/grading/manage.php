@@ -82,8 +82,6 @@ $PAGE->set_url($manager->get_management_url($returnurl));
 navigation_node::override_active_url($manager->get_management_url());
 $PAGE->set_title(get_string('gradingmanagement', 'core_grading'));
 $PAGE->set_heading(get_string('gradingmanagement', 'core_grading'));
-// We don't need to show the default header on a management page.
-$PAGE->activityheader->disable();
 $output = $PAGE->get_renderer('core_grading');
 
 // process the eventual change of the active grading method

@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use \core_contentbank\content;
-
 /**
  * Get the current user preferences that are available
  *
@@ -37,10 +35,5 @@ function core_contentbank_user_preferences() {
             'null' => NULL_NOT_ALLOWED,
             'default' => 'none'
         ],
-        'core_contentbank_visibility' => [
-            'choices' => [content::VISIBILITY_UNLISTED, content::VISIBILITY_PUBLIC],
-            'type' => PARAM_INT,
-            'null' => NULL_NOT_ALLOWED
-        ]
     ];
 }

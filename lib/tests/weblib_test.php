@@ -24,11 +24,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
-class weblib_test extends advanced_testcase {
+defined('MOODLE_INTERNAL') || die();
 
-    /**
-     * @covers ::format_string
-     */
+
+class core_weblib_testcase extends advanced_testcase {
+
     public function test_format_string() {
         global $CFG;
 
@@ -76,9 +76,9 @@ class weblib_test extends advanced_testcase {
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
         $user = $generator->create_user();
-        $rawstring = '<span lang="en" class="multilang">English</span><span lang="ca" class="multilang">Catalan</span>';
-        $expectednofilter = strip_tags($rawstring);
-        $expectedfilter = 'English';
+        $rawstring = 'Shortname <a href="#">link</a> curseword';
+        $expectednofilter = strip_links($rawstring);
+        $expectedfilter = 'Shortname link \*\**';
         $striplinks = true;
         $context = context_course::instance($course->id);
         $options = [
@@ -94,28 +94,26 @@ class weblib_test extends advanced_testcase {
         $nofilterresult = format_string($rawstring, $striplinks, $options);
         $this->assertEquals($expectednofilter, $nofilterresult);
 
-        // Add the multilang filter. Make sure it's enabled globally.
+        // Add the censor filter. Make sure it's enabled globally.
         $CFG->filterall = true;
-        $CFG->stringfilters = 'multilang';
-        filter_set_global_state('multilang', TEXTFILTER_ON);
-        filter_set_local_state('multilang', $context->id, TEXTFILTER_ON);
+        $CFG->stringfilters = 'censor';
+        $CFG->filter_censor_badwords = 'curseword';
+        filter_set_global_state('censor', TEXTFILTER_ON);
+        filter_set_local_state('censor', $context->id, TEXTFILTER_ON);
         // This time we want to apply the filters.
         $options['filter'] = true;
         $filterresult = format_string($rawstring, $striplinks, $options);
-        $this->assertMatchesRegularExpression("/$expectedfilter/", $filterresult);
+        $this->assertRegExp("/$expectedfilter/", $filterresult);
 
-        filter_set_local_state('multilang', $context->id, TEXTFILTER_OFF);
+        filter_set_local_state('censor', $context->id, TEXTFILTER_OFF);
 
         // Confirm that we get back the cached string. The result should be
         // the same as the filtered text above even though we've disabled the
-        // multilang filter in between.
+        // censor filter in between.
         $cachedresult = format_string($rawstring, $striplinks, $options);
-        $this->assertMatchesRegularExpression("/$expectedfilter/", $cachedresult);
+        $this->assertRegExp("/$expectedfilter/", $cachedresult);
     }
 
-    /**
-     * @covers ::s
-     */
     public function test_s() {
         // Special cases.
         $this->assertSame('0', s(0));
@@ -166,9 +164,6 @@ class weblib_test extends advanced_testcase {
         }
     }
 
-    /**
-     * @covers ::format_text_email
-     */
     public function test_format_text_email() {
         $this->assertSame("This is a TEST\n",
             format_text_email('<p>This is a <strong>test</strong></p>', FORMAT_HTML));
@@ -182,9 +177,6 @@ class weblib_test extends advanced_testcase {
             format_text_email('&#x7fd2;&#x7FD2;', FORMAT_HTML));
     }
 
-    /**
-     * @covers ::obfuscate_email
-     */
     public function test_obfuscate_email() {
         $email = 'some.user@example.com';
         $obfuscated = obfuscate_email($email);
@@ -193,9 +185,6 @@ class weblib_test extends advanced_testcase {
         $this->assertSame($email, $back);
     }
 
-    /**
-     * @covers ::obfuscate_text
-     */
     public function test_obfuscate_text() {
         $text = 'Žluťoučký koníček 32131';
         $obfuscated = obfuscate_text($text);
@@ -204,9 +193,6 @@ class weblib_test extends advanced_testcase {
         $this->assertSame($text, $back);
     }
 
-    /**
-     * @covers ::highlight
-     */
     public function test_highlight() {
         $this->assertSame('This is <span class="highlight">good</span>',
                 highlight('good', 'This is good'));
@@ -245,31 +231,19 @@ class weblib_test extends advanced_testcase {
                     highlight('test -1', '<p>test 1</p><p>1</p>', false, '<b>', '</b>'));
     }
 
-    /**
-     * @covers ::replace_ampersands_not_followed_by_entity
-     */
     public function test_replace_ampersands() {
         $this->assertSame("This &amp; that &nbsp;", replace_ampersands_not_followed_by_entity("This & that &nbsp;"));
         $this->assertSame("This &amp;nbsp that &nbsp;", replace_ampersands_not_followed_by_entity("This &nbsp that &nbsp;"));
     }
 
-    /**
-     * @covers ::strip_links
-     */
     public function test_strip_links() {
         $this->assertSame('this is a link', strip_links('this is a <a href="http://someaddress.com/query">link</a>'));
     }
 
-    /**
-     * @covers ::wikify_links
-     */
     public function test_wikify_links() {
         $this->assertSame('this is a link [ http://someaddress.com/query ]', wikify_links('this is a <a href="http://someaddress.com/query">link</a>'));
     }
 
-    /**
-     * @covers ::clean_text
-     */
     public function test_clean_text() {
         $text = "lala <applet>xx</applet>";
         $this->assertSame($text, clean_text($text, FORMAT_PLAIN));
@@ -278,9 +252,6 @@ class weblib_test extends advanced_testcase {
         $this->assertSame('lala xx', clean_text($text, FORMAT_HTML));
     }
 
-    /**
-     * @covers ::qualified_me
-     */
     public function test_qualified_me() {
         global $PAGE, $FULLME, $CFG;
         $this->resetAfterTest();
@@ -294,10 +265,7 @@ class weblib_test extends advanced_testcase {
         $this->assertSame($CFG->wwwroot.'/course/view.php?id=1', qualified_me());
     }
 
-    /**
-     * @covers \null_progress_trace
-     */
-    public function test_null_progress_trace() {
+    public function test_null_progres_trace() {
         $this->resetAfterTest(false);
 
         $trace = new null_progress_trace();
@@ -310,10 +278,7 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString('');
     }
 
-    /**
-     * @covers \null_progress_trace
-     */
-    public function test_text_progress_trace() {
+    public function test_text_progres_trace() {
         $this->resetAfterTest(false);
 
         $trace = new text_progress_trace();
@@ -324,10 +289,7 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString("do\n  re\n    mi\n");
     }
 
-    /**
-     * @covers \html_progress_trace
-     */
-    public function test_html_progress_trace() {
+    public function test_html_progres_trace() {
         $this->resetAfterTest(false);
 
         $trace = new html_progress_trace();
@@ -338,9 +300,6 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString("<p>do</p>\n<p>&#160;&#160;re</p>\n<p>&#160;&#160;&#160;&#160;mi</p>\n");
     }
 
-    /**
-     * @covers \html_list_progress_trace
-     */
     public function test_html_list_progress_trace() {
         $this->resetAfterTest(false);
 
@@ -352,10 +311,7 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString("<ul>\n<li>do<ul>\n<li>re<ul>\n<li>mi</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n");
     }
 
-    /**
-     * @covers \progress_trace_buffer
-     */
-    public function test_progress_trace_buffer() {
+    public function test_progres_trace_buffer() {
         $this->resetAfterTest(false);
 
         $trace = new progress_trace_buffer(new html_progress_trace());
@@ -381,10 +337,7 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString('');
     }
 
-    /**
-     * @covers \combined_progress_trace
-     */
-    public function test_combined_progress_trace() {
+    public function test_combined_progres_trace() {
         $this->resetAfterTest(false);
 
         $trace1 = new progress_trace_buffer(new html_progress_trace(), false);
@@ -400,9 +353,6 @@ class weblib_test extends advanced_testcase {
         $this->expectOutputString('');
     }
 
-    /**
-     * @covers ::set_debugging
-     */
     public function test_set_debugging() {
         global $CFG;
 
@@ -443,9 +393,6 @@ class weblib_test extends advanced_testcase {
         $this->assertFalse($CFG->debugdeveloper);
     }
 
-    /**
-     * @covers ::strip_pluginfile_content
-     */
     public function test_strip_pluginfile_content() {
         $source = <<<SOURCE
 Hello!
@@ -484,9 +431,6 @@ EXPECTED;
         $this->assertSame($expected, strip_pluginfile_content($source));
     }
 
-    /**
-     * @covers \purify_html
-     */
     public function test_purify_html_ruby() {
 
         $this->resetAfterTest();
@@ -509,7 +453,6 @@ EXPECTED;
      * @param int|false $format    The content format
      * @param string    $expected  Expected value
      * @dataProvider provider_content_to_text
-     * @covers ::content_to_text
      */
     public function test_content_to_text($content, $format, $expected) {
         $content = content_to_text($content, $format);
@@ -686,7 +629,6 @@ EXPECTED;
      * @param string $email the email address to test
      * @param boolean $result Expected result (true or false)
      * @dataProvider    data_validate_email
-     * @covers ::validate_email
      */
     public function test_validate_email($email, $result) {
         if ($result) {
@@ -811,7 +753,6 @@ EXPECTED;
      * @param string $cfgslasharguments slasharguments setting.
      * @param string|false $expected Expected value.
      * @dataProvider provider_get_file_argument
-     * @covers ::get_file_argument
      */
     public function test_get_file_argument($server, $cfgslasharguments, $expected) {
         global $CFG;
@@ -856,8 +797,6 @@ EXPECTED;
 
     /**
      * Tests for extract_draft_file_urls_from_text() function.
-     *
-     * @covers ::extract_draft_file_urls_from_text
      */
     public function test_extract_draft_file_urls_from_text() {
         global $CFG;
@@ -904,9 +843,6 @@ EXPECTED;
         $this->assertEquals($draftareas, $extracteddraftareas);
     }
 
-    /**
-     * @covers ::print_password_policy
-     */
     public function test_print_password_policy() {
         $this->resetAfterTest(true);
         global $CFG;

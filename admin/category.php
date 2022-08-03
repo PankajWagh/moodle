@@ -75,7 +75,7 @@ if ($PAGE->user_allowed_editing() && $adminediting != -1) {
     $USER->editing = $adminediting;
 }
 $buttons = null;
-if ($PAGE->user_allowed_editing() && !$PAGE->theme->haseditswitch) {
+if ($PAGE->user_allowed_editing()) {
     $url = clone($PAGE->url);
     if ($PAGE->user_is_editing()) {
         $caption = get_string('blockseditoff');
@@ -140,7 +140,13 @@ if ($errormsg !== '') {
     echo $OUTPUT->notification($statusmsg, 'notifysuccess');
 }
 
-echo $OUTPUT->heading(get_string('admincategory', 'admin', $settingspage->visiblename), 2);
+$path = array_reverse($settingspage->visiblepath);
+if (is_array($path)) {
+    $visiblename = join(' / ', $path);
+} else {
+    $visiblename = $path;
+}
+echo $OUTPUT->heading(get_string('admincategory', 'admin', $visiblename), 2);
 
 echo html_writer::start_tag('form', array('action' => '', 'method' => 'post', 'id' => 'adminsettings'));
 echo html_writer::start_tag('div');
@@ -152,7 +158,9 @@ echo $outputhtml;
 echo html_writer::end_tag('fieldset');
 echo html_writer::end_tag('form');
 
-// Add the form change checker.
-$PAGE->requires->js_call_amd('core_form/changechecker', 'watchFormById', ['adminsettings']);
+$PAGE->requires->yui_module('moodle-core-formchangechecker', 'M.core_formchangechecker.init', [[
+    'formid' => 'adminsettings'
+]]);
+$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
 
 echo $OUTPUT->footer();

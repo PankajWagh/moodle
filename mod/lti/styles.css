@@ -41,6 +41,10 @@
     color: red;
 }
 
+.path-mod-lti .message {
+    text-align: center;
+}
+
 /* Styles for admin */
 .path-admin-mod-lti .mform .fitem .fitemtitle {
     min-width: 18em;

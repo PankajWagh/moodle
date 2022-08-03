@@ -598,16 +598,14 @@ class auth_plugin_base {
      * @return array list of custom fields.
      */
     public function get_custom_user_profile_fields() {
-        global $CFG;
-        require_once($CFG->dirroot . '/user/profile/lib.php');
-
+        global $DB;
         // If already retrieved then return.
         if (!is_null($this->customfields)) {
             return $this->customfields;
         }
 
         $this->customfields = array();
-        if ($proffields = profile_get_custom_fields()) {
+        if ($proffields = $DB->get_records('user_info_field')) {
             foreach ($proffields as $proffield) {
                 $this->customfields[] = 'profile_field_'.$proffield->shortname;
             }
@@ -1104,7 +1102,7 @@ function signup_setup_new_user($user) {
     $user->secret      = random_string(15);
     $user->auth        = $CFG->registerauth;
     // Initialize alternate name fields to empty strings.
-    $namefields = array_diff(\core_user\fields::get_name_fields(), useredit_get_required_name_fields());
+    $namefields = array_diff(get_all_user_name_fields(), useredit_get_required_name_fields());
     foreach ($namefields as $namefield) {
         $user->$namefield = '';
     }
@@ -1161,8 +1159,7 @@ function signup_is_enabled() {
  * @since Moodle 3.3
  */
 function display_auth_lock_options($settings, $auth, $userfields, $helptext, $mapremotefields, $updateremotefields, $customfields = array()) {
-    global $CFG;
-    require_once($CFG->dirroot . '/user/profile/lib.php');
+    global $DB;
 
     // Introductory explanation and help text.
     if ($mapremotefields) {
@@ -1183,8 +1180,7 @@ function display_auth_lock_options($settings, $auth, $userfields, $helptext, $ma
     // Generate the list of profile fields to allow updates / lock.
     if (!empty($customfields)) {
         $userfields = array_merge($userfields, $customfields);
-        $allcustomfields = profile_get_custom_fields();
-        $customfieldname = array_combine(array_column($allcustomfields, 'shortname'), $allcustomfields);
+        $customfieldname = $DB->get_records('user_info_field', null, '', 'shortname, name');
     }
 
     foreach ($userfields as $field) {
@@ -1204,6 +1200,8 @@ function display_auth_lock_options($settings, $auth, $userfields, $helptext, $ma
                 // limit for the setting name is 100.
                 $fieldnametoolong = true;
             }
+        } else if ($fieldname == 'url') {
+            $fieldname = get_string('webpage');
         } else {
             $fieldname = get_string($fieldname);
         }

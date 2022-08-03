@@ -167,23 +167,34 @@ class auth extends \auth_plugin_base {
     }
 
     /**
+     * Do some checks on the identity provider before showing it on the login page.
+     * @param core\oauth2\issuer $issuer
+     * @return boolean
+     */
+    private function is_ready_for_login_page(\core\oauth2\issuer $issuer) {
+        return $issuer->get('enabled') &&
+                $issuer->is_configured() &&
+                !empty($issuer->get('showonloginpage'));
+    }
+
+    /**
      * Return a list of identity providers to display on the login page.
      *
      * @param string|moodle_url $wantsurl The requested URL.
      * @return array List of arrays with keys url, iconurl and name.
      */
     public function loginpage_idp_list($wantsurl) {
-        $providers = \core\oauth2\api::get_all_issuers(true);
+        $providers = \core\oauth2\api::get_all_issuers();
         $result = [];
         if (empty($wantsurl)) {
             $wantsurl = '/';
         }
         foreach ($providers as $idp) {
-            if ($idp->is_available_for_login()) {
+            if ($this->is_ready_for_login_page($idp)) {
                 $params = ['id' => $idp->get('id'), 'wantsurl' => $wantsurl, 'sesskey' => sesskey()];
                 $url = new moodle_url('/auth/oauth2/login.php', $params);
                 $icon = $idp->get('image');
-                $result[] = ['url' => $url, 'iconurl' => $icon, 'name' => $idp->get_display_name()];
+                $result[] = ['url' => $url, 'iconurl' => $icon, 'name' => $idp->get('name')];
             }
         }
         return $result;

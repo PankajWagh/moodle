@@ -25,7 +25,7 @@ define(['jquery', 'core/custom_interaction_events'], function($, CustomEvents) {
 
     var SELECTORS = {
         CHOICE_ELEMENT: '.answer input',
-        LINK: 'a',
+        LINK: 'label',
         RADIO: 'input[type="radio"]'
     };
 
@@ -108,7 +108,7 @@ define(['jquery', 'core/custom_interaction_events'], function($, CustomEvents) {
 
     /**
      * Initialise clear choice module.
-     *
+
      * @param {string} root The question outer div prefix.
      * @param {string} fieldPrefix The "Clear choice" div prefix.
      */
@@ -121,3 +121,4 @@ define(['jquery', 'core/custom_interaction_events'], function($, CustomEvents) {
         init: init
     };
 });
+

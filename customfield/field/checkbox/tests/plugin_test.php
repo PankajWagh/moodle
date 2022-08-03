@@ -103,24 +103,21 @@ class customfield_checkbox_plugin_testcase extends advanced_testcase {
      * Create a configuration form and submit it with the same values as in the field
      */
     public function test_config_form() {
-        $this->setAdminUser();
         $submitdata = (array)$this->cfields[1]->to_record();
         $submitdata['configdata'] = $this->cfields[1]->get('configdata');
 
-        $submitdata = \core_customfield\field_config_form::mock_ajax_submit($submitdata);
-        $form = new \core_customfield\field_config_form(null, null, 'post', '', null, true,
-            $submitdata, true);
-        $form->set_data_for_dynamic_submission();
+        \core_customfield\field_config_form::mock_submit($submitdata, []);
+        $handler = $this->cfcat->get_handler();
+        $form = $handler->get_field_config_form($this->cfields[1]);
         $this->assertTrue($form->is_validated());
-        $form->process_dynamic_submission();
+        $data = $form->get_data();
+        $handler->save_field_configuration($this->cfields[1], $data);
 
         // Try submitting with 'unique values' checked.
         $submitdata['configdata']['uniquevalues'] = 1;
-
-        $submitdata = \core_customfield\field_config_form::mock_ajax_submit($submitdata);
-        $form = new \core_customfield\field_config_form(null, null, 'post', '', null, true,
-            $submitdata, true);
-        $form->set_data_for_dynamic_submission();
+        \core_customfield\field_config_form::mock_submit($submitdata, []);
+        $handler = $this->cfcat->get_handler();
+        $form = $handler->get_field_config_form($this->cfields[1]);
         $this->assertFalse($form->is_validated());
     }
 

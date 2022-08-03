@@ -723,3 +723,4 @@ define(['jquery', 'core/dragdrop', 'qtype_ddmarker/shapes'], function($, dragDro
         init: dragDropForm.init
     };
 });
+

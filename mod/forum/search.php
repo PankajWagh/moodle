@@ -71,7 +71,6 @@ $starredonly = optional_param('starredonly', false, PARAM_BOOL); // Include only
 
 $PAGE->set_pagelayout('standard');
 $PAGE->set_url($FULLME); //TODO: this is very sloppy --skodak
-$PAGE->set_secondary_active_tab("coursehome");
 
 if (empty($search)) {   // Check the other parameters instead
     if (!empty($words)) {
@@ -140,10 +139,8 @@ $strpage = get_string("page");
 
 if (!$search || $showform) {
 
-    $url = new moodle_url('/mod/forum/index.php', array('id' => $course->id));
-    $PAGE->navbar->add($strforums, $url);
-    $url = new moodle_url('/mod/forum/search.php', array('id' => $course->id));
-    $PAGE->navbar->add(get_string('advancedsearch', 'forum'), $url);
+    $PAGE->navbar->add($strforums, new moodle_url('/mod/forum/index.php', array('id'=>$course->id)));
+    $PAGE->navbar->add(get_string('advancedsearch', 'forum'));
 
     $PAGE->set_title($strsearch);
     $PAGE->set_heading($course->fullname);
@@ -167,9 +164,7 @@ if (!$posts = forum_search_posts($searchterms, $course->id, $page*$perpage, $per
     $PAGE->set_title($strsearchresults);
     $PAGE->set_heading($course->fullname);
     echo $OUTPUT->header();
-    if (!$PAGE->has_secondary_navigation()) {
-        echo $OUTPUT->heading($strforums, 2);
-    }
+    echo $OUTPUT->heading($strforums, 2);
     echo $OUTPUT->heading($strsearchresults, 3);
     echo $OUTPUT->heading(get_string("noposts", "forum"), 4);
 
@@ -196,7 +191,7 @@ $rm = new rating_manager();
 
 $PAGE->set_title($strsearchresults);
 $PAGE->set_heading($course->fullname);
-$PAGE->add_header_action($searchform);
+$PAGE->set_button($searchform);
 echo $OUTPUT->header();
 echo '<div class="reportlink">';
 
@@ -223,9 +218,7 @@ echo html_writer::link($url, get_string('advancedsearch', 'forum').'...');
 
 echo '</div>';
 
-if (!$PAGE->has_secondary_navigation()) {
-    echo $OUTPUT->heading($strforums, 2);
-}
+echo $OUTPUT->heading($strforums, 2);
 echo $OUTPUT->heading("$strsearchresults: $totalcount", 3);
 
 $url = new moodle_url('search.php', array('search' => $search, 'id' => $course->id, 'perpage' => $perpage));

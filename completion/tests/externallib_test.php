@@ -92,7 +92,7 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
      * Test update_activity_completion_status
      */
     public function test_get_activities_completion_status() {
-        global $DB, $CFG, $PAGE;
+        global $DB, $CFG;
 
         $this->resetAfterTest(true);
 
@@ -105,38 +105,17 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
                                                                     'groupmodeforce' => 1));
         availability_completion\condition::wipe_static_cache();
 
-        $data = $this->getDataGenerator()->create_module('data',
-            ['course' => $course->id],
-            ['completion' => COMPLETION_TRACKING_MANUAL],
-        );
-        $forum = $this->getDataGenerator()->create_module('forum',
-            ['course' => $course->id],
-            ['completion' => COMPLETION_TRACKING_MANUAL],
-        );
-        $forumautocompletion = $this->getDataGenerator()->create_module('forum',
-            ['course' => $course->id],
-            ['showdescription' => true, 'completionview' => 1, 'completion' => COMPLETION_TRACKING_AUTOMATIC],
-        );
+        $data = $this->getDataGenerator()->create_module('data', array('course' => $course->id),
+                                                             array('completion' => 1));
+        $forum = $this->getDataGenerator()->create_module('forum',  array('course' => $course->id),
+                                                             array('completion' => 1));
         $availability = '{"op":"&","c":[{"type":"completion","cm":' . $forum->cmid .',"e":1}],"showc":[true]}';
-        $assign = $this->getDataGenerator()->create_module('assign',
-            ['course' => $course->id],
-            ['availability' => $availability],
-        );
-        $assignautocompletion = $this->getDataGenerator()->create_module('assign',
-            ['course' => $course->id], [
-                'showdescription' => true,
-                'completionview' => 1,
-                'completion' => COMPLETION_TRACKING_AUTOMATIC,
-                'completiongradeitemnumber' => 1,
-                'completionpassgrade' => 1,
-            ],
-        );
+        $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id], ['availability' => $availability]);
         $page = $this->getDataGenerator()->create_module('page',  array('course' => $course->id),
                                                             array('completion' => 1, 'visible' => 0));
 
         $cmdata = get_coursemodule_from_id('data', $data->cmid);
         $cmforum = get_coursemodule_from_id('forum', $forum->cmid);
-        $cmforumautocompletion = get_coursemodule_from_id('forum', $forumautocompletion->cmid);
 
         $studentrole = $DB->get_record('role', array('shortname' => 'student'));
         $teacherrole = $DB->get_record('role', array('shortname' => 'editingteacher'));
@@ -160,13 +139,8 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
         $result = external_api::clean_returnvalue(
             core_completion_external::get_activities_completion_status_returns(), $result);
 
-        // We added 6 activities, but only 4 with completion enabled and one of those is hidden.
-        $numberofactivities = 6;
-        $numberofhidden = 1;
-        $numberofcompletions = $numberofactivities - $numberofhidden;
-        $numberofstatusstudent = 4;
-
-        $this->assertCount($numberofstatusstudent, $result['statuses']);
+        // We added 4 activities, but only 3 with completion enabled and one of those is hidden.
+        $this->assertCount(2, $result['statuses']);
 
         $activitiesfound = 0;
         foreach ($result['statuses'] as $status) {
@@ -175,61 +149,14 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
                 $this->assertEquals(COMPLETION_COMPLETE, $status['state']);
                 $this->assertEquals(COMPLETION_TRACKING_MANUAL, $status['tracking']);
                 $this->assertTrue($status['valueused']);
-                $this->assertTrue($status['hascompletion']);
-                $this->assertFalse($status['isautomatic']);
-                $this->assertTrue($status['istrackeduser']);
-                $this->assertTrue($status['uservisible']);
-                $details = $status['details'];
-                $this->assertCount(0, $details);
-            } else if ($status['cmid'] == $forumautocompletion->cmid) {
-                $activitiesfound++;
-                $this->assertEquals(COMPLETION_INCOMPLETE, $status['state']);
-                $this->assertEquals(COMPLETION_TRACKING_AUTOMATIC, $status['tracking']);
-                $this->assertFalse($status['valueused']);
-                $this->assertTrue($status['hascompletion']);
-                $this->assertTrue($status['isautomatic']);
-                $this->assertTrue($status['istrackeduser']);
-                $this->assertTrue($status['uservisible']);
-                $details = $status['details'];
-                $this->assertCount(1, $details);
-                $this->assertEquals('completionview', $details[0]['rulename']);
-                $this->assertEquals(0, $details[0]['rulevalue']['status']);
-
-            } else if ($status['cmid'] == $assignautocompletion->cmid) {
-                $activitiesfound++;
-                $this->assertEquals(COMPLETION_INCOMPLETE, $status['state']);
-                $this->assertEquals(COMPLETION_TRACKING_AUTOMATIC, $status['tracking']);
-                $this->assertFalse($status['valueused']);
-                $this->assertTrue($status['hascompletion']);
-                $this->assertTrue($status['isautomatic']);
-                $this->assertTrue($status['istrackeduser']);
-                $this->assertTrue($status['uservisible']);
-                $details = $status['details'];
-                $this->assertCount(3, $details);
-                $expecteddetails = [
-                    'completionview',
-                    'completionusegrade',
-                    'completionpassgrade',
-                ];
-                foreach ($expecteddetails as $index => $name) {
-                    $this->assertEquals($name, $details[$index]['rulename']);
-                    $this->assertEquals(0, $details[$index]['rulevalue']['status']);
-                }
             } else if ($status['cmid'] == $data->cmid and $status['modname'] == 'data' and $status['instance'] == $data->id) {
                 $activitiesfound++;
                 $this->assertEquals(COMPLETION_INCOMPLETE, $status['state']);
                 $this->assertEquals(COMPLETION_TRACKING_MANUAL, $status['tracking']);
                 $this->assertFalse($status['valueused']);
-                $this->assertFalse($status['valueused']);
-                $this->assertTrue($status['hascompletion']);
-                $this->assertFalse($status['isautomatic']);
-                $this->assertTrue($status['istrackeduser']);
-                $this->assertTrue($status['uservisible']);
-                $details = $status['details'];
-                $this->assertCount(0, $details);
             }
         }
-        $this->assertEquals(4, $activitiesfound);
+        $this->assertEquals(2, $activitiesfound);
 
         // Teacher should see students status, they are in different groups but the teacher can access all groups.
         $this->setUser($teacher);
@@ -238,7 +165,8 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
         $result = external_api::clean_returnvalue(
             core_completion_external::get_activities_completion_status_returns(), $result);
 
-        $this->assertCount($numberofcompletions, $result['statuses']);
+        // We added 4 activities, but only 3 with completion enabled and one of those is hidden.
+        $this->assertCount(3, $result['statuses']);
 
         // Override status by teacher.
         $completion->update_state($cmforum, COMPLETION_INCOMPLETE, $student->id, true);
@@ -269,7 +197,8 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
         $result = external_api::clean_returnvalue(
             core_completion_external::get_activities_completion_status_returns(), $result);
 
-        $this->assertCount($numberofcompletions, $result['statuses']);
+        // We added 4 activities, but only 3 with completion enabled (one of those is hidden but the teacher can see it).
+        $this->assertCount(3, $result['statuses']);
 
         $activitiesfound = 0;
         foreach ($result['statuses'] as $status) {
@@ -277,17 +206,13 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
                 $activitiesfound++;
                 $this->assertEquals(COMPLETION_COMPLETE, $status['state']);
                 $this->assertEquals(COMPLETION_TRACKING_MANUAL, $status['tracking']);
-            } else if (in_array($status['cmid'], [$forumautocompletion->cmid, $assignautocompletion->cmid])) {
-                $activitiesfound++;
-                $this->assertEquals(COMPLETION_INCOMPLETE, $status['state']);
-                $this->assertEquals(COMPLETION_TRACKING_AUTOMATIC, $status['tracking']);
             } else {
                 $activitiesfound++;
                 $this->assertEquals(COMPLETION_INCOMPLETE, $status['state']);
                 $this->assertEquals(COMPLETION_TRACKING_MANUAL, $status['tracking']);
             }
         }
-        $this->assertEquals(5, $activitiesfound);
+        $this->assertEquals(3, $activitiesfound);
 
         // Change teacher role capabilities (disable access all groups).
         $context = context_course::instance($course->id);
@@ -307,7 +232,8 @@ class core_completion_externallib_testcase extends externallib_advanced_testcase
         // We need to execute the return values cleaning process to simulate the web service server.
         $result = external_api::clean_returnvalue(
             core_completion_external::get_activities_completion_status_returns(), $result);
-        $this->assertCount($numberofcompletions, $result['statuses']);
+        // We added 4 activities, but only 3 with completion enabled and one of those is hidden.
+        $this->assertCount(3, $result['statuses']);
     }
 
     /**

@@ -29,9 +29,18 @@
     }else {
         print_error('unspecifycourseid', 'error');
     }
+    
+      
+    // Iomad - check if a user can even see the course.
+    if (!iomad::iomad_check_course($id)) {
+        // Set it to 0 so it fails DB get_record.
+        $params['id'] = 0;
+    }
+   
 
     $course = $DB->get_record('course', $params, '*', MUST_EXIST);
 
+   
     $urlparams = array('id' => $course->id);
 
     // Sectionid should get priority over section number
@@ -54,9 +63,12 @@
     if ($switchrole == 0 && confirm_sesskey()) {
         role_switch($switchrole, $context);
     }
+	
 
-    require_login($course);
+   require_login($course);
 
+   
+       
     // Switchrole - sanity check in cost-order...
     $reset_user_allowed_editing = false;
     if ($switchrole > 0 && confirm_sesskey() &&
@@ -89,13 +101,15 @@
         }
     }
 
-
     require_once($CFG->dirroot.'/calendar/lib.php');    /// This is after login because it needs $USER
 
     // Must set layout before gettting section info. See MDL-47555.
     $PAGE->set_pagelayout('course');
-    $PAGE->add_body_class('limitedwidth');
+     
 
+    
+    
+ 
     if ($section and $section > 0) {
 
         // Get section details and check it exists.
@@ -120,8 +134,9 @@
     }
 
     // Fix course format if it is no longer installed
-    $format = course_get_format($course);
-    $course->format = $format->get_format();
+    $course->format = course_get_format($course)->get_format();
+    
+   
 
     $PAGE->set_pagetype('course-view-' . $course->format);
     $PAGE->set_other_editing_capability('moodle/course:update');
@@ -135,7 +150,14 @@
     // Preload course format renderer before output starts.
     // This is a little hacky but necessary since
     // format.php is not included until after output starts
-    $format->get_renderer($PAGE);
+    if (file_exists($CFG->dirroot.'/course/format/'.$course->format.'/renderer.php')) {
+        require_once($CFG->dirroot.'/course/format/'.$course->format.'/renderer.php');
+        if (class_exists('format_'.$course->format.'_renderer')) {
+            // call get_renderer only if renderer is defined in format plugin
+            // otherwise an exception would be thrown
+            $PAGE->get_renderer('format_'. $course->format);
+        }
+    }
 
     if ($reset_user_allowed_editing) {
         // ugly hack
@@ -207,7 +229,15 @@
 
     if ($course->id == SITEID) {
         // This course is not a real course.
-        redirect($CFG->wwwroot .'/?redirect=0');
+        redirect($CFG->wwwroot .'/');
+    }
+
+    $completion = new completion_info($course);
+    if ($completion->is_enabled()) {
+        $PAGE->requires->string_for_js('completion-alt-manual-y', 'completion');
+        $PAGE->requires->string_for_js('completion-alt-manual-n', 'completion');
+
+        $PAGE->requires->js_init_call('M.core_completion.init');
     }
 
     // Determine whether the user has permission to download course content.
@@ -238,7 +268,8 @@
 
     $PAGE->set_heading($course->fullname);
     echo $OUTPUT->header();
-
+	
+	
     if ($USER->editing == 1) {
 
         // MDL-65321 The backup libraries are quite heavy, only require the bare minimum.
@@ -249,8 +280,48 @@
         }
     }
 
+    if ($completion->is_enabled()) {
+        // This value tracks whether there has been a dynamic change to the page.
+        // It is used so that if a user does this - (a) set some tickmarks, (b)
+        // go to another page, (c) clicks Back button - the page will
+        // automatically reload. Otherwise it would start with the wrong tick
+        // values.
+        echo html_writer::start_tag('form', array('action'=>'.', 'method'=>'get'));
+        echo html_writer::start_tag('div');
+        echo html_writer::empty_tag('input', array('type'=>'hidden', 'id'=>'completion_dynamic_change', 'name'=>'completion_dynamic_change', 'value'=>'0'));
+        echo html_writer::end_tag('div');
+        echo html_writer::end_tag('form');
+    }
+     echo html_writer::start_tag('div', array('class'=>'container'));
+      echo html_writer::start_tag('div', array('class'=>'row'));
     // Course wrapper start.
-    echo html_writer::start_tag('div', array('class'=>'course-content'));
+     echo html_writer::start_tag('div', array('class'=>'course-detail col-md-6 col-sm-12'));
+     echo '<h1>'.$course->fullname.'</h1>';
+     $courseobj = new \core_course_list_element($course);
+     $imageurl = '';
+    foreach ($courseobj->get_course_overviewfiles() as $file) {
+        $isimage = $file->is_valid_image();
+        if (!$isimage) {
+            $imageurl = null;
+        } else {
+            $imageurl = file_encode_url("$CFG->wwwroot/pluginfile.php",
+                        '/'. $file->get_contextid(). '/'. $file->get_component(). '/'.
+                        $file->get_filearea(). $file->get_filepath(). $file->get_filename(), !$isimage);
+        }
+    }
+     if (empty($imageurl)) {
+                $imageurl = $OUTPUT->image_url('i/course');
+            }
+   
+    
+    echo "<div >";
+       $context = context_course::instance($course->id);
+        $course->summary = file_rewrite_pluginfile_urls($course->summary, 'pluginfile.php', $context->id, 'course', 'summary', NULL);
+     echo '<div class="courseimage">'.$course->summary.'</div>';
+     echo "</div>";
+     
+	echo html_writer::end_tag('div');
+    echo html_writer::start_tag('div', array('class'=>'course-content col-md-6 col-sm-12'));
 
     // make sure that section 0 exists (this function will create one if it is missing)
     course_create_sections_if_missing($course, 0);
@@ -263,19 +334,23 @@
     $modnamesused = $modinfo->get_used_module_names();
     $mods = $modinfo->get_cms();
     $sections = $modinfo->get_section_info_all();
+    
+     
 
     // CAUTION, hacky fundamental variable defintion to follow!
     // Note that because of the way course fromats are constructed though
     // inclusion we pass parameters around this way..
     $displaysection = $section;
-
-    // Include course AJAX
-    include_course_ajax($course, $modnamesused);
+    
+   
 
     // Include the actual course format.
     require($CFG->dirroot .'/course/format/'. $course->format .'/format.php');
     // Content wrapper end.
-
+	
+	
+    echo html_writer::end_tag('div');
+    echo html_writer::end_tag('div');
     echo html_writer::end_tag('div');
 
     // Trigger course viewed event.
@@ -283,15 +358,12 @@
     // anything after that point.
     course_view(context_course::instance($course->id), $section);
 
+    // Include course AJAX
+    include_course_ajax($course, $modnamesused);
+
     // If available, include the JS to prepare the download course content modal.
     if ($candownloadcourse) {
         $PAGE->requires->js_call_amd('core_course/downloadcontent', 'init');
-    }
-
-    // Load the view JS module if completion tracking is enabled for this course.
-    $completion = new completion_info($course);
-    if ($completion->is_enabled()) {
-        $PAGE->requires->js_call_amd('core_course/view', 'init');
     }
 
     echo $OUTPUT->footer();

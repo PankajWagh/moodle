@@ -22,7 +22,6 @@
  * @copyright  2016 Cameron Ball
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace webservice_xmlrpc;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -37,7 +36,7 @@ require_once($CFG->dirroot . '/webservice/xmlrpc/locallib.php');
  * @copyright  2016 Cameron Ball
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class locallib_test extends \advanced_testcase {
+class webservice_xmlrpc_locallib_testcase extends advanced_testcase {
 
     /**
      * Setup.
@@ -61,9 +60,9 @@ class locallib_test extends \advanced_testcase {
      */
     public function test_prepare_response($returnsdesc, $returns, $expected) {
         $server = $this->getMockBuilder('webservice_xmlrpc_server')
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
+                       ->disableOriginalConstructor()
+                       ->setMethods(null)
+                       ->getMock();
 
         $rc = new \ReflectionClass('webservice_xmlrpc_server');
         $rcm = $rc->getMethod('prepare_response');
@@ -71,7 +70,7 @@ class locallib_test extends \advanced_testcase {
 
         $func = $rc->getProperty('function');
         $func->setAccessible(true);
-        $func->setValue($server, (object) ['returns_desc' => new \external_value(PARAM_RAW, $returnsdesc, VALUE_OPTIONAL)]);
+        $func->setValue($server, (object) ['returns_desc' => new external_value(PARAM_RAW, $returnsdesc, VALUE_OPTIONAL)]);
 
         $ret = $rc->getProperty('returns');
         $ret->setAccessible(true);
@@ -97,9 +96,9 @@ class locallib_test extends \advanced_testcase {
      */
     public function test_generate_error($exception, $code, $expected) {
         $server = $this->getMockBuilder('webservice_xmlrpc_server')
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
+                ->disableOriginalConstructor()
+                ->setMethods(null)
+                ->getMock();
 
         $rc = new \ReflectionClass('webservice_xmlrpc_server');
         $rcm = $rc->getMethod('generate_error');

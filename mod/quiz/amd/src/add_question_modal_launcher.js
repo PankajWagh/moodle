@@ -41,14 +41,10 @@ define(
          * @param  {string} selector The selectors for the elements that trigger the modal
          * @param  {int} contextId The current context id
          * @param  {function} preShowCallback A callback to execute before the modal is shown
-         * @param  {boolean} showNewCategory  Display the New category tab when selecting random questions.
          * @return {promise} Resolved with the modal
          */
-        init: function(modalType, selector, contextId, preShowCallback, showNewCategory = true) {
+        init: function(modalType, selector, contextId, preShowCallback) {
             var body = $('body');
-            let templateContext = {
-                hidden: showNewCategory,
-            };
 
             // Create a question bank modal using the factory.
             // The same modal will be used by all of the add question
@@ -59,7 +55,6 @@ define(
                 {
                     type: modalType,
                     large: true,
-                    templateContext: templateContext,
                     // This callback executes before the modal is shown when the
                     // trigger element is clicked.
                     preShowCallback: function(triggerElement, modal) {

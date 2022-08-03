@@ -73,7 +73,9 @@ define([
                         return root.find(CalendarSelectors.courseSelector).val(courseId);
                     })
                     .then(function() {
-                        CalendarViewManager.updateUrl('?view=upcoming&course=' + courseId);
+                        window.history.pushState({}, '', '?view=upcoming&course=' + courseId);
+
+                        return;
                     })
                     .fail(Notification.exception);
             });
@@ -85,7 +87,6 @@ define([
                 } else {
                     daysWithEvent.removeClass('hidden');
                 }
-                CalendarViewManager.foldDayEvents(root);
             });
 
             var eventFormPromise = CalendarCrud.registerEventFormModal(root);

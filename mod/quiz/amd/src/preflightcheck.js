@@ -24,7 +24,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     3.1
  */
-define(['jquery', 'core/yui', 'core_form/changechecker'], function($, Y, FormChangeChecker) {
+define(['jquery', 'core/yui'], function($, Y) {
 
     /**
      * @alias module:mod_quiz/preflightcheck
@@ -97,10 +97,9 @@ define(['jquery', 'core/yui', 'core_form/changechecker'], function($, Y, FormCha
          */
         launchQuizPopup: function(e, popupoptions) {
             e.halt();
-            Y.use('io-form', function() {
+            Y.use('moodle-core-formchangechecker', 'io-form', function() {
+                M.core_formchangechecker.reset_form_dirty_state();
                 var form = e.target.ancestor('form');
-
-                FormChangeChecker.resetFormDirtyState(form.getDOMNode());
                 window.openpopup(e, {
                     url: form.get('action') + '?' + Y.IO.stringify(form).replace(/\bcancel=/, 'x='),
                     windowname: 'quizpopup',

@@ -42,7 +42,7 @@ redirect_if_major_upgrade_required();
 // TODO Add sesskey check to edit
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
-
+error_reporting(E_ALL);
 require_login();
 
 $hassiteconfig = has_capability('moodle/site:config', context_system::instance());
@@ -84,13 +84,11 @@ $params = array();
 $PAGE->set_context($context);
 $PAGE->set_url('/my/index.php', $params);
 $PAGE->set_pagelayout('mydashboard');
-$PAGE->add_body_class('limitedwidth');
 $PAGE->set_pagetype('my-index');
 $PAGE->blocks->add_region('content');
 $PAGE->set_subpage($currentpage->id);
 $PAGE->set_title($pagetitle);
-$PAGE->set_heading($pagetitle);
-$PAGE->has_secondary_navigation_setter(false);
+$PAGE->set_heading($header);
 
 if (!isguestuser()) {   // Skip default home page for guests
     if (get_home_page() != HOMEPAGE_MY) {
@@ -157,10 +155,7 @@ if (empty($CFG->forcedefaultmymoodle) && $PAGE->user_allowed_editing()) {
     }
 
     $url = new moodle_url("$CFG->wwwroot/my/index.php", $params);
-    $button = '';
-    if (!$PAGE->theme->haseditswitch) {
-        $button = $OUTPUT->single_button($url, $editstring);
-    }
+    $button = $OUTPUT->single_button($url, $editstring);
     $PAGE->set_button($resetbutton . $button);
 
 } else {
@@ -172,8 +167,6 @@ echo $OUTPUT->header();
 if (core_userfeedback::should_display_reminder()) {
     core_userfeedback::print_reminder_block();
 }
-
-echo $OUTPUT->addblockbutton('content');
 
 echo $OUTPUT->custom_block_region('content');
 

@@ -238,10 +238,9 @@ abstract class grade_object {
      * Updates this object in the Database, based on its object variables. ID must be set.
      *
      * @param string $source from where was the object updated (mod/forum, manual, etc.)
-     * @param bool $isbulkupdate If bulk grade update is happening.
      * @return bool success
      */
-    public function update($source = null, $isbulkupdate = false) {
+    public function update($source=null) {
         global $USER, $CFG, $DB;
 
         if (empty($this->id)) {
@@ -264,7 +263,7 @@ abstract class grade_object {
             $historyid = $DB->insert_record($this->table.'_history', $data);
         }
 
-        $this->notify_changed(false, $isbulkupdate);
+        $this->notify_changed(false);
 
         $this->update_feedback_files($historyid);
 
@@ -335,10 +334,9 @@ abstract class grade_object {
      * in object properties.
      *
      * @param string $source From where was the object inserted (mod/forum, manual, etc.)
-     * @param string $isbulkupdate If bulk grade update is happening.
      * @return int The new grade object ID if successful, false otherwise
      */
-    public function insert($source = null, $isbulkupdate = false) {
+    public function insert($source=null) {
         global $USER, $CFG, $DB;
 
         if (!empty($this->id)) {
@@ -366,7 +364,7 @@ abstract class grade_object {
             $historyid = $DB->insert_record($this->table.'_history', $data);
         }
 
-        $this->notify_changed(false, $isbulkupdate);
+        $this->notify_changed(false);
 
         $this->add_feedback_files($historyid);
 

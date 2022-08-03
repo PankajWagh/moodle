@@ -125,13 +125,6 @@ class behat_util extends testing_util {
         // Set noreplyaddress to an example domain, as it should be valid email address and test site can be a localhost.
         set_config('noreplyaddress', 'noreply@example.com');
 
-        // Set the support email address.
-        set_config('supportemail', 'email@example.com');
-
-        // Remove any default blocked hosts and port restrictions, to avoid blocking tests (eg those using local files).
-        set_config('curlsecurityblockedhosts', '');
-        set_config('curlsecurityallowedport', '');
-
         // Keeps the current version of database and dataroot.
         self::store_versions_hash();
 
@@ -417,10 +410,11 @@ class behat_util extends testing_util {
 
         filter_manager::reset_caches();
 
-        \core_reportbuilder\manager::reset_caches();
-
         // Reset course and module caches.
-        core_courseformat\base::reset_course_cache(0);
+        if (class_exists('format_base')) {
+            // If file containing class is not loaded, there is no cache there anyway.
+            format_base::reset_course_cache(0);
+        }
         get_fast_modinfo(0, 0, true);
 
         // Inform data generator.

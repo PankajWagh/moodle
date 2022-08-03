@@ -2,9 +2,9 @@
 /*
 ADOdb Date Library, part of the ADOdb abstraction library
 
-Latest version is available at https://adodb.org/
+Latest version is available at http://adodb.org/
 
-@version   v5.21.0  2021-02-27
+@version   v5.20.16  12-Jan-2020
 @copyright (c) 2000-2013 John Lim (jlim#natsoft.com). All rights reserved.
 @copyright (c) 2014      Damien Regad, Mark Newnham and the ADOdb community
 
@@ -38,7 +38,7 @@ of date()'s field formats. Mktime() will convert from local time to GMT,
 and date() will convert from GMT to local time, but daylight savings is
 not handled currently.
 
-This library is independent of the rest of ADOdb, and can be used
+This library is independant of the rest of ADOdb, and can be used
 as standalone code.
 
 PERFORMANCE
@@ -66,6 +66,13 @@ COPYRIGHT
 jackbbs, which includes adodb_mktime, adodb_get_gmt_diff, adodb_is_leap_year
 and originally found at http://www.php.net/manual/en/function.mktime.php
 
+=============================================================================
+
+BUG REPORTS
+
+These should be posted to the ADOdb forums at
+
+	http://phplens.com/lens/lensforum/topics.php?id=4
 
 =============================================================================
 
@@ -261,7 +268,7 @@ Changed adodb_get_gm_diff to use DateTimeZone().
 * Now adodb_mktime(0,0,0,24,1,2037) works correctly.
 
 - 15 July 2007 0.30
-Added PHP 5.2.0 compatibility fixes.
+Added PHP 5.2.0 compatability fixes.
  * gmtime behaviour for 1970 has changed. We use the actual date if it is between 1970 to 2038 to get the
  * timezone, otherwise we use the current year as the baseline to retrieve the timezone.
  * Also the timezone's in php 5.2.* support historical data better, eg. if timezone today was +8, but
@@ -341,7 +348,7 @@ January!!!), changed adodb_get_gmt_diff() to ignore daylight savings.
 
 - 9 Aug 2003 0.10
 Fixed bug with dates after 2038.
-See PHPLens Issue No: 6980
+See http://phplens.com/lens/lensforum/msgs.php?id=6980
 
 - 1 July 2003 0.09
 Added support for Q (Quarter).
@@ -396,6 +403,8 @@ First implementation.
 	Version Number
 */
 define('ADODB_DATE_VERSION',0.35);
+
+$ADODB_DATETIME_CLASS = (PHP_VERSION >= 5.2);
 
 /*
 	This code was originally for windows. But apparently this problem happens
@@ -523,8 +532,8 @@ function adodb_date_test()
 	if (adodb_year_digit_check(50) != 1950) print "Err 2-digit 1950<br>";
 	if (adodb_year_digit_check(90) != 1990) print "Err 2-digit 1990<br>";
 
-	// Test string formatting
-	print "<p>Testing date formatting</p>";
+	// Test string formating
+	print "<p>Testing date formating</p>";
 
 	$fmt = '\d\a\t\e T Y-m-d H:i:s a A d D F g G h H i j l L m M n O \R\F\C2822 r s t U w y Y z Z 2003';
 	$s1 = date($fmt,0);
@@ -728,12 +737,13 @@ function adodb_get_gmt_diff_ts($ts)
 */
 function adodb_get_gmt_diff($y,$m,$d)
 {
-	static $TZ,$tzo;
+static $TZ,$tzo;
+global $ADODB_DATETIME_CLASS;
 
 	if (!defined('ADODB_TEST_DATES')) $y = false;
 	else if ($y < 1970 || $y >= 2038) $y = false;
 
-	if ($y !== false) {
+	if ($ADODB_DATETIME_CLASS && $y !== false) {
 		$dt = new DateTime();
 		$dt->setISODate($y,$m,$d);
 		if (empty($tzo)) {
@@ -1025,20 +1035,20 @@ global $_month_table_normal,$_month_table_leaf, $_adodb_last_date_call_failed;
 		0 => $origd
 	);
 }
-
-/**
- * Compute timezone offset.
- *
- * @param int  $gmt     Time offset from GMT, in seconds
- * @param bool $ignored Param leftover from removed PHP4-compatibility code
- *                      kept to avoid altering function signature.
- * @return string
- */
-function adodb_tz_offset($gmt, $ignored=true)
+/*
+		if ($isphp5)
+				$dates .= sprintf('%s%04d',($gmt<=0)?'+':'-',abs($gmt)/36);
+			else
+				$dates .= sprintf('%s%04d',($gmt<0)?'+':'-',abs($gmt)/36);
+			break;*/
+function adodb_tz_offset($gmt,$isphp5)
 {
-	$zhrs = abs($gmt) / 3600;
+	$zhrs = abs($gmt)/3600;
 	$hrs = floor($zhrs);
-	return sprintf('%s%02d%02d', ($gmt <= 0) ? '+' : '-', $hrs, ($zhrs - $hrs) * 60);
+	if ($isphp5)
+		return sprintf('%s%02d%02d',($gmt<=0)?'+':'-',floor($zhrs),($zhrs-$hrs)*60);
+	else
+		return sprintf('%s%02d%02d',($gmt<0)?'+':'-',floor($zhrs),($zhrs-$hrs)*60);
 }
 
 
@@ -1071,8 +1081,10 @@ function adodb_date2($fmt, $d=false, $is_gmt=false)
 */
 function adodb_date($fmt,$d=false,$is_gmt=false)
 {
-	static $daylight;
-	static $jan1_1971;
+static $daylight;
+global $ADODB_DATETIME_CLASS;
+static $jan1_1971;
+
 
 	if (!isset($daylight)) {
 		$daylight = function_exists('adodb_daylight_sv');
@@ -1081,15 +1093,7 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 
 	if ($d === false) return ($is_gmt)? @gmdate($fmt): @date($fmt);
 	if (!defined('ADODB_TEST_DATES')) {
-
-		/*
-		* Format 'Q' is an ADOdb custom format, not supported in PHP
-		* so if there is a 'Q' in the format, we force it to use our
-		* function. There is a trivial overhead in this
-		*/
-
-		if ((abs($d) <= 0x7FFFFFFF) && strpos($fmt,'Q') === false)
-		{ // check if number in 32-bit signed range
+		if ((abs($d) <= 0x7FFFFFFF)) { // check if number in 32-bit signed range
 
 			if (!defined('ADODB_NO_NEGATIVE_TS') || $d >= $jan1_1971) // if windows, must be +ve integer
 				return ($is_gmt)? @gmdate($fmt,$d): @date($fmt,$d);
@@ -1112,6 +1116,8 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 	$max = strlen($fmt);
 	$dates = '';
 
+	$isphp5 = PHP_VERSION >= 5;
+
 	/*
 		at this point, we have the following integer vars to manipulate:
 		$year, $month, $day, $hour, $min, $secs
@@ -1122,9 +1128,12 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 			$dates .= date('e');
 			break;
 		case 'T':
-			$dt = new DateTime();
-			$dt->SetDate($year,$month,$day);
-			$dates .= $dt->Format('T');
+			if ($ADODB_DATETIME_CLASS) {
+				$dt = new DateTime();
+				$dt->SetDate($year,$month,$day);
+				$dates .= $dt->Format('T');
+			} else
+				$dates .= date('T');
 			break;
 		// YEAR
 		case 'L': $dates .= $arr['leap'] ? '1' : '0'; break;
@@ -1143,16 +1152,14 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 
 			$gmt = adodb_get_gmt_diff($year,$month,$day);
 
-			$dates .= ' '.adodb_tz_offset($gmt);
+			$dates .= ' '.adodb_tz_offset($gmt,$isphp5);
 			break;
 
 		case 'Y': $dates .= $year; break;
 		case 'y': $dates .= substr($year,strlen($year)-2,2); break;
 		// MONTH
 		case 'm': if ($month<10) $dates .= '0'.$month; else $dates .= $month; break;
-		case 'Q':
-			$dates .= ceil($month / 3);
-			break;
+		case 'Q': $dates .= ($month+3)>>2; break;
 		case 'n': $dates .= $month; break;
 		case 'M': $dates .= date('M',mktime(0,0,0,$month,2,1971)); break;
 		case 'F': $dates .= date('F',mktime(0,0,0,$month,2,1971)); break;
@@ -1160,9 +1167,6 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 		case 't': $dates .= $arr['ndays']; break;
 		case 'z': $dates .= $arr['yday']; break;
 		case 'w': $dates .= adodb_dow($year,$month,$day); break;
-		case 'W':
-			$dates .= sprintf('%02d',ceil( $arr['yday'] / 7) - 1);
-			break;
 		case 'l': $dates .= gmdate('l',$_day_power*(3+adodb_dow($year,$month,$day))); break;
 		case 'D': $dates .= gmdate('D',$_day_power*(3+adodb_dow($year,$month,$day))); break;
 		case 'j': $dates .= $day; break;
@@ -1181,7 +1185,7 @@ function adodb_date($fmt,$d=false,$is_gmt=false)
 		case 'O':
 			$gmt = ($is_gmt) ? 0 : adodb_get_gmt_diff($year,$month,$day);
 
-			$dates .= adodb_tz_offset($gmt);
+			$dates .= adodb_tz_offset($gmt,$isphp5);
 			break;
 
 		case 'H':
@@ -1385,7 +1389,7 @@ global $ADODB_DATE_LOCALE;
 		$sep = substr($tstr,2,1);
 		$hasAM = strrpos($tstr,'M') !== false;
 	*/
-		# see PHPLens Issue No: 14865 for reasoning, and changelog for version 0.24
+		# see http://phplens.com/lens/lensforum/msgs.php?id=14865 for reasoning, and changelog for version 0.24
 		$dstr = gmstrftime('%x',31366800); // 30 Dec 1970, 1 am
 		$sep = substr($dstr,2,1);
 		$tstr = strtoupper(gmstrftime('%X',31366800)); // 30 Dec 1970, 1 am

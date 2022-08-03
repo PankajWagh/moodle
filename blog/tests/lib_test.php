@@ -22,9 +22,6 @@
  * @copyright  2009 Nicolas Connault
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace core_blog;
-
-use blog_listing;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -35,7 +32,7 @@ require_once($CFG->dirroot . '/blog/lib.php');
 /**
  * Test functions that rely on the DB tables
  */
-class lib_test extends \advanced_testcase {
+class core_blog_lib_testcase extends advanced_testcase {
 
     private $courseid;
     private $cmid;
@@ -57,7 +54,7 @@ class lib_test extends \advanced_testcase {
         $this->assertNotEmpty($page);
 
         // Create default group.
-        $group = new \stdClass();
+        $group = new stdClass();
         $group->courseid = $course->id;
         $group->name = 'ANON';
         $group->id = $DB->insert_record('groups', $group);
@@ -74,7 +71,7 @@ class lib_test extends \advanced_testcase {
             'rawname' => 'Testtagname', 'isstandard' => 1));
 
         // Create default post.
-        $post = new \stdClass();
+        $post = new stdClass();
         $post->userid = $user->id;
         $post->groupid = $group->id;
         $post->content = 'test post content text';
@@ -173,7 +170,7 @@ class lib_test extends \advanced_testcase {
 
         // Check the node tree is correct.
         core_blog_myprofile_navigation($tree, $USER, $iscurrentuser, $course);
-        $reflector = new \ReflectionObject($tree);
+        $reflector = new ReflectionObject($tree);
         $nodes = $reflector->getProperty('nodes');
         $nodes->setAccessible(true);
         $this->assertArrayHasKey('blogs', $nodes->getValue($tree));
@@ -195,7 +192,7 @@ class lib_test extends \advanced_testcase {
 
         // Check the node tree is correct.
         core_blog_myprofile_navigation($tree, $USER, $iscurrentuser, $course);
-        $reflector = new \ReflectionObject($tree);
+        $reflector = new ReflectionObject($tree);
         $nodes = $reflector->getProperty('nodes');
         $nodes->setAccessible(true);
         $this->assertArrayNotHasKey('blogs', $nodes->getValue($tree));
@@ -218,7 +215,7 @@ class lib_test extends \advanced_testcase {
 
         // Check the node tree is correct.
         core_blog_myprofile_navigation($tree, $USER, $iscurrentuser, $course);
-        $reflector = new \ReflectionObject($tree);
+        $reflector = new ReflectionObject($tree);
         $nodes = $reflector->getProperty('nodes');
         $nodes->setAccessible(true);
         $this->assertArrayNotHasKey('blogs', $nodes->getValue($tree));
@@ -226,11 +223,11 @@ class lib_test extends \advanced_testcase {
 
     public function test_blog_get_listing_course() {
         $this->setAdminUser();
-        $coursecontext = \context_course::instance($this->courseid);
+        $coursecontext = context_course::instance($this->courseid);
         $anothercourse = $this->getDataGenerator()->create_course();
 
         // Add blog associations with a course.
-        $blog = new \blog_entry($this->postid);
+        $blog = new blog_entry($this->postid);
         $blog->add_association($coursecontext->id);
 
         // There is one entry associated with a course.
@@ -256,12 +253,12 @@ class lib_test extends \advanced_testcase {
 
     public function test_blog_get_listing_module() {
         $this->setAdminUser();
-        $coursecontext = \context_course::instance($this->courseid);
-        $contextmodule = \context_module::instance($this->cmid);
+        $coursecontext = context_course::instance($this->courseid);
+        $contextmodule = context_module::instance($this->cmid);
         $anothermodule = $this->getDataGenerator()->create_module('page', array('course' => $this->courseid));
 
         // Add blog associations with a course.
-        $blog = new \blog_entry($this->postid);
+        $blog = new blog_entry($this->postid);
         $blog->add_association($contextmodule->id);
 
         // There is no entry associated with a course.

@@ -80,8 +80,7 @@ if (($disable = optional_param('disable', '', PARAM_PLUGIN)) && confirm_sesskey(
         print_error('unknownquestiontype', 'question', $thispageurl, $disable);
     }
 
-    $class = \core_plugin_manager::resolve_plugininfo_class('qtype');
-    $class::enable_plugin($disable, false);
+    set_config($disable . '_disabled', 1, 'question');
     redirect($thispageurl);
 }
 
@@ -95,8 +94,7 @@ if (($enable = optional_param('enable', '', PARAM_PLUGIN)) && confirm_sesskey())
         print_error('cannotenable', 'question', $thispageurl, $enable);
     }
 
-    $class = \core_plugin_manager::resolve_plugininfo_class('qtype');
-    $class::enable_plugin($enable, true);
+    unset_config($enable . '_disabled', 'question');
     redirect($thispageurl);
 }
 
@@ -253,3 +251,4 @@ function question_type_icon_html($action, $qtypename, $icon, $alt, $tip) {
             new pix_icon($icon, $alt, 'moodle', array('title' => '', 'class' => 'iconsmall')),
             null, array('title' => $tip));
 }
+

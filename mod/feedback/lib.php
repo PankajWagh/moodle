@@ -42,8 +42,6 @@ define('FEEDBACK_DEFAULT_PAGE_COUNT', 20);
 define('FEEDBACK_EVENT_TYPE_OPEN', 'open');
 define('FEEDBACK_EVENT_TYPE_CLOSE', 'close');
 
-require_once(__DIR__ . '/deprecatedlib.php');
-
 /**
  * @uses FEATURE_GROUPS
  * @uses FEATURE_GROUPINGS
@@ -52,7 +50,7 @@ require_once(__DIR__ . '/deprecatedlib.php');
  * @uses FEATURE_GRADE_HAS_GRADE
  * @uses FEATURE_GRADE_OUTCOMES
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed True if module supports feature, false if not, null if doesn't know or string for the module purpose.
+ * @return mixed True if module supports feature, null if doesn't know
  */
 function feedback_supports($feature) {
     switch($feature) {
@@ -65,7 +63,6 @@ function feedback_supports($feature) {
         case FEATURE_GRADE_OUTCOMES:          return false;
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_COMMUNICATION;
 
         default: return null;
     }
@@ -391,8 +388,7 @@ function feedback_get_recent_mod_activity(&$activities, &$index,
 
     $sqlargs = array();
 
-    $userfieldsapi = \core_user\fields::for_userpic();
-    $userfields = $userfieldsapi->get_sql('u', false, '', 'useridagain', false)->selects;
+    $userfields = user_picture::fields('u', null, 'useridagain');
     $sql = " SELECT fk . * , fc . * , $userfields
                 FROM {feedback_completed} fc
                     JOIN {feedback} fk ON fk.id = fc.feedback
@@ -512,6 +508,32 @@ function feedback_print_recent_mod_activity($activity, $courseid, $detail, $modn
     echo "</td></tr></table>";
 
     return;
+}
+
+/**
+ * Obtains the automatic completion state for this feedback based on the condition
+ * in feedback settings.
+ *
+ * @param object $course Course
+ * @param object $cm Course-module
+ * @param int $userid User ID
+ * @param bool $type Type of comparison (or/and; can be used as return value if no conditions)
+ * @return bool True if completed, false if not, $type if conditions not set.
+ */
+function feedback_get_completion_state($course, $cm, $userid, $type) {
+    global $CFG, $DB;
+
+    // Get feedback details
+    $feedback = $DB->get_record('feedback', array('id'=>$cm->instance), '*', MUST_EXIST);
+
+    // If completion option is enabled, evaluate it and return true/false
+    if ($feedback->completionsubmit) {
+        $params = array('userid'=>$userid, 'feedback'=>$feedback->id);
+        return $DB->record_exists('feedback_completed', $params);
+    } else {
+        // Completion option is not enabled so just return $type
+        return $type;
+    }
 }
 
 /**
@@ -963,8 +985,7 @@ function feedback_get_incomplete_users(cm_info $cm,
 
     //first get all user who can complete this feedback
     $cap = 'mod/feedback:complete';
-    $userfieldsapi = \core_user\fields::for_name();
-    $allnames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+    $allnames = get_all_user_name_fields(true, 'u');
     $fields = 'u.id, ' . $allnames . ', u.picture, u.email, u.imagealt';
     if (!$allusers = get_users_by_capability($context,
                                             $cap,
@@ -1101,8 +1122,7 @@ function feedback_get_complete_users($cm,
         $sortsql = '';
     }
 
-    $userfieldsapi = \core_user\fields::for_userpic();
-    $ufields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+    $ufields = user_picture::fields('u');
     $sql = 'SELECT DISTINCT '.$ufields.', c.timemodified as completed_timemodified
             FROM {user} u, {feedback_completed} c '.$fromgroup.'
             WHERE '.$where.' anonymous_response = :anon
@@ -2802,17 +2822,17 @@ function feedback_extend_settings_navigation(settings_navigation $settings,
 
     global $PAGE;
 
-    $hassecondary = $PAGE->has_secondary_navigation();
     if (!$context = context_module::instance($PAGE->cm->id, IGNORE_MISSING)) {
         print_error('badcontext');
     }
 
     if (has_capability('mod/feedback:edititems', $context)) {
-        $questionnode = $feedbacknode->add(get_string('questions', 'feedback'), null,
-            navigation_node::TYPE_CUSTOM, null, 'questionnode');
+        $questionnode = $feedbacknode->add(get_string('questions', 'feedback'));
+
         $questionnode->add(get_string('edit_items', 'feedback'),
                     new moodle_url('/mod/feedback/edit.php',
-                                    ['id' => $PAGE->cm->id]));
+                                    array('id' => $PAGE->cm->id,
+                                          'do_show' => 'edit')));
 
         $questionnode->add(get_string('export_questions', 'feedback'),
                     new moodle_url('/mod/feedback/export.php',
@@ -2823,43 +2843,38 @@ function feedback_extend_settings_navigation(settings_navigation $settings,
                     new moodle_url('/mod/feedback/import.php',
                                     array('id' => $PAGE->cm->id)));
 
-        $feedbacknode->add(get_string('templates', 'feedback'),
-                    new moodle_url('/mod/feedback/manage_templates.php', ['id' => $PAGE->cm->id, 'mode' => 'manage']),
-                    navigation_node::TYPE_CUSTOM, null, 'templatenode');
+        $questionnode->add(get_string('templates', 'feedback'),
+                    new moodle_url('/mod/feedback/edit.php',
+                                    array('id' => $PAGE->cm->id,
+                                          'do_show' => 'templates')));
     }
 
     if (has_capability('mod/feedback:mapcourse', $context) && $PAGE->course->id == SITEID) {
         $feedbacknode->add(get_string('mappedcourses', 'feedback'),
-                    new moodle_url('/mod/feedback/mapcourse.php', ['id' => $PAGE->cm->id]),
-                    navigation_node::TYPE_CUSTOM, null, 'mapcourse');
-    }
-
-    $feedback = $PAGE->activityrecord;
-    if ($feedback->course == SITEID) {
-        $analysisnode = navigation_node::create(get_string('analysis', 'feedback'),
-            new moodle_url('/mod/feedback/analysis_course.php', ['id' => $PAGE->cm->id]),
-            navigation_node::TYPE_CUSTOM, null, 'feedbackanalysis');
-    } else {
-        $analysisnode = navigation_node::create(get_string('analysis', 'feedback'),
-            new moodle_url('/mod/feedback/analysis.php', ['id' => $PAGE->cm->id]),
-            navigation_node::TYPE_CUSTOM, null, 'feedbackanalysis');
+                    new moodle_url('/mod/feedback/mapcourse.php',
+                                    array('id' => $PAGE->cm->id)));
     }
 
     if (has_capability('mod/feedback:viewreports', $context)) {
-        $feedbacknode->add_node($analysisnode);
-        $feedbacknode->add(get_string(($hassecondary ? 'responses' : 'show_entries'), 'feedback'),
-                    new moodle_url('/mod/feedback/show_entries.php', ['id' => $PAGE->cm->id]),
-                        navigation_node::TYPE_CUSTOM, null, 'responses');
+        $feedback = $PAGE->activityrecord;
+        if ($feedback->course == SITEID) {
+            $feedbacknode->add(get_string('analysis', 'feedback'),
+                    new moodle_url('/mod/feedback/analysis_course.php',
+                                    array('id' => $PAGE->cm->id)));
+        } else {
+            $feedbacknode->add(get_string('analysis', 'feedback'),
+                    new moodle_url('/mod/feedback/analysis.php',
+                                    array('id' => $PAGE->cm->id)));
+        }
+
+        $feedbacknode->add(get_string('show_entries', 'feedback'),
+                    new moodle_url('/mod/feedback/show_entries.php',
+                                    array('id' => $PAGE->cm->id)));
 
         if ($feedback->anonymous == FEEDBACK_ANONYMOUS_NO AND $feedback->course != SITEID) {
             $feedbacknode->add(get_string('show_nonrespondents', 'feedback'),
-                    new moodle_url('/mod/feedback/show_nonrespondents.php', ['id' => $PAGE->cm->id]),
-                        navigation_node::TYPE_CUSTOM, null, 'nonrespondents');
-        }
-    } else {
-        $feedbackcompletion = new mod_feedback_completion($feedback, $context, $PAGE->course->id);
-        if ($feedbackcompletion->can_view_analysis()) {
-            $feedbacknode->add_node($analysisnode);
+                        new moodle_url('/mod/feedback/show_nonrespondents.php',
+                                        array('id' => $PAGE->cm->id)));
         }
     }
 }
@@ -3256,27 +3271,4 @@ function mod_feedback_core_calendar_event_timestart_updated(\calendar_event $eve
         $event = \core\event\course_module_updated::create_from_cm($coursemodule, $context);
         $event->trigger();
     }
-}
-
-/**
- * Callback to fetch the activity event type lang string.
- *
- * @param string $eventtype The event type.
- * @return lang_string The event type lang string.
- */
-function mod_feedback_core_calendar_get_event_action_string(string $eventtype): string {
-    $modulename = get_string('modulename', 'feedback');
-
-    switch ($eventtype) {
-        case FEEDBACK_EVENT_TYPE_OPEN:
-            $identifier = 'calendarstart';
-            break;
-        case FEEDBACK_EVENT_TYPE_CLOSE:
-            $identifier = 'calendarend';
-            break;
-        default:
-            return get_string('requiresaction', 'calendar', $modulename);
-    }
-
-    return get_string($identifier, 'feedback', $modulename);
 }

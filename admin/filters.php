@@ -72,8 +72,10 @@ switch ($action) {
 
     case 'setstate':
         if (isset($filters[$filterpath]) and $newstate = optional_param('newstate', '', PARAM_INT)) {
-            $class = \core_plugin_manager::resolve_plugininfo_class('filter');
-            $class::enable_plugin($filterpath, $newstate);
+            filter_set_global_state($filterpath, $newstate);
+            if ($newstate == TEXTFILTER_DISABLED) {
+                filter_set_applies_to_strings($filterpath, false);
+            }
         }
         break;
 
@@ -81,16 +83,12 @@ switch ($action) {
         if (isset($filters[$filterpath])) {
             $applytostrings = optional_param('stringstoo', false, PARAM_BOOL);
             filter_set_applies_to_strings($filterpath, $applytostrings);
-            reset_text_filters_cache();
-            core_plugin_manager::reset_caches();
         }
         break;
 
     case 'down':
         if (isset($filters[$filterpath])) {
             filter_set_global_state($filterpath, $filters[$filterpath]->active, 1);
-            reset_text_filters_cache();
-            core_plugin_manager::reset_caches();
         }
         break;
 
@@ -98,14 +96,14 @@ switch ($action) {
         if (isset($filters[$filterpath])) {
             $oldpos = $filters[$filterpath]->sortorder;
             filter_set_global_state($filterpath, $filters[$filterpath]->active, -1);
-            reset_text_filters_cache();
-            core_plugin_manager::reset_caches();
         }
         break;
 }
 
-// Return.
+// Reset caches and return.
 if ($action) {
+    reset_text_filters_cache();
+    core_plugin_manager::reset_caches();
     redirect(new moodle_url('/admin/filters.php'));
 }
 

@@ -47,14 +47,14 @@ if (!isset($customfieldplugins[$customfieldname])) {
 switch ($action) {
     case 'disable':
         if ($customfieldplugins[$customfieldname]->is_enabled()) {
-            $class = \core_plugin_manager::resolve_plugininfo_class('customfield');
-            $class::enable_plugin($customfieldname, false);
+            set_config('disabled', 1, 'customfield_'. $customfieldname);
+            core_plugin_manager::reset_caches();
         }
         break;
     case 'enable':
         if (!$customfieldplugins[$customfieldname]->is_enabled()) {
-            $class = \core_plugin_manager::resolve_plugininfo_class('customfield');
-            $class::enable_plugin($customfieldname, true);
+            unset_config('disabled', 'customfield_'. $customfieldname);
+            core_plugin_manager::reset_caches();
         }
         break;
 }

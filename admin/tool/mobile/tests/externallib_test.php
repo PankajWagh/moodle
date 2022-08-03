@@ -99,7 +99,6 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
             'tool_mobile_iosappid' => get_config('tool_mobile', 'iosappid'),
             'tool_mobile_androidappid' => get_config('tool_mobile', 'androidappid'),
             'tool_mobile_setuplink' => get_config('tool_mobile', 'setuplink'),
-            'tool_mobile_qrcodetype' => get_config('tool_mobile', 'qrcodetype'),
             'warnings' => array()
         );
         $this->assertEquals($expected, $result);
@@ -118,7 +117,6 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
         set_config('lang', 'a_b');  // Set invalid lang.
         set_config('disabledfeatures', 'myoverview', 'tool_mobile');
         set_config('minimumversion', '3.8.0', 'tool_mobile');
-        set_config('supportemail', 'test@test.com');
 
         // Enable couple of issuers.
         $issuer = \core\oauth2\api::create_standard_issuer('google');
@@ -187,7 +185,6 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
 
         $mysitepolicy = 'http://mysite.is/policy/';
         set_config('sitepolicy', $mysitepolicy);
-        set_config('supportemail', 'test@test.com');
 
         $result = external::get_config();
         $result = external_api::clean_returnvalue(external::get_config_returns(), $result);
@@ -219,7 +216,6 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
             array('name' => 'tool_mobile_filetypeexclusionlist', 'value' => ''),
             array('name' => 'tool_mobile_custommenuitems', 'value' => ''),
             array('name' => 'tool_mobile_apppolicy', 'value' => ''),
-            array('name' => 'tool_mobile_autologinmintimebetweenreq', 'value' => 6 * MINSECS),
             array('name' => 'calendartype', 'value' => $CFG->calendartype),
             array('name' => 'calendar_site_timeformat', 'value' => $CFG->calendar_site_timeformat),
             array('name' => 'calendar_startwday', 'value' => $CFG->calendar_startwday),
@@ -386,15 +382,6 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
         $mocktime = time() - 7 * MINSECS;
         set_user_preference('tool_mobile_autologin_request_last', $mocktime, $USER);
         $result = external::get_autologin_key($token->privatetoken);
-        $result = external_api::clean_returnvalue(external::get_autologin_key_returns(), $result);
-
-        // Change min time between requests to 30 seconds.
-        set_config('autologinmintimebetweenreq', 30, 'tool_mobile');
-
-        // Mock a previous request, 60 seconds ago.
-        $mocktime = time() - MINSECS;
-        set_user_preference('tool_mobile_autologin_request_last', $mocktime, $USER);
-        $result = external::get_autologin_key($token->privatetoken);    // All good, we were expecint 30 seconds or more.
         $result = external_api::clean_returnvalue(external::get_autologin_key_returns(), $result);
 
         // We just requested one token, we must wait.
@@ -633,8 +620,7 @@ class tool_mobile_external_testcase extends externallib_advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 
-        $mobilesettings = get_config('tool_mobile');
-        $qrloginkey = api::get_qrlogin_key($mobilesettings);
+        $qrloginkey = api::get_qrlogin_key();
 
         // Generate new tokens, the ones we expect to receive.
         $service = $DB->get_record('external_services', array('shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE));

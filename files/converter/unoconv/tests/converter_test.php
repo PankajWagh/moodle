@@ -52,9 +52,9 @@ class fileconverter_unoconv_converter_testcase extends advanced_testcase {
      *                  If no methods are specified, only abstract functions are mocked.
      * @return  \fileconverter_unoconv\converter
      */
-    protected function get_testable_mock($mockedmethods = []) {
+    protected function get_testable_mock($mockedmethods = null) {
         $converter = $this->getMockBuilder(\fileconverter_unoconv\converter::class)
-            ->onlyMethods($mockedmethods)
+            ->setMethods($mockedmethods)
             ->getMock();
 
         return $converter;

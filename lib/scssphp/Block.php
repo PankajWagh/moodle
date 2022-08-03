@@ -1,9 +1,8 @@
 <?php
-
 /**
  * SCSSPHP
  *
- * @copyright 2012-2020 Leaf Corcoran
+ * @copyright 2012-2019 Leaf Corcoran
  *
  * @license http://opensource.org/licenses/MIT MIT
  *
@@ -50,7 +49,7 @@ class Block
     public $sourceColumn;
 
     /**
-     * @var array|null
+     * @var array
      */
     public $selectors;
 

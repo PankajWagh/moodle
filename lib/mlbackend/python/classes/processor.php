@@ -38,7 +38,7 @@ class processor implements  \core_analytics\classifier, \core_analytics\regresso
     /**
      * The required version of the python package that performs all calculations.
      */
-    const REQUIRED_PIP_PACKAGE_VERSION = '3.0.2';
+    const REQUIRED_PIP_PACKAGE_VERSION = '2.6.4';
 
     /**
      * The python package is installed in a server.
@@ -276,6 +276,7 @@ class processor implements  \core_analytics\classifier, \core_analytics\regresso
             throw new \moodle_exception('errorpredictwrongformat', 'analytics', '', json_last_error_msg());
         }
 
+
         if ($resultobj->status != 0) {
             $resultobj = $this->format_error_info($resultobj);
         }
@@ -336,7 +337,7 @@ class processor implements  \core_analytics\classifier, \core_analytics\regresso
             // We need an extra request to get the resources generated during the evaluation process.
 
             // Directory to temporarly store the evaluation log zip returned by the server.
-            $evaluationtmpdir = make_request_directory();
+            $evaluationtmpdir = make_request_directory('mlbackend_python_evaluationlog');
             $evaluationzippath = $evaluationtmpdir . DIRECTORY_SEPARATOR . 'evaluationlog.zip';
 
             $requestparams = ['uniqueid' => $uniqueid, 'dirhash' => $this->hash_dir($outputdir),
@@ -376,7 +377,7 @@ class processor implements  \core_analytics\classifier, \core_analytics\regresso
      */
     public function export(string $uniqueid, string $modeldir) : string {
 
-        $exporttmpdir = make_request_directory();
+        $exporttmpdir = make_request_directory('mlbackend_python_export');
 
         if (!$this->useserver) {
             // Use the local file system.
@@ -716,7 +717,7 @@ class processor implements  \core_analytics\classifier, \core_analytics\regresso
      */
     private function zip_dir(string $dir) {
 
-        $ziptmpdir = make_request_directory();
+        $ziptmpdir = make_request_directory('mlbackend_python');
         $ziptmpfile = $ziptmpdir . DIRECTORY_SEPARATOR . 'mlbackend.zip';
 
         $files = get_directory_list($dir);

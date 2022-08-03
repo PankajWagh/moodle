@@ -314,34 +314,25 @@ class page_requirements_manager {
 
             // It is possible that the $page->context is null, so we can't use $page->context->id.
             $contextid = null;
-            $contextinstanceid = null;
             if (!is_null($page->context)) {
                 $contextid = $page->context->id;
-                $contextinstanceid = $page->context->instanceid;
-                $courseid = $page->course->id;
-                $coursecontext = context_course::instance($courseid);
             }
 
             $this->M_cfg = array(
-                'wwwroot'               => $CFG->wwwroot,
-                'homeurl'               => $page->navigation->action,
-                'sesskey'               => sesskey(),
-                'sessiontimeout'        => $CFG->sessiontimeout,
-                'sessiontimeoutwarning' => $CFG->sessiontimeoutwarning,
-                'themerev'              => theme_get_revision(),
-                'slasharguments'        => (int)(!empty($CFG->slasharguments)),
-                'theme'                 => $page->theme->name,
-                'iconsystemmodule'      => $iconsystem->get_amd_name(),
-                'jsrev'                 => $this->get_jsrev(),
-                'admin'                 => $CFG->admin,
-                'svgicons'              => $page->theme->use_svg_icons(),
-                'usertimezone'          => usertimezone(),
-                'courseId'              => isset($courseid) ? (int) $courseid : 0,
-                'courseContextId'       => isset($coursecontext) ? $coursecontext->id : 0,
-                'contextid'             => $contextid,
-                'contextInstanceId'     => (int) $contextinstanceid,
-                'langrev'               => get_string_manager()->get_revision(),
-                'templaterev'           => $this->get_templaterev()
+                'wwwroot'             => $CFG->wwwroot,
+                'sesskey'             => sesskey(),
+                'sessiontimeout'      => $CFG->sessiontimeout,
+                'themerev'            => theme_get_revision(),
+                'slasharguments'      => (int)(!empty($CFG->slasharguments)),
+                'theme'               => $page->theme->name,
+                'iconsystemmodule'    => $iconsystem->get_amd_name(),
+                'jsrev'               => $this->get_jsrev(),
+                'admin'               => $CFG->admin,
+                'svgicons'            => $page->theme->use_svg_icons(),
+                'usertimezone'        => usertimezone(),
+                'contextid'           => $contextid,
+                'langrev'             => get_string_manager()->get_revision(),
+                'templaterev'         => $this->get_templaterev()
             );
             if ($CFG->debugdeveloper) {
                 $this->M_cfg['developerdebug'] = true;
@@ -795,6 +786,8 @@ class page_requirements_manager {
                                     'requires' => array('node', 'cookie'));
                     break;
                 case 'core_completion':
+                    $module = array('name'     => 'core_completion',
+                                    'fullpath' => '/course/completion.js');
                     break;
                 case 'core_message':
                     $module = array('name'     => 'core_message',
@@ -1622,6 +1615,14 @@ EOF;
         // First the skip links.
         $output = $renderer->render_skip_links($this->skiplinks);
 
+        // The polyfill needs to load before the other JavaScript in order to make sure
+        // that we have access to the functions it provides.
+        if (empty($CFG->cachejs)) {
+            $output .= html_writer::script('', $this->js_fix_url('/lib/babel-polyfill/polyfill.js'));
+        } else {
+            $output .= html_writer::script('', $this->js_fix_url('/lib/babel-polyfill/polyfill.min.js'));
+        }
+
         // Include the Polyfills.
         $output .= html_writer::script('', $this->js_fix_url('/lib/polyfills/polyfill.js'));
 
@@ -1668,7 +1669,6 @@ EOF;
         $this->js_call_amd('core/log', 'setConfig', array($logconfig));
         // Add any global JS that needs to run on all pages.
         $this->js_call_amd('core/page_global', 'init');
-        $this->js_call_amd('core/confirm');
 
         // Call amd init functions.
         $output .= $this->get_amd_footercode();
@@ -1697,9 +1697,6 @@ EOF;
             'error',
             'file',
             'url',
-            // TODO MDL-70830 shortforms should preload the collapseall/expandall strings properly.
-            'collapseall',
-            'expandall',
         ), 'moodle');
         $this->strings_for_js(array(
             'debuginfo',

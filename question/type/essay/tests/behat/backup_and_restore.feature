@@ -1,5 +1,5 @@
 @qtype @qtype_essay
-Feature: Test duplicating a quiz containing an Essay question
+Feature: Test duplicating a quiz containing an Assay question
   As a teacher
   In order re-use my courses containing Essay questions
   I need to be able to backup and restore them

@@ -23,10 +23,6 @@
  */
 namespace core\task;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
-
 /**
  * Simple task to delete old backup records.
  */
@@ -51,8 +47,7 @@ class backup_cleanup_task extends scheduled_task {
         $loglifetime = get_config('backup', 'loglifetime');
 
         if (empty($loglifetime)) {
-            mtrace('The \'loglifetime\' config is not set. Can\'t proceed and delete old backup records.');
-            return;
+            throw new coding_exception('The \'loglifetime\' config is not set. Can\'t proceed and delete old backup records.');
         }
 
         // First, get the list of all backupids older than loglifetime.
@@ -70,9 +65,6 @@ class backup_cleanup_task extends scheduled_task {
                 $DB->delete_records('backup_controllers', array('backupid' => $record->backupid));
             }
         }
-
-        // Delete files and dirs older than 1 week.
-        \backup_helper::delete_old_backup_dirs(strtotime('-1 week'));
     }
 
 }

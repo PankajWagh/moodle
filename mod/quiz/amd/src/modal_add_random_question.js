@@ -22,23 +22,23 @@
  */
 define([
     'jquery',
+    'core/yui',
     'core/notification',
     'core/modal',
     'core/modal_events',
     'core/modal_registry',
     'core/fragment',
     'core/templates',
-    'core_form/changechecker',
 ],
 function(
     $,
+    Y,
     Notification,
     Modal,
     ModalEvents,
     ModalRegistry,
     Fragment,
-    Templates,
-    FormChangeChecker,
+    Templates
 ) {
 
     var registered = false;
@@ -272,9 +272,12 @@ function(
             return;
         }.bind(this))
         .then(function() {
-            // Make sure the form change checker is disabled otherwise it'll stop the user from navigating away from the
-            // page once the modal is hidden.
-            FormChangeChecker.disableAllChecks();
+            // Make sure the form change checker is disabled otherwise it'll
+            // stop the user from navigating away from the page once the modal
+            // is hidden.
+            Y.use('moodle-core-formchangechecker', function() {
+                M.core_formchangechecker.reset_form_dirty_state();
+            });
             return;
         })
         .fail(Notification.exception);

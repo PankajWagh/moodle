@@ -64,7 +64,7 @@ if (!wiki_user_can_view($subwiki, $wiki)) {
     print_error('cannotviewpage', 'wiki');
 }
 
-$wikipage = new page_wiki_viewversion($wiki, $subwiki, $cm, 'modulepage');
+$wikipage = new page_wiki_viewversion($wiki, $subwiki, $cm);
 
 $wikipage->set_page($page);
 $wikipage->set_versionid($versionid);

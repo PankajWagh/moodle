@@ -50,7 +50,6 @@ class defaulthomepage_form extends \moodleform {
         $options = [
             HOMEPAGE_SITE => new lang_string('site'),
             HOMEPAGE_MY => new lang_string('mymoodle', 'admin'),
-            HOMEPAGE_MYCOURSES => new lang_string('mycourses', 'admin'),
         ];
 
         $mform->addElement('select', 'defaulthomepage', get_string('defaulthomepageuser'), $options);

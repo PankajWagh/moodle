@@ -21,15 +21,8 @@
  * @copyright  2016 Damyon Wiese <damyon@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core_form/events'], function($, FormEvent) {
+define(['jquery', 'core/event'], function($, Event) {
     return {
-        /**
-         * Enhance the supplied element to handle form field errors.
-         *
-         * @method
-         * @param {String} elementid
-         * @listens event:formFieldValidationFailed
-         */
         enhance: function(elementid) {
             var element = document.getElementById(elementid);
             if (!element) {
@@ -38,10 +31,8 @@ define(['jquery', 'core_form/events'], function($, FormEvent) {
                 return;
             }
 
-            element.addEventListener(FormEvent.eventTypes.formFieldValidationFailed, e => {
-                const msg = e.detail.message;
-                e.preventDefault();
-
+            $(element).on(Event.Events.FORM_FIELD_VALIDATION, function(event, msg) {
+                event.preventDefault();
                 var parent = $(element).closest('.form-group');
                 var feedback = parent.find('.form-control-feedback');
                 const feedbackId = feedback.attr('id');

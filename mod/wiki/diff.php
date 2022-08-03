@@ -38,6 +38,7 @@ require_once($CFG->dirroot . '/mod/wiki/locallib.php');
 require_once($CFG->dirroot . '/mod/wiki/pagelib.php');
 
 require_once($CFG->dirroot . '/mod/wiki/diff/difflib.php');
+require_once($CFG->dirroot . '/mod/wiki/diff/diff_nwiki.php');
 
 $pageid = required_param('pageid', PARAM_TEXT);
 $compare = required_param('compare', PARAM_INT);
@@ -71,7 +72,7 @@ if (!wiki_user_can_view($subwiki, $wiki)) {
     print_error('cannotviewpage', 'wiki');
 }
 
-$wikipage = new page_wiki_diff($wiki, $subwiki, $cm, 'modulepage');
+$wikipage = new page_wiki_diff($wiki, $subwiki, $cm);
 
 $wikipage->set_page($page);
 $wikipage->set_comparison($compare, $comparewith);

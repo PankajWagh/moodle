@@ -68,7 +68,13 @@ echo $OUTPUT->heading(get_string('defaultcompletion', 'completion'));
 
 echo $renderer->navigation($course, 'defaultcompletion');
 
-$PAGE->requires->js_call_amd('core_form/changechecker', 'watchFormById', ['theform']);
+$PAGE->requires->yui_module('moodle-core-formchangechecker',
+        'M.core_formchangechecker.init',
+        array(array(
+            'formid' => 'theform'
+        ))
+);
+$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
 
 echo $renderer->defaultcompletion($activityresourcedata);
 

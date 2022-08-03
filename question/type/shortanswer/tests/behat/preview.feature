@@ -27,6 +27,7 @@ Feature: Preview a Short answer question
   @javascript @_switch_window
   Scenario: Preview a Short answer question with correct answer
     When I choose "Preview" action for "shortanswer-001" in the question bank
+    And I switch to "questionpreview" window
     Then I should see "Name an amphibian:"
     # Set behaviour options
     And I set the following fields to these values:
@@ -41,6 +42,7 @@ Feature: Preview a Short answer question
   @javascript @_switch_window
   Scenario: Preview a Short answer question with almost correct answer
     When I choose "Preview" action for "shortanswer-001" in the question bank
+    And I switch to "questionpreview" window
     Then I should see "Name an amphibian:"
     # Set behaviour options
     And I set the following fields to these values:
@@ -55,6 +57,7 @@ Feature: Preview a Short answer question
   @javascript @_switch_window
   Scenario: Preview a Short answer question with incorrect answer
     When I choose "Preview" action for "shortanswer-001" in the question bank
+    And I switch to "questionpreview" window
     Then I should see "Name an amphibian:"
     # Set behaviour options
     And I set the following fields to these values:

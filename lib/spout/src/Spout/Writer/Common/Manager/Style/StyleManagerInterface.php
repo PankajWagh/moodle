@@ -24,7 +24,7 @@ interface StyleManagerInterface
      * Typically, set "wrap text" if a cell contains a new line.
      *
      * @param Cell $cell
-     * @return PossiblyUpdatedStyle The eventually updated style
+     * @return Style The updated style
      */
-    public function applyExtraStylesIfNeeded(Cell $cell) : PossiblyUpdatedStyle;
+    public function applyExtraStylesIfNeeded(Cell $cell);
 }

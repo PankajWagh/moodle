@@ -254,7 +254,7 @@ function(
         });
 
         $(SELECTORS.JUMPTO).focus(function() {
-            var firstInput = root.find(SELECTORS.CLOSE_BUTTON);
+            var firstInput = $(SELECTORS.HEADER_CONTAINER).find('input:visible');
             if (firstInput.length) {
                 firstInput.focus();
             } else {
@@ -297,13 +297,7 @@ function(
         });
 
         var closebutton = root.find(SELECTORS.CLOSE_BUTTON);
-        closebutton.on(CustomEvents.events.activate, function(e, data) {
-            data.originalEvent.preventDefault();
-
-            var button = $(SELECTORS.DRAWER).attr('data-origin');
-            if (button) {
-                $('#' + button).focus();
-            }
+        closebutton.on(CustomEvents.events.activate, function() {
             PubSub.publish(Events.TOGGLE_VISIBILITY);
         });
 

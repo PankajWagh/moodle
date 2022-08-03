@@ -78,16 +78,4 @@ class block_globalsearch extends block_base {
 
         return $this->content;
     }
-
-    /**
-     * This block shouldn't be added to a page if the global search advanced feature is disabled.
-     *
-     * @param moodle_page $page
-     * @return bool
-     */
-    public function can_block_be_added(moodle_page $page): bool {
-        global $CFG;
-
-        return $CFG->enableglobalsearch;
-    }
 }

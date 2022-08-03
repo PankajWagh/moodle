@@ -245,9 +245,7 @@ if (grade_regrade_final_grades_if_required($course, $grade_edit_tree_index_check
     $recreatetree = true;
 }
 
-$actionbar = new \core_grades\output\gradebook_setup_action_bar($context);
-print_grade_page_head($courseid, 'settings', 'setup', get_string('gradebooksetup', 'grades'),
-    false, false, true, null, null, null, $actionbar);
+print_grade_page_head($courseid, 'settings', 'setup', get_string('gradebooksetup', 'grades'));
 
 // Print Table of categories and items
 echo $OUTPUT->box_start('gradetreebox generalbox');
@@ -288,11 +286,26 @@ echo $OUTPUT->container_start('buttons mdl-align');
 
 if ($moving) {
     echo $OUTPUT->single_button(new moodle_url('index.php', array('id'=>$course->id)), get_string('cancel'), 'get');
+} else {
+    echo $OUTPUT->single_button(new moodle_url('item.php', array('courseid' => $course->id)), get_string('additem',
+        'grades'), 'get');
+    if (!empty($CFG->enableoutcomes)) {
+        echo $OUTPUT->single_button(new moodle_url('outcomeitem.php', array('courseid'=>$course->id)), get_string('addoutcomeitem', 'grades'), 'get');
+    }
+    echo $OUTPUT->single_button(new moodle_url('category.php', array('courseid' => $course->id)), get_string('addcategory',
+        'grades'), 'get');
+    //echo $OUTPUT->(new moodle_url('index.php', array('id'=>$course->id, 'action'=>'autosort')), get_string('autosort', 'grades'), 'get');
 }
 
 echo $OUTPUT->container_end();
 
-$PAGE->requires->js_call_amd('core_form/changechecker', 'watchFormById', ['gradetreeform']);
+$PAGE->requires->yui_module('moodle-core-formchangechecker',
+    'M.core_formchangechecker.init',
+    array(array(
+        'formid' => 'gradetreeform'
+    ))
+);
+$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
 
 echo $OUTPUT->footer();
 die;

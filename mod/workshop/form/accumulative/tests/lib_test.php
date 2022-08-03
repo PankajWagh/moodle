@@ -18,14 +18,10 @@
  * Unit tests for Accumulative grading strategy logic
  *
  * @package    workshopform_accumulative
- * @category   test
+ * @category   phpunit
  * @copyright  2009 David Mudrak <david.mudrak@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace workshopform_accumulative;
-
-use workshop;
-use workshop_accumulative_strategy;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -34,10 +30,8 @@ global $CFG;
 require_once($CFG->dirroot . '/mod/workshop/locallib.php');
 require_once($CFG->dirroot . '/mod/workshop/form/accumulative/lib.php');
 
-/**
- * Unit tests for Accumulative grading strategy lib.php
- */
-class lib_test extends \advanced_testcase {
+
+class workshop_accumulative_strategy_testcase extends advanced_testcase {
     /** workshop instance emulation */
     protected $workshop;
 
@@ -89,7 +83,7 @@ class lib_test extends \advanced_testcase {
         $this->strategy->dimensions[1003] = (object)array('grade' => '20', 'weight' => '-1');
         $grades[] = (object)array('dimensionid' => 1003, 'grade' => '20');
         // exercise SUT
-        $this->expectException(\coding_exception::class);
+        $this->expectException(coding_exception::class);
         $suggested = $this->strategy->calculate_peer_grade($grades);
     }
 
@@ -190,7 +184,7 @@ class lib_test extends \advanced_testcase {
         $grades[] = (object)array('dimensionid' => 1012, 'grade' => '4.00000'); // exceeds the number of scale items
 
         // Exercise SUT.
-        $this->expectException(\coding_exception::class);
+        $this->expectException(coding_exception::class);
         $suggested = $this->strategy->calculate_peer_grade($grades);
     }
 }

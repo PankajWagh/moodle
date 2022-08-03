@@ -26,8 +26,6 @@ namespace tool_usertours\output;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . "/filelib.php");
-
 use tool_usertours\step as stepsource;
 
 /**
@@ -62,11 +60,6 @@ class step implements \renderable {
         global $PAGE;
         $step = $this->step;
 
-        $content = $step->get_content();
-        $systemcontext = \context_system::instance();
-        $content = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $systemcontext->id,
-            'tool_usertours', 'stepcontent', $step->get_id());
-
         $result = (object) [
             'stepid'    => $step->get_id(),
             'title'     => external_format_text(
@@ -76,8 +69,8 @@ class step implements \renderable {
                     'tool_usertours'
                 )[0],
             'content'   => external_format_text(
-                    stepsource::get_string_from_input($content),
-                    $step->get_contentformat(),
+                    stepsource::get_string_from_input($step->get_content()),
+                    FORMAT_HTML,
                     $PAGE->context->id,
                     'tool_usertours'
                 )[0],

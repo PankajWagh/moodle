@@ -79,6 +79,12 @@ class core_user_external extends external_api {
             // Interests.
             'interests' => new external_value(PARAM_TEXT, 'User interests (separated by commas)', VALUE_OPTIONAL),
             // Optional.
+            'url' => new external_value(core_user::get_property_type('url'), 'User web page', VALUE_OPTIONAL),
+            'icq' => new external_value(core_user::get_property_type('icq'), 'ICQ number', VALUE_OPTIONAL),
+            'skype' => new external_value(core_user::get_property_type('skype'), 'Skype ID', VALUE_OPTIONAL),
+            'aim' => new external_value(core_user::get_property_type('aim'), 'AIM ID', VALUE_OPTIONAL),
+            'yahoo' => new external_value(core_user::get_property_type('yahoo'), 'Yahoo ID', VALUE_OPTIONAL),
+            'msn' => new external_value(core_user::get_property_type('msn'), 'MSN ID', VALUE_OPTIONAL),
             'idnumber' => new external_value(core_user::get_property_type('idnumber'),
                 'An arbitrary ID code number perhaps from the institution', VALUE_DEFAULT, ''),
             'institution' => new external_value(core_user::get_property_type('institution'), 'institution', VALUE_OPTIONAL),
@@ -497,6 +503,12 @@ class core_user_external extends external_api {
             // Interests.
             'interests' => new external_value(PARAM_TEXT, 'User interests (separated by commas)', VALUE_OPTIONAL),
             // Optional.
+            'url' => new external_value(core_user::get_property_type('url'), 'User web page', VALUE_OPTIONAL),
+            'icq' => new external_value(core_user::get_property_type('icq'), 'ICQ number', VALUE_OPTIONAL),
+            'skype' => new external_value(core_user::get_property_type('skype'), 'Skype ID', VALUE_OPTIONAL),
+            'aim' => new external_value(core_user::get_property_type('aim'), 'AIM ID', VALUE_OPTIONAL),
+            'yahoo' => new external_value(core_user::get_property_type('yahoo'), 'Yahoo ID', VALUE_OPTIONAL),
+            'msn' => new external_value(core_user::get_property_type('msn'), 'MSN ID', VALUE_OPTIONAL),
             'idnumber' => new external_value(core_user::get_property_type('idnumber'),
                 'An arbitrary ID code number perhaps from the institution', VALUE_OPTIONAL),
             'institution' => new external_value(core_user::get_property_type('institution'), 'Institution', VALUE_OPTIONAL),
@@ -564,143 +576,106 @@ class core_user_external extends external_api {
                 'maxfiles'       => 1,
                 'accepted_types' => 'optimised_image');
 
-        $warnings = array();
+        $transaction = $DB->start_delegated_transaction();
+
         foreach ($params['users'] as $user) {
-            // Catch any exception while updating a user and return it as a warning.
-            try {
-                $transaction = $DB->start_delegated_transaction();
-
-                // First check the user exists.
-                if (!$existinguser = core_user::get_user($user['id'])) {
-                    throw new moodle_exception('invaliduserid', '', '', null,
-                            'Invalid user ID');
-                }
-                // Check if we are trying to update an admin.
-                if ($existinguser->id != $USER->id and is_siteadmin($existinguser) and !is_siteadmin($USER)) {
-                    throw new moodle_exception('usernotupdatedadmin', '', '', null,
-                            'Cannot update admin accounts');
-                }
-                // Other checks (deleted, remote or guest users).
-                if ($existinguser->deleted) {
-                    throw new moodle_exception('usernotupdateddeleted', '', '', null,
-                            'User is a deleted user');
-                }
-                if (is_mnet_remote_user($existinguser)) {
-                    throw new moodle_exception('usernotupdatedremote', '', '', null,
-                            'User is a remote user');
-                }
-                if (isguestuser($existinguser->id)) {
-                    throw new moodle_exception('usernotupdatedguest', '', '', null,
-                            'Cannot update guest account');
-                }
-                // Check duplicated emails.
-                if (isset($user['email']) && $user['email'] !== $existinguser->email) {
-                    if (!validate_email($user['email'])) {
-                        throw new moodle_exception('useremailinvalid', '', '', null,
-                                'Invalid email address');
-                    } else if (empty($CFG->allowaccountssameemail)) {
-                        // Make a case-insensitive query for the given email address
-                        // and make sure to exclude the user being updated.
-                        $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid AND id <> :userid';
-                        $params = array(
-                            'email' => $user['email'],
-                            'mnethostid' => $CFG->mnet_localhost_id,
-                            'userid' => $user['id']
-                        );
-                        // Skip if there are other user(s) that already have the same email.
-                        if ($DB->record_exists_select('user', $select, $params)) {
-                            throw new moodle_exception('useremailduplicate', '', '', null,
-                                    'Duplicate email address');
-                        }
+            // First check the user exists.
+            if (!$existinguser = core_user::get_user($user['id'])) {
+                continue;
+            }
+            // Check if we are trying to update an admin.
+            if ($existinguser->id != $USER->id and is_siteadmin($existinguser) and !is_siteadmin($USER)) {
+                continue;
+            }
+            // Other checks (deleted, remote or guest users).
+            if ($existinguser->deleted or is_mnet_remote_user($existinguser) or isguestuser($existinguser->id)) {
+                continue;
+            }
+            // Check duplicated emails.
+            if (isset($user['email']) && $user['email'] !== $existinguser->email) {
+                if (!validate_email($user['email'])) {
+                    continue;
+                } else if (empty($CFG->allowaccountssameemail)) {
+                    // Make a case-insensitive query for the given email address and make sure to exclude the user being updated.
+                    $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid AND id <> :userid';
+                    $params = array(
+                        'email' => $user['email'],
+                        'mnethostid' => $CFG->mnet_localhost_id,
+                        'userid' => $user['id']
+                    );
+                    // Skip if there are other user(s) that already have the same email.
+                    if ($DB->record_exists_select('user', $select, $params)) {
+                        continue;
                     }
                 }
+            }
 
-                user_update_user($user, true, false);
+            user_update_user($user, true, false);
 
-                $userobject = (object)$user;
+            $userobject = (object)$user;
 
-                // Update user picture if it was specified for this user.
-                if (empty($CFG->disableuserimages) && isset($user['userpicture'])) {
-                    $userobject->deletepicture = null;
+            // Update user picture if it was specified for this user.
+            if (empty($CFG->disableuserimages) && isset($user['userpicture'])) {
+                $userobject->deletepicture = null;
 
-                    if ($user['userpicture'] == 0) {
-                        $userobject->deletepicture = true;
-                    } else {
-                        $userobject->imagefile = $user['userpicture'];
-                    }
-
-                    core_user::update_picture($userobject, $filemanageroptions);
+                if ($user['userpicture'] == 0) {
+                    $userobject->deletepicture = true;
+                } else {
+                    $userobject->imagefile = $user['userpicture'];
                 }
 
-                // Update user interests.
-                if (!empty($user['interests'])) {
-                    $trimmedinterests = array_map('trim', explode(',', $user['interests']));
-                    $interests = array_filter($trimmedinterests, function($value) {
-                        return !empty($value);
-                    });
-                    useredit_update_interests($userobject, $interests);
-                }
+                core_user::update_picture($userobject, $filemanageroptions);
+            }
 
-                // Update user custom fields.
-                if (!empty($user['customfields'])) {
+            // Update user interests.
+            if (!empty($user['interests'])) {
+                $trimmedinterests = array_map('trim', explode(',', $user['interests']));
+                $interests = array_filter($trimmedinterests, function($value) {
+                    return !empty($value);
+                });
+                useredit_update_interests($userobject, $interests);
+            }
 
-                    foreach ($user['customfields'] as $customfield) {
-                        // Profile_save_data() saves profile file it's expecting a user with the correct id,
-                        // and custom field to be named profile_field_"shortname".
-                        $user["profile_field_".$customfield['type']] = $customfield['value'];
-                    }
-                    profile_save_data((object) $user);
-                }
+            // Update user custom fields.
+            if (!empty($user['customfields'])) {
 
-                // Trigger event.
-                \core\event\user_updated::create_from_userid($user['id'])->trigger();
+                foreach ($user['customfields'] as $customfield) {
+                    // Profile_save_data() saves profile file it's expecting a user with the correct id,
+                    // and custom field to be named profile_field_"shortname".
+                    $user["profile_field_".$customfield['type']] = $customfield['value'];
+                }
+                profile_save_data((object) $user);
+            }
 
-                // Preferences.
-                if (!empty($user['preferences'])) {
-                    $userpref = clone($existinguser);
-                    foreach ($user['preferences'] as $preference) {
-                        $userpref->{'preference_'.$preference['type']} = $preference['value'];
-                    }
-                    useredit_update_user_preference($userpref);
-                }
-                if (isset($user['suspended']) and $user['suspended']) {
-                    \core\session\manager::kill_user_sessions($user['id']);
-                }
+            // Trigger event.
+            \core\event\user_updated::create_from_userid($user['id'])->trigger();
 
-                $transaction->allow_commit();
-            } catch (Exception $e) {
-                try {
-                    $transaction->rollback($e);
-                } catch (Exception $e) {
-                    $warning = [];
-                    $warning['item'] = 'user';
-                    $warning['itemid'] = $user['id'];
-                    if ($e instanceof moodle_exception) {
-                        $warning['warningcode'] = $e->errorcode;
-                    } else {
-                        $warning['warningcode'] = $e->getCode();
-                    }
-                    $warning['message'] = $e->getMessage();
-                    $warnings[] = $warning;
+            // Preferences.
+            if (!empty($user['preferences'])) {
+                $userpref = clone($existinguser);
+                foreach ($user['preferences'] as $preference) {
+                    $userpref->{'preference_'.$preference['type']} = $preference['value'];
                 }
+                useredit_update_user_preference($userpref);
+            }
+            if (isset($user['suspended']) and $user['suspended']) {
+                \core\session\manager::kill_user_sessions($user['id']);
             }
         }
 
-        return ['warnings' => $warnings];
+        $transaction->allow_commit();
+
+        return null;
     }
 
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return null
      * @since Moodle 2.2
      */
     public static function update_users_returns() {
-        return new external_single_structure(
-            array(
-                'warnings' => new external_warnings()
-            )
-        );
+        return null;
     }
 
     /**
@@ -1118,6 +1093,11 @@ class core_user_external extends external_api {
             'address'     => new external_value(core_user::get_property_type('address'), 'Postal address', VALUE_OPTIONAL),
             'phone1'      => new external_value(core_user::get_property_type('phone1'), 'Phone 1', VALUE_OPTIONAL),
             'phone2'      => new external_value(core_user::get_property_type('phone2'), 'Phone 2', VALUE_OPTIONAL),
+            'icq'         => new external_value(core_user::get_property_type('icq'), 'icq number', VALUE_OPTIONAL),
+            'skype'       => new external_value(core_user::get_property_type('skype'), 'skype id', VALUE_OPTIONAL),
+            'yahoo'       => new external_value(core_user::get_property_type('yahoo'), 'yahoo id', VALUE_OPTIONAL),
+            'aim'         => new external_value(core_user::get_property_type('aim'), 'aim id', VALUE_OPTIONAL),
+            'msn'         => new external_value(core_user::get_property_type('msn'), 'msn number', VALUE_OPTIONAL),
             'department'  => new external_value(core_user::get_property_type('department'), 'department', VALUE_OPTIONAL),
             'institution' => new external_value(core_user::get_property_type('institution'), 'institution', VALUE_OPTIONAL),
             'idnumber'    => new external_value(core_user::get_property_type('idnumber'), 'An arbitrary ID code number perhaps from the institution', VALUE_OPTIONAL),
@@ -1135,6 +1115,7 @@ class core_user_external extends external_api {
             'description' => new external_value(core_user::get_property_type('description'), 'User profile description', VALUE_OPTIONAL),
             'descriptionformat' => new external_format_value(core_user::get_property_type('descriptionformat'), VALUE_OPTIONAL),
             'city'        => new external_value(core_user::get_property_type('city'), 'Home city of the user', VALUE_OPTIONAL),
+            'url'         => new external_value(core_user::get_property_type('url'), 'URL of the user', VALUE_OPTIONAL),
             'country'     => new external_value(core_user::get_property_type('country'), 'Home country code of the user, such as AU or CZ', VALUE_OPTIONAL),
             'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - small version'),
             'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - big version'),

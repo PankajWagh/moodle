@@ -22,7 +22,7 @@
  * @copyright  2020 Jake Dallimore <jrhdallimore@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace core_course;
+namespace tests\core_course;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -35,7 +35,7 @@ use core_course\local\repository\content_item_readonly_repository;
  * @copyright  2020 Jake Dallimore <jrhdallimore@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class exporters_content_item_test extends \advanced_testcase {
+class exporters_course_content_item_testcase extends \advanced_testcase {
 
     /**
      * Test confirming a content_item can be exported for a course.
@@ -92,8 +92,7 @@ class exporters_content_item_test extends \advanced_testcase {
             '* First point
             * Another point',
             MOD_ARCHETYPE_OTHER,
-            'core_test',
-            MOD_PURPOSE_CONTENT
+            'core_test'
         );
 
         $ciexporter = new course_content_item_exporter($contentitem, ['context' => \context_course::instance($course->id)]);

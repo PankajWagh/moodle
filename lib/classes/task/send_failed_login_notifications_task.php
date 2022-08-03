@@ -115,8 +115,7 @@ class send_failed_login_notifications_task extends scheduled_task {
 
         // Now, select all the login error logged records belonging to the ips and infos
         // since lastnotifyfailure, that we have stored in the cache_flags table.
-        $userfieldsapi = \core_user\fields::for_name();
-        $namefields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $namefields = get_all_user_name_fields(true, 'u');
         $sql = "SELECT * FROM (
                         SELECT l.*, u.username, $namefields
                           FROM {" . $logtable . "} l

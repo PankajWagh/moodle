@@ -57,8 +57,7 @@ class export_form extends \moodleform {
                 'valuehtmlcallback' => function($value) {
                     global $OUTPUT;
 
-                    $userfieldsapi = \core_user\fields::for_name();
-                    $allusernames = $userfieldsapi->get_sql('', false, '', '', false)->selects;
+                    $allusernames = get_all_user_name_fields(true);
                     $fields = 'id, ' . $allusernames;
                     $user = \core_user::get_user($value, $fields);
                     $useroptiondata = [

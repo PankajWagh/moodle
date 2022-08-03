@@ -52,3 +52,4 @@ M.qtype_multianswer.init = function (Y, questiondiv) {
         feedbackspan.removeClass('accesshide');
     });
 };
+

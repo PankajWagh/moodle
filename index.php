@@ -34,15 +34,11 @@ require_once($CFG->libdir .'/filelib.php');
 redirect_if_major_upgrade_required();
 
 $urlparams = array();
-if (!empty($CFG->defaulthomepage) &&
-        ($CFG->defaulthomepage == HOMEPAGE_MY || $CFG->defaulthomepage == HOMEPAGE_MYCOURSES) &&
-        optional_param('redirect', 1, PARAM_BOOL) === 0
-) {
+if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && optional_param('redirect', 1, PARAM_BOOL) === 0) {
     $urlparams['redirect'] = 0;
 }
 $PAGE->set_url('/', $urlparams);
 $PAGE->set_pagelayout('frontpage');
-$PAGE->add_body_class('limitedwidth');
 $PAGE->set_other_editing_capability('moodle/course:update');
 $PAGE->set_other_editing_capability('moodle/course:manageactivities');
 $PAGE->set_other_editing_capability('moodle/course:activityvisibility');
@@ -51,6 +47,20 @@ $PAGE->set_other_editing_capability('moodle/course:activityvisibility');
 $PAGE->set_cacheable(false);
 
 require_course_login($SITE);
+
+// IOMAD - Set the theme if the server hostname matches one of ours.
+if ($company = $DB->get_record('company', array('hostname' => $_SERVER["SERVER_NAME"]))) {
+    $hascompanybyurl = true;
+    // set the current editing company to be this.
+    $SESSION->currenteditingcompany = $company->id;
+    // Set the page theme.
+    $SESSION->theme = $company->theme;
+    $SESSION->company = $company;
+    $wantedcompanyid = $company->id;
+    $wantedcompanyshort = $company->shortname;
+} else {
+    $hascompanybyurl = false;
+}
 
 $hasmaintenanceaccess = has_capability('moodle/site:maintenanceaccess', context_system::instance());
 
@@ -75,8 +85,6 @@ if (get_home_page() != HOMEPAGE_SITE) {
         set_user_preference('user_home_page_preference', HOMEPAGE_SITE);
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && $redirect === 1) {
         redirect($CFG->wwwroot .'/my/');
-    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES) && $redirect === 1) {
-        redirect($CFG->wwwroot .'/my/courses.php');
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_USER)) {
         $frontpagenode = $PAGE->settingsnav->find('frontpage', null);
         if ($frontpagenode) {
@@ -102,21 +110,7 @@ $PAGE->set_docs_path('');
 $editing = $PAGE->user_is_editing();
 $PAGE->set_title($SITE->fullname);
 $PAGE->set_heading($SITE->fullname);
-if (has_capability('moodle/course:update', context_system::instance())) {
-    $PAGE->has_secondary_navigation_setter(true);
-    $PAGE->set_secondary_active_tab('coursehome');
-} else {
-    $PAGE->has_secondary_navigation_setter(false);
-}
-
 $courserenderer = $PAGE->get_renderer('core', 'course');
-
-if ($hassiteconfig) {
-    $editurl = new moodle_url('/course/view.php', ['id' => SITEID, 'sesskey' => sesskey()]);
-    $editbutton = $OUTPUT->edit_button($editurl);
-    $PAGE->set_button($editbutton);
-}
-
 echo $OUTPUT->header();
 
 $siteformatoptions = course_get_format($SITE)->get_format_options();

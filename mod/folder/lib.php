@@ -33,7 +33,7 @@ define('FOLDER_DISPLAY_INLINE', 1);
 /**
  * List of features supported in Folder module
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed True if module supports feature, false if not, null if doesn't know or string for the module purpose.
+ * @return mixed True if module supports feature, false if not, null if doesn't know
  */
 function folder_supports($feature) {
     switch($feature) {
@@ -46,7 +46,6 @@ function folder_supports($feature) {
         case FEATURE_GRADE_OUTCOMES:          return false;
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_CONTENT;
 
         default: return null;
     }
@@ -440,7 +439,7 @@ function folder_get_coursemodule_info($cm) {
  * @param cm_info $cm
  */
 function folder_cm_info_dynamic(cm_info $cm) {
-    if ($cm->get_custom_data()) {
+    if ($cm->customdata) {
         // the field 'customdata' is not empty IF AND ONLY IF we display contens inline
         $cm->set_no_view_link();
     }

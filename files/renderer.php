@@ -289,9 +289,9 @@ class core_files_renderer extends plugin_renderer_base {
      * @return string
      */
     protected function fm_print_restrictions($fm) {
-        $maxbytes = display_size($fm->options->maxbytes, 0);
+        $maxbytes = display_size($fm->options->maxbytes);
         $strparam = (object) array('size' => $maxbytes, 'attachments' => $fm->options->maxfiles,
-            'areasize' => display_size($fm->options->areamaxbytes, 0));
+            'areasize' => display_size($fm->options->areamaxbytes));
         $hasmaxfiles = !empty($fm->options->maxfiles) && $fm->options->maxfiles > 0;
         $hasarealimit = !empty($fm->options->areamaxbytes) && $fm->options->areamaxbytes != -1;
         if ($hasmaxfiles && $hasarealimit) {

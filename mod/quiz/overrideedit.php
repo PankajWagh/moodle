@@ -66,9 +66,6 @@ if ($overrideid) {
 
 $PAGE->set_url($url);
 
-// Activate the secondary nav tab.
-$PAGE->set_secondary_active_tab("mod_quiz_useroverrides");
-
 require_login($course, false, $cm);
 
 $context = context_module::instance($cm->id);
@@ -179,8 +176,6 @@ if ($mform->is_cancelled()) {
     if (!empty($override->id)) {
         $fromform->id = $override->id;
         $DB->update_record('quiz_overrides', $fromform);
-        $cachekey = $groupmode ? "{$fromform->quiz}_g_{$fromform->groupid}" : "{$fromform->quiz}_u_{$fromform->userid}";
-        cache::make('mod_quiz', 'overrides')->delete($cachekey);
 
         // Determine which override updated event to fire.
         $params['objectid'] = $override->id;
@@ -197,8 +192,6 @@ if ($mform->is_cancelled()) {
     } else {
         unset($fromform->id);
         $fromform->id = $DB->insert_record('quiz_overrides', $fromform);
-        $cachekey = $groupmode ? "{$fromform->quiz}_g_{$fromform->groupid}" : "{$fromform->quiz}_u_{$fromform->userid}";
-        cache::make('mod_quiz', 'overrides')->delete($cachekey);
 
         // Determine which override created event to fire.
         $params['objectid'] = $fromform->id;
@@ -241,12 +234,8 @@ $PAGE->navbar->add($pagetitle);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title($pagetitle);
 $PAGE->set_heading($course->fullname);
-$PAGE->activityheader->set_attrs([
-    "title" => format_string($quiz->name, true, array('context' => $context)),
-    "description" => "",
-    "hidecompletion" => true
-]);
 echo $OUTPUT->header();
+echo $OUTPUT->heading(format_string($quiz->name, true, array('context' => $context)));
 
 $mform->display();
 

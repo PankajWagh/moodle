@@ -10,17 +10,14 @@ Feature: Course participants can be filtered
       | Course 1 | C1        |     1     | ##5 months ago## |
       | Course 2 | C2        |     0     | ##4 months ago## |
       | Course 3 | C3        |     0     | ##3 months ago## |
-    And the following "custom profile fields" exist:
-      | datatype | shortname  | name           |
-      | text     | frog       | Favourite frog |
     And the following "users" exist:
-      | username | firstname | lastname | email                     | idnumber | country | city   | maildisplay | profile_field_frog |
-      | student1 | Student   | 1        | student1@example.com      | SID1     |         | SCITY1 | 0           | Kermit             |
-      | student2 | Student   | 2        | student2@example.com      | SID2     | GB      | SCITY2 | 1           | Mr Toad            |
-      | student3 | Student   | 3        | student3@example.com      | SID3     | AU      | SCITY3 | 0           |                    |
-      | student4 | Student   | 4        | student4@moodle.com       | SID4     | AT      | SCITY4 | 0           |                    |
-      | student5 | Trendy    | Learnson | trendy@learnson.com       | SID5     | AU      | SCITY5 | 0           |                    |
-      | patricia | Patricia  | Pea      | patricia.pea1@example.org | TID1     | US      | TCITY1 | 0           |                    |
+      | username | firstname | lastname | email                     | idnumber | country | city   | maildisplay |
+      | student1 | Student   | 1        | student1@example.com      | SID1     |         | SCITY1 | 0           |
+      | student2 | Student   | 2        | student2@example.com      | SID2     | GB      | SCITY2 | 1           |
+      | student3 | Student   | 3        | student3@example.com      | SID3     | AU      | SCITY3 | 0           |
+      | student4 | Student   | 4        | student4@moodle.com       | SID4     | AT      | SCITY4 | 0           |
+      | student5 | Trendy    | Learnson | trendy@learnson.com       | SID5     | AU      | SCITY5 | 0           |
+      | patricia | Patricia  | Pea      | patricia.pea1@example.org | TID1     | US      | TCITY1 | 0           |
     And the following "course enrolments" exist:
       | user     | course | role           | status | timeend       |
       | student1 | C1     | student        |    0   |               |
@@ -61,7 +58,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: No filters applied
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     Then I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
@@ -70,7 +68,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario Outline: Filter users for a course with a single value
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     And I set the field "Match" in the "Filter 1" "fieldset" to "<matchtype>"
     And I set the field "type" in the "Filter 1" "fieldset" to "<filtertype>"
@@ -100,7 +99,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario Outline: Filter users for a course with multiple values for a single filter
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     And I set the field "Match" in the "Filter 1" "fieldset" to "<matchtype>"
     And I set the field "type" in the "Filter 1" "fieldset" to "<filtertype>"
@@ -121,7 +121,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario Outline: Filter users which are group members in several courses
-    Given I am on the "C3" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 3" course homepage
     And I navigate to course participants
     And I set the field "type" in the "Filter 1" "fieldset" to "<filtertype>"
     And I set the field "Type or select..." in the "Filter 1" "fieldset" to "<filtervalue>"
@@ -140,7 +141,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: In separate groups mode, a student in a single group can only view and filter by users in their own group
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Unsuspend student 2 for to improve coverage of this test.
@@ -199,7 +201,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: In separate groups mode, a student in multiple groups can only view and filter by users in their own groups
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Unsuspend student 2 for to improve coverage of this test.
@@ -262,7 +265,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Filter users who have no role in a course
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Remove the user role.
@@ -288,7 +292,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Multiple filters applied (All filterset match type)
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Match Any:
@@ -530,7 +535,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Filter match by one or more keywords and modified match types
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Match:
@@ -604,7 +610,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Reorder users without losing filter
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     When I set the field "type" in the "Filter 1" "fieldset" to "Roles"
@@ -626,7 +633,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Only possible to add filter rows for the number of filters available
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     When I set the field "type" in the "Filter 1" "fieldset" to "Keyword"
     And I click on "Add condition" "button"
@@ -644,7 +652,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Rendering filter options for teachers in a course that don't support groups
-    Given I am on the "C2" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 2" course homepage
     When I navigate to course participants
     Then I should see "Roles" in the "type" "field"
     And I should see "Enrolment methods" in the "type" "field"
@@ -652,7 +661,8 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Rendering filter options for students who have limited privileges
-    Given I am on the "C2" "Course" page logged in as "student1"
+    Given I log in as "student1"
+    And I am on "Course 2" course homepage
     When I navigate to course participants
     Then I should see "Roles" in the "type" "field"
     But I should not see "Status" in the "type" "field"
@@ -660,9 +670,10 @@ Feature: Course participants can be filtered
 
   @javascript
   Scenario: Filter by user identity fields
-    Given the following config values are set as admin:
+    Given I log in as "patricia"
+    And the following config values are set as admin:
         | showuseridentity | idnumber,email,city,country |
-    And I am on the "C1" "Course" page logged in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Search by email (only) - should only see visible email + own.
@@ -739,7 +750,8 @@ Feature: Course participants can be filtered
       | showuseridentity | idnumber,email,city,country |
     And I log out
 
-    And I am on the "C1" "Course" page logged in as "patricia"
+    And I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Match:
@@ -808,7 +820,8 @@ Feature: Course participants can be filtered
     #   Keyword Any ["@example.com"].
 
     # Set the Roles to "All" ["Student"].
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     And I set the field "Match" in the "Filter 1" "fieldset" to "All"
     And I set the field "type" in the "Filter 1" "fieldset" to "Roles"
@@ -846,7 +859,8 @@ Feature: Course participants can be filtered
     #   Keyword Any ["@example.com"].
 
     # Set the Roles to "All" ["Student"].
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
     When I set the field "Match" in the "Filter 1" "fieldset" to "All"
     And I set the field "type" in the "Filter 1" "fieldset" to "Roles"
@@ -881,7 +895,8 @@ Feature: Course participants can be filtered
     # Match None:
     #   Keyword Any ["@example.com"]; and
     #   Roles All ["Teacher"].
-    Given I am on the "C1" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 1" course homepage
     And I navigate to course participants
 
     # Set the Keyword to "Any" ["@example.com"]
@@ -929,7 +944,7 @@ Feature: Course participants can be filtered
     Then I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
     And I should see "Student 3" in the "participants" "table"
-    And I should not see "Student 4" in the "participants" "table"
+    And I should see "Student 4" in the "participants" "table"
     But I should not see "Patricia Pea" in the "participants" "table"
 
   @javascript
@@ -937,7 +952,8 @@ Feature: Course participants can be filtered
     # Match:
     #   No filters; and
     # First initial "T".
-    Given I am on the "C2" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 2" course homepage
     And I navigate to course participants
     And I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
@@ -956,7 +972,8 @@ Feature: Course participants can be filtered
     # Match:
     #   No filters; and
     # Last initial "L".
-    Given I am on the "C2" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 2" course homepage
     And I navigate to course participants
     And I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
@@ -976,7 +993,8 @@ Feature: Course participants can be filtered
     #   No filters; and
     # First initial "T"; and
     # Last initial "L".
-    Given I am on the "C2" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 2" course homepage
     And I navigate to course participants
     And I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
@@ -996,7 +1014,8 @@ Feature: Course participants can be filtered
     # Match:
     #   Roles All ["Teacher"]; and
     # First initial "T".
-    Given I am on the "C2" "Course" page logged in as "patricia"
+    Given I log in as "patricia"
+    And I am on "Course 2" course homepage
     And I navigate to course participants
     And I should see "Student 1" in the "participants" "table"
     And I should see "Student 2" in the "participants" "table"
@@ -1017,16 +1036,3 @@ Feature: Course participants can be filtered
     And I should not see "Student 2" in the "participants" "table"
     And I should not see "Student 3" in the "participants" "table"
     And I should not see "Patricia Pea" in the "participants" "table"
-
-  @javascript
-  Scenario: Filtering works correctly with custom profile fields
-    Given the following config values are set as admin:
-      | showuseridentity | email,profile_field_frog |
-    And I am on the "C2" "Course" page logged in as "patricia"
-    And I navigate to course participants
-    And I set the field "type" in the "Filter 1" "fieldset" to "Keyword"
-    And I set the field "Type..." to "Kermit"
-    And I press enter
-    And I click on "Apply filters" "button"
-    Then I should see "Student 1" in the "participants" "table"
-    And I should not see "Student 2" in the "participants" "table"

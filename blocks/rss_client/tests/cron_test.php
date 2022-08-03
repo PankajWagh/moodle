@@ -121,11 +121,11 @@ class block_rss_client_cron_testcase extends advanced_testcase {
 
         // Run the scheduled task and have it fail.
         $task = $this->getMockBuilder(\block_rss_client\task\refreshfeeds::class)
-            ->onlyMethods(['fetch_feed'])
+            ->setMethods(['fetch_feed'])
             ->getMock();
 
         $piemock = $this->getMockBuilder(\moodle_simplepie::class)
-            ->onlyMethods(['error'])
+            ->setMethods(['error'])
             ->getMock();
 
         $piemock->method('error')

@@ -15,7 +15,8 @@ Feature: Uniqueness of Group ID number
       | user | course | role |
       | teacher1 | C1 | editingteacher |
     And I log in as "teacher1"
-    And I am on the "Course 1" "groups" page
+    And I am on "Course 1" course homepage
+    And I navigate to "Users > Groups" in current page administration
 
   Scenario: Group ID number uniqueness
     Given I press "Create group"
@@ -41,7 +42,7 @@ Feature: Uniqueness of Group ID number
     And I press "Cancel"
 
   Scenario: Grouping ID number uniqueness
-    Given I select "Groupings" from the "jump" singleselect
+    Given I follow "Groupings"
     And I press "Create grouping"
     And I set the following fields to these values:
       | Grouping name | Grouping 1 |

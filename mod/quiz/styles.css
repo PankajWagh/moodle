@@ -14,12 +14,14 @@
 
 #page-mod-quiz-attempt .submitbtns,
 #page-mod-quiz-review .submitbtns {
-    display: flex;
+    clear: left;
+    text-align: left;
+    padding-top: 1.5em;
 }
 
 #page-mod-quiz-attempt .submitbtns .mod_quiz-next-nav,
 #page-mod-quiz-review .submitbtns .mod_quiz-next-nav {
-    margin-left: auto;
+    float: right;
 }
 
 .path-mod-quiz .mod_quiz-redo_question_button {
@@ -973,6 +975,16 @@ table#categoryquestions {
     font-size: 100%;
 }
 
+.modulespecificbuttonscontainer {
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+}
+
+.questionbankformforpopup .modulespecificbuttonscontainer {
+    padding-top: 10px;
+    padding-left: 0;
+}
+
 .quizquestionlistcontrols {
     text-align: center;
 }
@@ -1166,4 +1178,52 @@ table#categoryquestions {
     #page-mod-quiz-review .que {
         page-break-inside: avoid;
     }
+}
+.path-mod-quiz #mod_quiz_navblock h3.mod_quiz-section-heading {
+    font-size: 15px;
+    padding: 8px 0px;
+}
+.path-mod-quiz #mod_quiz_navblock .qnbutton
+{
+	height:auto !important;
+}
+
+
+
+.que.multichoice .answer div.r0:has(*~img) 
+{
+	border:1px solid #000;
+}
+
+.answernumber
+{
+	font-weight: bold;
+    text-transform: uppercase;
+}
+.path-mod-quiz #mod_quiz_navblock h3.mod_quiz-section-heading {
+    font-size: 15px;
+    padding: 14px 0;
+}
+
+.path-mod-quiz #mod_quiz_navblock a.answersaved {
+	font-weight: bold;	
+}
+.path-mod-quiz #mod_quiz_navblock .qnbutton .trafficlight{
+	display:none;
+}
+.path-mod-quiz #mod_quiz_navblock .answersaved
+{
+	     background-color: #ccc;
+}
+.que .qtext
+{
+	margin-bottom:0px !important;
+}
+
+.formulation .validationerror{
+display:none;
+}
+.activity-navigation #next-activity-link, .activity-navigation #prev-activity-link{
+    display: none;
+    
 }

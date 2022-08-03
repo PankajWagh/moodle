@@ -33,10 +33,8 @@ require_once($CFG->libdir . '/outputlib.php');
  *
  * @copyright 2012 Sam Hemelryk
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers \theme_config
- * @coversDefaultClass \theme_config
  */
-class theme_config_test extends advanced_testcase {
+class core_theme_config_testcase extends advanced_testcase {
     /**
      * This function will test directives used to serve SVG images to make sure
      * this are making the right decisions.
@@ -131,8 +129,6 @@ class theme_config_test extends advanced_testcase {
 
     /**
      * This function will test custom device detection regular expression setting.
-     *
-     * @covers \core_useragent
      */
     public function test_devicedetectregex() {
         global $CFG;
@@ -177,7 +173,7 @@ class theme_config_test extends advanced_testcase {
         theme_set_sub_revision_for_theme($themename, $themesubrevision);
         $url = $theme->editor_css_url();
 
-        $this->assertMatchesRegularExpression("/{$themerevision}_{$themesubrevision}/", $url->out(false));
+        $this->assertRegExp("/{$themerevision}_{$themesubrevision}/", $url->out(false));
     }
 
     /**
@@ -216,19 +212,5 @@ class theme_config_test extends advanced_testcase {
         $cssactual = $theme->editor_scss_to_css();
 
         $this->assertEquals($cssexpected, $cssactual);
-    }
-
-    /**
-     * Test that {@see theme_config::get_all_block_regions()} returns localised list of region names.
-     *
-     * @covers ::get_all_block_regions
-     */
-    public function test_get_all_block_regions() {
-        $this->resetAfterTest();
-
-        $theme = theme_config::load(theme_config::DEFAULT_THEME);
-        $regions = $theme->get_all_block_regions();
-
-        $this->assertEquals('Right', $regions['side-pre']);
     }
 }

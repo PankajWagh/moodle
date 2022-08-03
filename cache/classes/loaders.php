@@ -445,8 +445,7 @@ class cache implements cache_loader {
             }
             $setaftervalidation = ($result !== false);
         } else if ($this->perfdebug) {
-            $readbytes = $this->store->get_last_io_bytes();
-            cache_helper::record_cache_hit($this->store, $this->definition, 1, $readbytes);
+            cache_helper::record_cache_hit($this->store, $this->definition);
         }
         // 5. Validate strictness.
         if ($strictness === MUST_EXIST && $result === false) {
@@ -493,7 +492,6 @@ class cache implements cache_loader {
         $resultpersist = array();
         $resultstore = array();
         $keystofind = array();
-        $readbytes = cache_store::IO_BYTES_NOT_SUPPORTED;
 
         // First up check the persist cache for each key.
         $isusingpersist = $this->use_static_acceleration();
@@ -517,9 +515,6 @@ class cache implements cache_loader {
         // Next assuming we didn't find all of the keys in the persist cache try loading them from the store.
         if (count($keystofind)) {
             $resultstore = $this->store->get_many(array_keys($keystofind));
-            if ($this->perfdebug) {
-                $readbytes = $this->store->get_last_io_bytes();
-            }
             // Process each item in the result to "unwrap" it.
             foreach ($resultstore as $key => $value) {
                 if ($value instanceof cache_ttl_wrapper) {
@@ -604,7 +599,7 @@ class cache implements cache_loader {
                     $hits++;
                 }
             }
-            cache_helper::record_cache_hit($this->store, $this->definition, $hits, $readbytes);
+            cache_helper::record_cache_hit($this->store, $this->definition, $hits);
             cache_helper::record_cache_miss($this->store, $this->definition, $misses);
         }
 
@@ -630,6 +625,9 @@ class cache implements cache_loader {
      * @return bool True on success, false otherwise.
      */
     public function set($key, $data) {
+        if ($this->perfdebug) {
+            cache_helper::record_cache_set($this->store, $this->definition);
+        }
         if ($this->loader !== false) {
             // We have a loader available set it there as well.
             // We have to let the loader do its own parsing of data as it may be unique.
@@ -656,12 +654,7 @@ class cache implements cache_loader {
         }
         $parsedkey = $this->parse_key($key);
 
-        $success = $this->store->set($parsedkey, $data);
-        if ($this->perfdebug) {
-            cache_helper::record_cache_set($this->store, $this->definition, 1,
-                    $this->store->get_last_io_bytes());
-        }
-        return $success;
+        return $this->store->set($parsedkey, $data);
     }
 
     /**
@@ -788,8 +781,7 @@ class cache implements cache_loader {
         }
         $successfullyset = $this->store->set_many($data);
         if ($this->perfdebug && $successfullyset) {
-            cache_helper::record_cache_set($this->store, $this->definition, $successfullyset,
-                    $this->store->get_last_io_bytes());
+            cache_helper::record_cache_set($this->store, $this->definition, $successfullyset);
         }
         return $successfullyset;
     }
@@ -1853,9 +1845,6 @@ class cache_session extends cache {
             if ($result instanceof cache_cached_object) {
                 $result = $result->restore_object();
             }
-            if ($this->perfdebug) {
-                $readbytes = $this->get_store()->get_last_io_bytes();
-            }
         }
         // 4. Load if from the loader/datasource if we don't already have it.
         if ($result === false) {
@@ -1875,7 +1864,7 @@ class cache_session extends cache {
                 $this->set($key, $result);
             }
         } else if ($this->perfdebug) {
-            cache_helper::record_cache_hit($this->get_store(), $this->get_definition(), 1, $readbytes);
+            cache_helper::record_cache_hit($this->get_store(), $this->get_definition());
         }
         // 5. Validate strictness.
         if ($strictness === MUST_EXIST && $result === false) {
@@ -1918,6 +1907,9 @@ class cache_session extends cache {
             // We have to let the loader do its own parsing of data as it may be unique.
             $loader->set($key, $data);
         }
+        if ($this->perfdebug) {
+            cache_helper::record_cache_set($this->get_store(), $this->get_definition());
+        }
         if (is_object($data) && $data instanceof cacheable_object) {
             $data = new cache_cached_object($data);
         } else if (!$this->get_store()->supports_dereferencing_objects() && !is_scalar($data)) {
@@ -1931,12 +1923,7 @@ class cache_session extends cache {
         if ($this->has_a_ttl() && !$this->store_supports_native_ttl()) {
             $data = new cache_ttl_wrapper($data, $this->get_definition()->get_ttl());
         }
-        $success = $this->get_store()->set($this->parse_key($key), $data);
-        if ($this->perfdebug) {
-            cache_helper::record_cache_set($this->get_store(), $this->get_definition(), 1,
-                    $this->get_store()->get_last_io_bytes());
-        }
-        return $success;
+        return $this->get_store()->set($this->parse_key($key), $data);
     }
 
     /**
@@ -1984,9 +1971,6 @@ class cache_session extends cache {
             $keymap[$parsedkey] = $key;
         }
         $result = $this->get_store()->get_many($parsedkeys);
-        if ($this->perfdebug) {
-            $readbytes = $this->get_store()->get_last_io_bytes();
-        }
         $return = array();
         $missingkeys = array();
         $hasmissingkeys = false;
@@ -2054,7 +2038,7 @@ class cache_session extends cache {
                     $hits++;
                 }
             }
-            cache_helper::record_cache_hit($this->get_store(), $this->get_definition(), $hits, $readbytes);
+            cache_helper::record_cache_hit($this->get_store(), $this->get_definition(), $hits);
             cache_helper::record_cache_miss($this->get_store(), $this->get_definition(), $misses);
         }
         return $return;
@@ -2132,8 +2116,7 @@ class cache_session extends cache {
         }
         $successfullyset = $this->get_store()->set_many($data);
         if ($this->perfdebug && $successfullyset) {
-            cache_helper::record_cache_set($this->get_store(), $this->get_definition(), $successfullyset,
-                    $this->get_store()->get_last_io_bytes());
+            cache_helper::record_cache_set($this->get_store(), $this->get_definition(), $successfullyset);
         }
         return $successfullyset;
     }

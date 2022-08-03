@@ -52,12 +52,11 @@
     }
 }
 
-.path-grade-report-grader,
-.path-grade-report-user {
-    .gradepass {
+.path-grade-report-grader {
+    span.gradepass {
         color: $success;
     }
-    .gradefail {
+    span.gradefail {
         color: $danger;
     }
 }
@@ -403,6 +402,10 @@
  */
 .path-grade-report-grader {
     .gradeparent {
+        table {
+            @include border-radius($border-radius);
+        }
+
         tr .cell,
         .floater .cell {
             background-color: $pagination-bg;

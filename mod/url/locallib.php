@@ -172,22 +172,37 @@ function url_print_header($url, $cm, $course) {
 }
 
 /**
- * Get url introduction.
- *
+ * Print url heading.
  * @param object $url
  * @param object $cm
- * @param bool $ignoresettings print even if not specified in modedit
- * @return string
+ * @param object $course
+ * @param bool $notused This variable is no longer used.
+ * @return void
  */
-function url_get_intro(object $url, object $cm, bool $ignoresettings = false): string {
+function url_print_heading($url, $cm, $course, $notused = false) {
+    global $OUTPUT;
+    echo $OUTPUT->heading(format_string($url->name), 2);
+}
+
+/**
+ * Print url introduction.
+ * @param object $url
+ * @param object $cm
+ * @param object $course
+ * @param bool $ignoresettings print even if not specified in modedit
+ * @return void
+ */
+function url_print_intro($url, $cm, $course, $ignoresettings=false) {
+    global $OUTPUT;
+
     $options = empty($url->displayoptions) ? [] : (array) unserialize_array($url->displayoptions);
     if ($ignoresettings or !empty($options['printintro'])) {
         if (trim(strip_tags($url->intro))) {
-            return format_module_intro('url', $url, $cm->id);
+            echo $OUTPUT->box_start('mod_introbox', 'urlintro');
+            echo format_module_intro('url', $url, $cm->id);
+            echo $OUTPUT->box_end();
         }
     }
-
-    return '';
 }
 
 /**
@@ -204,11 +219,9 @@ function url_display_frame($url, $cm, $course) {
 
     if ($frame === 'top') {
         $PAGE->set_pagelayout('frametop');
-        $PAGE->activityheader->set_attrs([
-            'description' => url_get_intro($url, $cm),
-            'title' => format_string($url->name)
-        ]);
         url_print_header($url, $cm, $course);
+        url_print_heading($url, $cm, $course);
+        url_print_intro($url, $cm, $course);
         echo $OUTPUT->footer();
         die;
 
@@ -253,10 +266,11 @@ EOF;
  * @return does not return
  */
 function url_print_workaround($url, $cm, $course) {
-    global $OUTPUT, $PAGE, $USER;
+    global $OUTPUT;
 
-    $PAGE->activityheader->set_description(url_get_intro($url, $cm, true));
     url_print_header($url, $cm, $course);
+    url_print_heading($url, $cm, $course, true);
+    url_print_intro($url, $cm, $course, true);
 
     $fullurl = url_get_full_url($url, $cm, $course);
 
@@ -292,7 +306,7 @@ function url_print_workaround($url, $cm, $course) {
  * @return does not return
  */
 function url_display_embed($url, $cm, $course) {
-    global $PAGE, $OUTPUT;
+    global $CFG, $PAGE, $OUTPUT;
 
     $mimetype = resourcelib_guess_url_mimetype($url->externalurl);
     $fullurl  = url_get_full_url($url, $cm, $course);
@@ -322,10 +336,12 @@ function url_display_embed($url, $cm, $course) {
         $code = resourcelib_embed_general($fullurl, $title, $clicktoopen, $mimetype);
     }
 
-    $PAGE->activityheader->set_description(url_get_intro($url, $cm));
     url_print_header($url, $cm, $course);
+    url_print_heading($url, $cm, $course);
 
     echo $code;
+
+    url_print_intro($url, $cm, $course);
 
     echo $OUTPUT->footer();
     die;
@@ -418,6 +434,7 @@ function url_get_variable_options($config) {
         'userlastname'    => get_string('lastname'),
         'userfullname'    => get_string('fullnameuser'),
         'useremail'       => get_string('email'),
+        'usericq'         => get_string('icqnumber'),
         'userphone1'      => get_string('phone1'),
         'userphone2'      => get_string('phone2'),
         'userinstitution' => get_string('institution'),
@@ -425,6 +442,7 @@ function url_get_variable_options($config) {
         'useraddress'     => get_string('address'),
         'usercity'        => get_string('city'),
         'usertimezone'    => get_string('timezone'),
+        'userurl'         => get_string('webpage'),
     );
 
     if ($config->rolesinparams) {
@@ -479,6 +497,7 @@ function url_get_variable_values($url, $cm, $course, $config) {
         $values['userlastname']    = $USER->lastname;
         $values['userfullname']    = fullname($USER);
         $values['useremail']       = $USER->email;
+        $values['usericq']         = $USER->icq;
         $values['userphone1']      = $USER->phone1;
         $values['userphone2']      = $USER->phone2;
         $values['userinstitution'] = $USER->institution;
@@ -487,6 +506,7 @@ function url_get_variable_values($url, $cm, $course, $config) {
         $values['usercity']        = $USER->city;
         $now = new DateTime('now', core_date::get_user_timezone_object());
         $values['usertimezone']    = $now->getOffset() / 3600.0; // Value in hours for BC.
+        $values['userurl']         = $USER->url;
     }
 
     // weak imitation of Single-Sign-On, for backwards compatibility only
@@ -542,16 +562,8 @@ function url_guess_icon($fullurl, $size = null) {
         return null;
     }
 
-    try {
-        // There can be some cases where the url is invalid making parse_url() to return false.
-        // That will make moodle_url class to throw an exception, so we need to catch the exception to prevent errors.
-        $moodleurl = new moodle_url($fullurl);
-        $fullurl = $moodleurl->out_omit_querystring();
-    } catch (\moodle_exception $e) {
-        // If an exception is thrown, means the url is invalid. No need to log exception.
-        return null;
-    }
-
+    $moodleurl = new moodle_url($fullurl);
+    $fullurl = $moodleurl->out_omit_querystring();
     $icon = file_extension_icon($fullurl, $size);
     $htmlicon = file_extension_icon('.htm', $size);
     $unknownicon = file_extension_icon('', $size);

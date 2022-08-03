@@ -123,7 +123,6 @@ $straction = get_string('filters', 'admin'); // Used by tabs.php
 $PAGE->set_cacheable(false);
 $PAGE->set_title($title);
 $PAGE->set_pagelayout('admin');
-$PAGE->activityheader->disable();
 echo $OUTPUT->header();
 
 /// Print heading.

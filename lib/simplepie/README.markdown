@@ -11,7 +11,9 @@ compatibility and standards compliance][what_is].
 
 Requirements
 ------------
-* PHP 5.6+ (Required since SimplePie 1.5.3)
+* PHP 5.3.0+ (5.3.6+ recommended since SimplePie 1.4.2)
+	* Support for PHP 5.2 stopped in branch `one-dot-three`
+	* Support for PHP 4 stopped in branch `one-dot-two`
 * libxml2 (certain 2.7.x releases are too buggy for words, and will crash)
 * One of iconv, mbstring or intl extensions
 * cURL or fsockopen()
@@ -87,14 +89,14 @@ Authors and contributors
 ### Alumni
 * [Ryan McCue][] (developer, support)
 * [Ryan Parman][] (Creator, developer, evangelism, support)
-* [Sam Sneddon][] (Lead developer)
+* [Geoffrey Sneddon][] (Lead developer)
 * [Michael Shipley][] (Submitter of patches, support)
 * [Steve Minutillo][] (Submitter of patches)
 
-[Malcolm Blaney]: https://mblaney.xyz
+[Malcolm Blaney]: https://unicyclic.com/mal
 [Ryan McCue]: http://ryanmccue.info
 [Ryan Parman]: http://ryanparman.com
-[Sam Sneddon]: https://gsnedders.com
+[Geoffrey Sneddon]: http://gsnedders.com
 [Michael Shipley]: http://michaelpshipley.com
 [Steve Minutillo]: http://minutillo.com/steve/
 

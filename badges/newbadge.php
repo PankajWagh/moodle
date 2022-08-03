@@ -41,7 +41,6 @@ if (empty($CFG->badges_allowcoursebadges) && ($type == BADGE_TYPE_COURSE)) {
 }
 
 $title = get_string('create', 'badges');
-$PAGE->add_body_class('limitedwidth');
 
 if (($type == BADGE_TYPE_COURSE) && ($course = $DB->get_record('course', array('id' => $courseid)))) {
     require_login($course);
@@ -61,6 +60,8 @@ if (($type == BADGE_TYPE_COURSE) && ($course = $DB->get_record('course', array('
 }
 
 require_capability('moodle/badges:createbadge', $PAGE->context);
+
+badges_local_backpack_js(true);
 
 $fordb = new stdClass();
 $fordb->id = null;

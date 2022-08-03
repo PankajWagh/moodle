@@ -19,8 +19,7 @@ Feature: Test importing Essay questions
 
   @javascript @_file_upload
   Scenario: import Essay question.
-    When I navigate to "Question bank" in current page administration
-    And I select "Import" from the "questionbankactionselect" singleselect
+    When I navigate to "Question bank > Import" in current page administration
     And I set the field "id_format_xml" to "1"
     And I upload "question/type/essay/tests/fixtures/testquestion.moodle.xml" file to "Import" filemanager
     And I press "id_submitbutton"
@@ -29,5 +28,3 @@ Feature: Test importing Essay questions
     And I should see "Write an essay with 500 words."
     And I press "Continue"
     And I should see "essay-001"
-    And I choose "Edit question" action for "essay-001" in the question bank
-    And the field "id_maxwordlimit" matches value "20"

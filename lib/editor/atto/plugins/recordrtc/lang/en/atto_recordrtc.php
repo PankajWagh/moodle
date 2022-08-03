@@ -66,11 +66,8 @@ $string['recordrtc:recordvideo'] = 'Record video directly into the text editor';
 $string['settings'] = 'RecordRTC settings';
 $string['startrecording'] = 'Start recording';
 $string['stoprecording'] = 'Stop recording';
-$string['audiotimelimit'] = 'Audio time limit in seconds';
-$string['audiotimelimit_desc'] = 'Maximum recording length allowed for the audio clips';
-$string['videotimelimit'] = 'Video time limit in seconds';
-$string['videotimelimit_desc'] = 'Maximum recording length allowed for the video clips';
-$string['timelimitwarning'] = 'You must enter a number that is greater than 0.';
+$string['timelimit'] = 'Time limit in seconds';
+$string['timelimit_desc'] = 'Maximum recording length allowed for the audio/video clips';
 $string['uploadaborted'] = 'Upload aborted:';
 $string['uploadfailed'] = 'Upload failed:';
 $string['uploadfailed404'] = 'Upload failed: file too large';
@@ -78,7 +75,3 @@ $string['uploadprogress'] = 'completed';
 $string['videobitrate'] = 'Video bitrate';
 $string['videobitrate_desc'] = 'Quality of video recording (larger number means higher quality)';
 $string['videortc'] = 'Record video';
-
-// Deprecated since Moodle 4.0.
-$string['timelimit'] = 'Time limit in seconds';
-$string['timelimit_desc'] = 'Maximum recording length allowed for the audio/video clips';

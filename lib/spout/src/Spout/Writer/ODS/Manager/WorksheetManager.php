@@ -10,7 +10,6 @@ use Box\Spout\Common\Exception\IOException;
 use Box\Spout\Common\Helper\Escaper\ODS as ODSEscaper;
 use Box\Spout\Common\Helper\StringHelper;
 use Box\Spout\Writer\Common\Entity\Worksheet;
-use Box\Spout\Writer\Common\Manager\RegisteredStyle;
 use Box\Spout\Writer\Common\Manager\Style\StyleMerger;
 use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\ODS\Manager\Style\StyleManager;
@@ -62,7 +61,7 @@ class WorksheetManager implements WorksheetManagerInterface
      */
     public function startSheet(Worksheet $worksheet)
     {
-        $sheetFilePointer = \fopen($worksheet->getFilePath(), 'w');
+        $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
         $this->throwIfSheetFilePointerIsNotAvailable($sheetFilePointer);
 
         $worksheet->setFilePointer($sheetFilePointer);
@@ -94,7 +93,7 @@ class WorksheetManager implements WorksheetManagerInterface
         $escapedSheetName = $this->stringsEscaper->escape($externalSheet->getName());
         $tableStyleName = 'ta' . ($externalSheet->getIndex() + 1);
 
-        $tableElement = '<table:table table:style-name="' . $tableStyleName . '" table:name="' . $escapedSheetName . '">';
+        $tableElement  = '<table:table table:style-name="' . $tableStyleName . '" table:name="' . $escapedSheetName . '">';
         $tableElement .= '<table:table-column table:default-cell-style-name="ce1" table:style-name="co1" table:number-columns-repeated="' . $worksheet->getMaxNumColumns() . '"/>';
 
         return $tableElement;
@@ -105,8 +104,8 @@ class WorksheetManager implements WorksheetManagerInterface
      *
      * @param Worksheet $worksheet The worksheet to add the row to
      * @param Row $row The row to be added
-     * @throws InvalidArgumentException If a cell value's type is not supported
      * @throws IOException If the data cannot be written
+     * @throws InvalidArgumentException If a cell value's type is not supported
      * @return void
      */
     public function addRow(Worksheet $worksheet, Row $row)
@@ -126,13 +125,7 @@ class WorksheetManager implements WorksheetManagerInterface
             $nextCell = isset($cells[$nextCellIndex]) ? $cells[$nextCellIndex] : null;
 
             if ($nextCell === null || $cell->getValue() !== $nextCell->getValue()) {
-                $registeredStyle = $this->applyStyleAndRegister($cell, $rowStyle);
-                $cellStyle = $registeredStyle->getStyle();
-                if ($registeredStyle->isMatchingRowStyle()) {
-                    $rowStyle = $cellStyle; // Replace actual rowStyle (possibly with null id) by registered style (with id)
-                }
-
-                $data .= $this->getCellXMLWithStyle($cell, $cellStyle, $currentCellIndex, $nextCellIndex);
+                $data .= $this->applyStyleAndGetCellXML($cell, $rowStyle, $currentCellIndex, $nextCellIndex);
                 $currentCellIndex = $nextCellIndex;
             }
 
@@ -141,7 +134,7 @@ class WorksheetManager implements WorksheetManagerInterface
 
         $data .= '</table:table-row>';
 
-        $wasWriteSuccessful = \fwrite($worksheet->getFilePointer(), $data);
+        $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $data);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
         }
@@ -153,46 +146,24 @@ class WorksheetManager implements WorksheetManagerInterface
 
     /**
      * Applies styles to the given style, merging the cell's style with its row's style
+     * Then builds and returns xml for the cell.
      *
      * @param Cell $cell
      * @param Style $rowStyle
+     * @param int $currentCellIndex
+     * @param int $nextCellIndex
      * @throws InvalidArgumentException If a cell value's type is not supported
-     * @return RegisteredStyle
+     * @return string
      */
-    private function applyStyleAndRegister(Cell $cell, Style $rowStyle) : RegisteredStyle
+    private function applyStyleAndGetCellXML(Cell $cell, Style $rowStyle, $currentCellIndex, $nextCellIndex)
     {
-        $isMatchingRowStyle = false;
-        if ($cell->getStyle()->isEmpty()) {
-            $cell->setStyle($rowStyle);
+        // Apply row and extra styles
+        $mergedCellAndRowStyle = $this->styleMerger->merge($cell->getStyle(), $rowStyle);
+        $cell->setStyle($mergedCellAndRowStyle);
+        $newCellStyle = $this->styleManager->applyExtraStylesIfNeeded($cell);
 
-            $possiblyUpdatedStyle = $this->styleManager->applyExtraStylesIfNeeded($cell);
-
-            if ($possiblyUpdatedStyle->isUpdated()) {
-                $registeredStyle = $this->styleManager->registerStyle($possiblyUpdatedStyle->getStyle());
-            } else {
-                $registeredStyle = $this->styleManager->registerStyle($rowStyle);
-                $isMatchingRowStyle = true;
-            }
-        } else {
-            $mergedCellAndRowStyle = $this->styleMerger->merge($cell->getStyle(), $rowStyle);
-            $cell->setStyle($mergedCellAndRowStyle);
-
-            $possiblyUpdatedStyle = $this->styleManager->applyExtraStylesIfNeeded($cell);
-            if ($possiblyUpdatedStyle->isUpdated()) {
-                $newCellStyle = $possiblyUpdatedStyle->getStyle();
-            } else {
-                $newCellStyle = $mergedCellAndRowStyle;
-            }
-
-            $registeredStyle = $this->styleManager->registerStyle($newCellStyle);
-        }
-
-        return new RegisteredStyle($registeredStyle, $isMatchingRowStyle);
-    }
-
-    private function getCellXMLWithStyle(Cell $cell, Style $style, int $currentCellIndex, int $nextCellIndex) : string
-    {
-        $styleIndex = $style->getId() + 1; // 1-based
+        $registeredStyle = $this->styleManager->registerStyle($newCellStyle);
+        $styleIndex = $registeredStyle->getId() + 1; // 1-based
 
         $numTimesValueRepeated = ($nextCellIndex - $currentCellIndex);
 
@@ -219,31 +190,24 @@ class WorksheetManager implements WorksheetManagerInterface
         if ($cell->isString()) {
             $data .= ' office:value-type="string" calcext:value-type="string">';
 
-            $cellValueLines = \explode("\n", $cell->getValue());
+            $cellValueLines = explode("\n", $cell->getValue());
             foreach ($cellValueLines as $cellValueLine) {
                 $data .= '<text:p>' . $this->stringsEscaper->escape($cellValueLine) . '</text:p>';
             }
 
             $data .= '</table:table-cell>';
         } elseif ($cell->isBoolean()) {
-            $value = $cell->getValue() ? 'true' : 'false'; // boolean-value spec: http://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#datatype-boolean
-            $data .= ' office:value-type="boolean" calcext:value-type="boolean" office:boolean-value="' . $value . '">';
+            $data .= ' office:value-type="boolean" calcext:value-type="boolean" office:boolean-value="' . $cell->getValue() . '">';
             $data .= '<text:p>' . $cell->getValue() . '</text:p>';
             $data .= '</table:table-cell>';
         } elseif ($cell->isNumeric()) {
-            $cellValue = $this->stringHelper->formatNumericValue($cell->getValue());
-            $data .= ' office:value-type="float" calcext:value-type="float" office:value="' . $cellValue . '">';
-            $data .= '<text:p>' . $cellValue . '</text:p>';
-            $data .= '</table:table-cell>';
-        } elseif ($cell->isError() && is_string($cell->getValueEvenIfError())) {
-            // only writes the error value if it's a string
-            $data .= ' office:value-type="string" calcext:value-type="error" office:value="">';
-            $data .= '<text:p>' . $cell->getValueEvenIfError() . '</text:p>';
+            $data .= ' office:value-type="float" calcext:value-type="float" office:value="' . $cell->getValue() . '">';
+            $data .= '<text:p>' . $cell->getValue() . '</text:p>';
             $data .= '</table:table-cell>';
         } elseif ($cell->isEmpty()) {
             $data .= '/>';
         } else {
-            throw new InvalidArgumentException('Trying to add a value with an unsupported type: ' . \gettype($cell->getValue()));
+            throw new InvalidArgumentException('Trying to add a value with an unsupported type: ' . gettype($cell->getValue()));
         }
 
         return $data;
@@ -259,10 +223,10 @@ class WorksheetManager implements WorksheetManagerInterface
     {
         $worksheetFilePointer = $worksheet->getFilePointer();
 
-        if (!\is_resource($worksheetFilePointer)) {
+        if (!is_resource($worksheetFilePointer)) {
             return;
         }
 
-        \fclose($worksheetFilePointer);
+        fclose($worksheetFilePointer);
     }
 }

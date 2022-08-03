@@ -25,8 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-use \mod_assign\output\assign_header;
-
 require_once($CFG->dirroot.'/grade/grading/lib.php');
 
 /**

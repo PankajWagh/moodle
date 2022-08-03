@@ -50,8 +50,13 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * Test that triggering the user_info_category_created event works as expected.
      */
     public function test_user_info_category_created_event() {
+        global $DB;
+
         // Create a new profile category.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
 
         // Trigger the event.
         $sink = $this->redirectEvents();
@@ -76,8 +81,15 @@ class core_event_profile_field_testcase extends advanced_testcase {
         global $DB;
 
         // Create new profile categories.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
-        $cat2 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category 2']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
+
+        $cat2 = new stdClass();
+        $cat2->name = 'Example category 2';
+        $cat2->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat2->id = $DB->insert_record('user_info_category', $cat2);
 
         // Trigger the events.
         $sink = $this->redirectEvents();
@@ -104,9 +116,18 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * Test that deleting a user info category triggers a delete event.
      */
     public function test_user_info_category_deleted_event() {
+        global $DB;
+
         // Create new profile categories.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
-        $cat2 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category 2']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
+
+        $cat2 = new stdClass();
+        $cat2->name = 'Example category 2';
+        $cat2->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat2->id = $DB->insert_record('user_info_category', $cat2);
 
         // Trigger the event.
         $sink = $this->redirectEvents();
@@ -131,7 +152,10 @@ class core_event_profile_field_testcase extends advanced_testcase {
         global $DB;
 
         // Create a new profile category.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
 
         // Create a new profile field.
         $data = new stdClass();
@@ -172,17 +196,27 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * Test that updating a user info field triggers an update event.
      */
     public function test_user_info_field_updated_event() {
+        global $DB;
+
         // Create a new profile category.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
 
         // Create a new profile field.
-        $data = $this->getDataGenerator()->create_custom_profile_field([
-            'datatype' => 'text',
-            'shortname' => 'example',
-            'name' => 'Example field',
-            'description' => 'Hello this is an example.',
-            'categoryid' => $cat1->id,
-        ]);
+        $data = new stdClass();
+        $data->datatype = 'text';
+        $data->shortname = 'example';
+        $data->name = 'Example field';
+        $data->description = 'Hello this is an example.';
+        $data->required = false;
+        $data->locked = false;
+        $data->forceunique = false;
+        $data->signup = false;
+        $data->visible = '0';
+        $data->categoryid = $cat1->id;
+        $data->id = $DB->insert_record('user_info_field', $data);
 
         // Trigger the event.
         $sink = $this->redirectEvents();
@@ -207,25 +241,36 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * Test that moving a field triggers update events.
      */
     public function test_user_info_field_updated_event_move_field() {
+        global $DB;
+
         // Create a new profile category.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
 
         // Create a new profile field.
-        $field1 = $this->getDataGenerator()->create_custom_profile_field([
-            'datatype' => 'text',
-            'shortname' => 'example',
-            'name' => 'Example field',
-            'description' => 'Hello this is an example.',
-            'categoryid' => $cat1->id,
-        ]);
+        $field1 = new stdClass();
+        $field1->datatype = 'text';
+        $field1->shortname = 'example';
+        $field1->name = 'Example field';
+        $field1->description = 'Hello this is an example.';
+        $field1->required = false;
+        $field1->locked = false;
+        $field1->forceunique = false;
+        $field1->signup = false;
+        $field1->visible = '0';
+        $field1->categoryid = $cat1->id;
+        $field1->sortorder = $DB->count_records('user_info_field') + 1;
+        $field1->id = $DB->insert_record('user_info_field', $field1);
 
         // Create another that we will be moving.
-        $field2 = $this->getDataGenerator()->create_custom_profile_field([
-            'datatype' => 'text',
-            'shortname' => 'example2',
-            'name' => 'Example field 2',
-            'categoryid' => $cat1->id,
-        ]);
+        $field2 = clone $field1;
+        $field2->datatype = 'text';
+        $field2->shortname = 'example2';
+        $field2->name = 'Example field 2';
+        $field2->sortorder = $DB->count_records('user_info_field') + 1;
+        $field2->id = $DB->insert_record('user_info_field', $field2);
 
         // Trigger the events.
         $sink = $this->redirectEvents();
@@ -257,18 +302,32 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * another category triggers an update event.
      */
     public function test_user_info_field_updated_event_delete_category() {
-        // Create profile categories.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
-        $cat2 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        global $DB;
+
+        // Create a new profile category.
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
+
+        $cat2 = new stdClass();
+        $cat2->name = 'Example category';
+        $cat2->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat2->id = $DB->insert_record('user_info_category', $cat2);
 
         // Create a new profile field.
-        $field = $this->getDataGenerator()->create_custom_profile_field([
-            'datatype' => 'text',
-            'shortname' => 'example',
-            'name' => 'Example field',
-            'description' => 'Hello this is an example.',
-            'categoryid' => $cat1->id,
-        ]);
+        $field = new stdClass();
+        $field->datatype = 'text';
+        $field->shortname = 'example';
+        $field->name = 'Example field';
+        $field->description = 'Hello this is an example.';
+        $field->required = false;
+        $field->locked = false;
+        $field->forceunique = false;
+        $field->signup = false;
+        $field->visible = '0';
+        $field->categoryid = $cat1->id;
+        $field->id = $DB->insert_record('user_info_field', $field);
 
         // Trigger the event.
         $sink = $this->redirectEvents();
@@ -292,17 +351,27 @@ class core_event_profile_field_testcase extends advanced_testcase {
      * Test that deleting a user info field triggers a delete event.
      */
     public function test_user_info_field_deleted_event() {
+        global $DB;
+
         // Create a new profile category.
-        $cat1 = $this->getDataGenerator()->create_custom_profile_field_category(['name' => 'Example category']);
+        $cat1 = new stdClass();
+        $cat1->name = 'Example category';
+        $cat1->sortorder = $DB->count_records('user_info_category') + 1;
+        $cat1->id = $DB->insert_record('user_info_category', $cat1);
 
         // Create a new profile field.
-        $data = $this->getDataGenerator()->create_custom_profile_field([
-            'datatype' => 'text',
-            'shortname' => 'delete',
-            'name' => 'Example field for delete',
-            'description' => 'Hello this is an example.',
-            'categoryid' => $cat1->id,
-        ]);
+        $data = new stdClass();
+        $data->datatype = 'text';
+        $data->shortname = 'delete';
+        $data->name = 'Example field for delete';
+        $data->description = 'Hello this is an example.';
+        $data->required = false;
+        $data->locked = false;
+        $data->forceunique = false;
+        $data->signup = false;
+        $data->visible = '0';
+        $data->categoryid = $cat1->id;
+        $data->id = $DB->insert_record('user_info_field', $data, true);
 
         // Trigger the event.
         $sink = $this->redirectEvents();

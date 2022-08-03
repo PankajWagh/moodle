@@ -51,12 +51,10 @@
 defined('MOODLE_INTERNAL') || die;
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use mod_lti\helper;
 use moodle\mod\lti as lti;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use mod_lti\local\ltiopenid\jwks_helper;
-use mod_lti\local\ltiopenid\registration_helper;
 
 global $CFG;
 require_once($CFG->dirroot.'/mod/lti/OAuth.php');
@@ -436,7 +434,7 @@ function lti_get_jwt_claim_mapping() {
             'claim' => 'url',
             'isarray' => false
         ],
-        'custom_context_memberships_v2_url' => [
+        'custom_context_memberships_url' => [
             'suffix' => 'nrps',
             'group' => 'namesroleservice',
             'claim' => 'context_memberships_url',
@@ -594,11 +592,11 @@ function lti_get_launch_data($instance, $nonce = '') {
             $endpoint = trim($instance->securetoolurl);
         }
 
-        if ($endpoint !== '') {
-            $endpoint = lti_ensure_url_is_https($endpoint);
+        $endpoint = lti_ensure_url_is_https($endpoint);
+    } else {
+        if (!strstr($endpoint, '://')) {
+            $endpoint = 'http://' . $endpoint;
         }
-    } else if ($endpoint !== '' && !strstr($endpoint, '://')) {
-        $endpoint = 'http://' . $endpoint;
     }
 
     $orgid = lti_get_organizationid($typeconfig);
@@ -2074,18 +2072,6 @@ function lti_calculate_custom_parameter($value) {
             return implode(",", groups_get_user_groups($COURSE->id, $USER->id)[0]);
         case 'Context.id.history':
             return implode(",", get_course_history($COURSE));
-        case 'CourseSection.timeFrame.begin':
-            if (empty($COURSE->startdate)) {
-                return "";
-            }
-            $dt = new DateTime("@$COURSE->startdate", new DateTimeZone('UTC'));
-            return $dt->format(DateTime::ATOM);
-        case 'CourseSection.timeFrame.end':
-            if (empty($COURSE->enddate)) {
-                return "";
-            }
-            $dt = new DateTime("@$COURSE->enddate", new DateTimeZone('UTC'));
-            return $dt->format(DateTime::ATOM);
     }
     return null;
 }
@@ -2323,8 +2309,7 @@ function lti_get_lti_types_by_course($courseid, $coursevisible = null) {
                 FROM {lti_types}
                WHERE coursevisible $coursevisiblesql
                  AND ($coursecond)
-                 AND state = :active
-            ORDER BY name ASC";
+                 AND state = :active";
 
     return $DB->get_records_sql($query,
         array('siteid' => $SITE->id, 'courseid' => $courseid, 'active' => LTI_TOOL_STATE_CONFIGURED) + $coursevisparams);
@@ -2754,7 +2739,7 @@ function lti_prepare_type_for_save($type, $config) {
         $type->clientid = $config->lti_clientid;
     }
     if ((!empty($type->ltiversion) && $type->ltiversion === LTI_VERSION_1P3) && empty($type->clientid)) {
-        $type->clientid = registration_helper::get()->new_clientid();
+        $type->clientid = random_string(15);
     } else if (empty($type->clientid)) {
         $type->clientid = null;
     }
@@ -2823,14 +2808,6 @@ function lti_update_type($type, $config) {
                 $record->value = $value;
                 lti_update_config($record);
             }
-        }
-        if (isset($type->toolproxyid) && $type->ltiversion === LTI_VERSION_1P3) {
-            // We need to remove the tool proxy for this tool to function under 1.3.
-            $toolproxyid = $type->toolproxyid;
-            $DB->delete_records('lti_tool_settings', array('toolproxyid' => $toolproxyid));
-            $DB->delete_records('lti_tool_proxies', array('id' => $toolproxyid));
-            $type->toolproxyid = null;
-            $DB->update_record('lti_types', $type);
         }
         require_once($CFG->libdir.'/modinfolib.php');
         if ($clearcache) {
@@ -3094,73 +3071,6 @@ function lti_delete_tool_proxy($id) {
         lti_delete_type($tool->id);
     }
     $DB->delete_records('lti_tool_proxies', array('id' => $id));
-}
-
-/**
- * Get both LTI tool proxies and tool types.
- *
- * If limit and offset are not zero, a subset of the tools will be returned. Tool proxies will be counted before tool
- * types.
- * For example: If 10 tool proxies and 10 tool types exist, and the limit is set to 15, then 10 proxies and 5 types
- * will be returned.
- *
- * @param int $limit Maximum number of tools returned.
- * @param int $offset Do not return tools before offset index.
- * @param bool $orphanedonly If true, only return orphaned proxies.
- * @param int $toolproxyid If not 0, only return tool types that have this tool proxy id.
- * @return array list(proxies[], types[]) List containing array of tool proxies and array of tool types.
- */
-function lti_get_lti_types_and_proxies(int $limit = 0, int $offset = 0, bool $orphanedonly = false, int $toolproxyid = 0): array {
-    global $DB;
-
-    if ($orphanedonly) {
-        $orphanedproxiessql = helper::get_tool_proxy_sql($orphanedonly, false);
-        $countsql = helper::get_tool_proxy_sql($orphanedonly, true);
-        $proxies  = $DB->get_records_sql($orphanedproxiessql, null, $offset, $limit);
-        $totalproxiescount = $DB->count_records_sql($countsql);
-    } else {
-        $proxies = $DB->get_records('lti_tool_proxies', null, 'name ASC, state DESC, timemodified DESC',
-            '*', $offset, $limit);
-        $totalproxiescount = $DB->count_records('lti_tool_proxies');
-    }
-
-    // Find new offset and limit for tool types after getting proxies and set up query.
-    $typesoffset = max($offset - $totalproxiescount, 0); // Set to 0 if negative.
-    $typeslimit = max($limit - count($proxies), 0); // Set to 0 if negative.
-    $typesparams = [];
-    if (!empty($toolproxyid)) {
-        $typesparams['toolproxyid'] = $toolproxyid;
-    }
-
-    $types = $DB->get_records('lti_types', $typesparams, 'name ASC, state DESC, timemodified DESC',
-            '*', $typesoffset, $typeslimit);
-
-    return [$proxies, array_map('serialise_tool_type', $types)];
-}
-
-/**
- * Get the total number of LTI tool types and tool proxies.
- *
- * @param bool $orphanedonly If true, only count orphaned proxies.
- * @param int $toolproxyid If not 0, only count tool types that have this tool proxy id.
- * @return int Count of tools.
- */
-function lti_get_lti_types_and_proxies_count(bool $orphanedonly = false, int $toolproxyid = 0): int {
-    global $DB;
-
-    $typessql = "SELECT count(*)
-                   FROM {lti_types}";
-    $typesparams = [];
-    if (!empty($toolproxyid)) {
-        $typessql .= " WHERE toolproxyid = :toolproxyid";
-        $typesparams['toolproxyid'] = $toolproxyid;
-    }
-
-    $proxiessql = helper::get_tool_proxy_sql($orphanedonly, true);
-
-    $countsql = "SELECT ($typessql) + ($proxiessql) as total" . $DB->sql_null_from_clause();
-
-    return $DB->count_records_sql($countsql, $typesparams);
 }
 
 /**
@@ -3523,8 +3433,7 @@ function lti_post_launch_html($newparms, $endpoint, $debug=false) {
     }
     $r .= "</form>\n";
 
-    // Auto-submit the form if endpoint is set.
-    if ($endpoint !== '' && !$debug) {
+    if ( ! $debug ) {
         $r .= " <script type=\"text/javascript\"> \n" .
             "  //<![CDATA[ \n" .
             "    document.ltiLaunchForm.submit(); \n" .
@@ -3824,8 +3733,7 @@ function lti_get_capabilities() {
        'CourseSection.label' => 'context_label',
        'CourseSection.sourcedId' => 'lis_course_section_sourcedid',
        'CourseSection.longDescription' => '$COURSE->summary',
-       'CourseSection.timeFrame.begin' => null,
-       'CourseSection.timeFrame.end' => null,
+       'CourseSection.timeFrame.begin' => '$COURSE->startdate',
        'ResourceLink.id' => 'resource_link_id',
        'ResourceLink.title' => 'resource_link_title',
        'ResourceLink.description' => 'resource_link_description',
@@ -4462,7 +4370,7 @@ function lti_load_cartridge($url, $map, $propertiesmap = array()) {
 
     // TODO MDL-46023 Replace this code with a call to the new library.
     $origerrors = libxml_use_internal_errors(true);
-    $origentity = lti_libxml_disable_entity_loader(true);
+    $origentity = libxml_disable_entity_loader(true);
     libxml_clear_errors();
 
     $document = new DOMDocument();
@@ -4474,7 +4382,7 @@ function lti_load_cartridge($url, $map, $propertiesmap = array()) {
 
     libxml_clear_errors();
     libxml_use_internal_errors($origerrors);
-    lti_libxml_disable_entity_loader($origentity);
+    libxml_disable_entity_loader($origentity);
 
     if (count($errors) > 0) {
         $message = 'Failed to load cartridge.';
@@ -4559,20 +4467,3 @@ function lti_new_access_token($typeid, $scopes) {
 
 }
 
-
-/**
- * Wrapper for function libxml_disable_entity_loader() deprecated in PHP 8
- *
- * Method was deprecated in PHP 8 and it shows deprecation message. However it is still
- * required in the previous versions on PHP. While Moodle supports both PHP 7 and 8 we need to keep it.
- * @see https://php.watch/versions/8.0/libxml_disable_entity_loader-deprecation
- *
- * @param bool $value
- * @return bool
- */
-function lti_libxml_disable_entity_loader(bool $value): bool {
-    if (PHP_VERSION_ID < 80000) {
-        return (bool)libxml_disable_entity_loader($value);
-    }
-    return true;
-}

@@ -92,30 +92,41 @@
     $strseemoredetail = get_string("seemoredetail", "survey");
     $strnotes = get_string("notes", "survey");
 
+    switch ($action) {
+        case 'download':
+            $PAGE->navbar->add(get_string('downloadresults', 'survey'));
+            break;
+        case 'summary':
+        case 'scales':
+        case 'questions':
+            $PAGE->navbar->add($strreport);
+            $PAGE->navbar->add(${'str'.$action});
+            break;
+        case 'students':
+            $PAGE->navbar->add($strreport);
+            $PAGE->navbar->add(get_string('participants'));
+            break;
+        case '':
+            $PAGE->navbar->add($strreport);
+            $PAGE->navbar->add($strsummary);
+            break;
+        default:
+            $PAGE->navbar->add($strreport);
+            break;
+    }
+
     $PAGE->set_title("$course->shortname: ".format_string($survey->name));
     $PAGE->set_heading($course->fullname);
-    $PAGE->activityheader->set_attrs([
-        'hidecompletion' => true,
-        'description' => ''
-    ]);
-
-    // Activate the secondary nav tab.
-    navigation_node::override_active_url(new moodle_url('/mod/survey/report.php', ['id' => $id, 'action' => 'summary']));
-
-    $actionbar = new \mod_survey\output\actionbar($id, $action, $url);
     echo $OUTPUT->header();
-    $renderer = $PAGE->get_renderer('mod_survey');
-    echo $renderer->response_actionbar($actionbar);
+    echo $OUTPUT->heading(format_string($survey->name));
 
 /// Check to see if groups are being used in this survey
     if ($groupmode = groups_get_activity_groupmode($cm)) {   // Groups are being used
         $menuaction = $action == "student" ? "students" : $action;
         $currentgroup = groups_get_activity_group($cm, true);
-        $groupsactivitymenu = groups_print_activity_menu($cm, new moodle_url('/mod/survey/report.php',
-            ['id' => $cm->id, 'action' => $menuaction, 'qid' => $qid]), true);
+        groups_print_activity_menu($cm, $CFG->wwwroot . "/mod/survey/report.php?id=$cm->id&amp;action=$menuaction&amp;qid=$qid");
     } else {
         $currentgroup = 0;
-        $groupsactivitymenu = null;
     }
 
     $params = array(
@@ -141,6 +152,33 @@
 
     $groupingid = $cm->groupingid;
 
+    echo $OUTPUT->box_start("generalbox boxaligncenter");
+    if ($showscales) {
+        echo "<a href=\"report.php?action=summary&amp;id=$id\">$strsummary</a>";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=scales&amp;id=$id\">$strscales</a>";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=questions&amp;id=$id\">$strquestions</a>";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=students&amp;id=$id\">".get_string('participants')."</a>";
+        if (has_capability('mod/survey:download', $context)) {
+            echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=download&amp;id=$id\">$strdownload</a>";
+        }
+        if (empty($action)) {
+            $action = "summary";
+        }
+    } else {
+        echo "<a href=\"report.php?action=questions&amp;id=$id\">$strquestions</a>";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=students&amp;id=$id\">".get_string('participants')."</a>";
+        if (has_capability('mod/survey:download', $context)) {
+            echo "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"report.php?action=download&amp;id=$id\">$strdownload</a>";
+        }
+        if (empty($action)) {
+            $action = "questions";
+        }
+    }
+    echo $OUTPUT->box_end();
+
+    echo $OUTPUT->spacer(array('height'=>30, 'width'=>30, 'br'=>true)); // should be done with CSS instead
+
+
 /// Print the menu across the top
 
     $virtualscales = false;
@@ -150,28 +188,20 @@
       case "summary":
         echo $OUTPUT->heading($strsummary, 3);
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
-
         if (survey_count_responses($survey->id, $currentgroup, $groupingid)) {
             echo "<div class='reportsummary'><a href=\"report.php?action=scales&amp;id=$id\">";
             survey_print_graph("id=$id&amp;group=$currentgroup&amp;type=overall.png");
             echo "</a></div>";
         } else {
-            echo $OUTPUT->notification(get_string("nobodyyet", "survey"), 'info', false);
+            echo $OUTPUT->notification(get_string("nobodyyet","survey"));
         }
         break;
 
       case "scales":
         echo $OUTPUT->heading($strscales, 3);
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
-
         if (! $results = survey_get_responses($survey->id, $currentgroup, $groupingid) ) {
-            echo $OUTPUT->notification(get_string("nobodyyet", "survey"), 'info', false);
+            echo $OUTPUT->notification(get_string("nobodyyet","survey"));
 
         } else {
 
@@ -221,12 +251,8 @@
             echo $OUTPUT->heading($strallquestions, 3);
         }
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
-
         if (! $results = survey_get_responses($survey->id, $currentgroup, $groupingid) ) {
-            echo $OUTPUT->notification(get_string("nobodyyet", "survey"), 'info', false);
+            echo $OUTPUT->notification(get_string("nobodyyet","survey"));
 
         } else {
 
@@ -302,9 +328,6 @@
 
         echo $OUTPUT->heading("$strquestion: $question->text", 3);
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
 
         $strname = get_string("name", "survey");
         $strtime = get_string("time", "survey");
@@ -346,12 +369,8 @@
 
          echo $OUTPUT->heading(get_string("analysisof", "survey", get_string('participants')), 3);
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
-
          if (! $results = survey_get_responses($survey->id, $currentgroup, $groupingid) ) {
-             echo $OUTPUT->notification(get_string("nobodyyet", "survey"), 'info', false);
+             echo $OUTPUT->notification(get_string("nobodyyet","survey"));
          } else {
              survey_print_all_responses($cm->id, $results, $course->id);
          }
@@ -364,10 +383,6 @@
          }
 
          echo $OUTPUT->heading(get_string("analysisof", "survey", fullname($user)), 3);
-
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
 
          if ($notes != '' and confirm_sesskey()) {
              if (survey_get_analysis($survey->id, $user->id)) {
@@ -475,10 +490,6 @@
       case "download":
         echo $OUTPUT->heading($strdownload, 3);
 
-        if ($groupsactivitymenu) {
-            echo html_writer::div($groupsactivitymenu, 'mb-2');
-        }
-
         require_capability('mod/survey:download', $context);
 
         $numusers = survey_count_responses($survey->id, $currentgroup, $groupingid);
@@ -501,10 +512,11 @@
             echo $OUTPUT->container_end();
 
         } else {
-            echo $OUTPUT->notification(get_string("nobodyyet", "survey"), 'info', false);
+             echo html_writer::tag('p', get_string("nobodyyet", "survey"), array('class' => 'centerpara'));
         }
 
         break;
 
     }
     echo $OUTPUT->footer();
+

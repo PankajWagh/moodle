@@ -98,7 +98,7 @@ class filesize extends \admin_setting {
         if (empty($bytes)) {
             return get_string('none');
         }
-        return display_size($bytes, 0);
+        return display_size($bytes);
     }
 
     /**

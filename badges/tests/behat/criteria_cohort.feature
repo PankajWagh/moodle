@@ -146,13 +146,12 @@ Feature: Award badges based on cohort
     And I press "Save"
     When I press "Enable access"
     And I press "Continue"
-    And I select "Recipients (0)" from the "jump" singleselect
+    And I follow "Recipients (0)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "First User (first@example.com)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "Second User (second@example.com)"
     And I press "Award badge"
-    And I navigate to "Badges > Manage badges" in site administration
     And I follow "Site Badge"
     Then I should see "Recipients (1)"
     And I log out
@@ -198,13 +197,12 @@ Feature: Award badges based on cohort
     And I set the field "update" to "Any"
     When I press "Enable access"
     And I press "Continue"
-    And I select "Recipients (1)" from the "jump" singleselect
+    And I follow "Recipients (1)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "First User (first@example.com)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "Second User (second@example.com)"
     And I press "Award badge"
-    And I navigate to "Badges > Manage badges" in site administration
     And I follow "Site Badge"
     Then I should see "Recipients (2)"
     And I log out
@@ -255,13 +253,12 @@ Feature: Award badges based on cohort
     And I set the field "update" to "Any"
     When I press "Enable access"
     And I press "Continue"
-    And I select "Recipients (1)" from the "jump" singleselect
+    And I follow "Recipients (1)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "First User (first@example.com)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "Second User (second@example.com)"
     And I press "Award badge"
-    And I navigate to "Badges > Manage badges" in site administration
     And I follow "Site Badge"
     Then I should see "Recipients (2)"
     And I log out
@@ -314,13 +311,12 @@ Feature: Award badges based on cohort
     And I set the field "update" to "All"
     When I press "Enable access"
     And I press "Continue"
-    And I select "Recipients (0)" from the "jump" singleselect
+    And I follow "Recipients (0)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "First User (first@example.com)"
     And I press "Award badge"
     And I set the field "potentialrecipients[]" to "Second User (second@example.com)"
     And I press "Award badge"
-    And I navigate to "Badges > Manage badges" in site administration
     And I follow "Site Badge"
     Then I should see "Recipients (1)"
     And I log out

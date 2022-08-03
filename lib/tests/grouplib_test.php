@@ -470,44 +470,6 @@ class core_grouplib_testcase extends advanced_testcase {
         list($sql, $params) = groups_get_members_ids_sql(USERSWITHOUTGROUP, $syscontext);
     }
 
-    /**
-     * Test retrieving users with concatenated group names from a course
-     */
-    public function test_groups_get_names_concat_sql(): void {
-        global $DB;
-
-        $this->resetAfterTest();
-
-        // Create a course containing two groups.
-        $course = $this->getDataGenerator()->create_course();
-        $group1 = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
-        $group2 = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
-
-        // Create first user, add them to group 1 and group 2.
-        $user1 = $this->getDataGenerator()->create_and_enrol($course, 'student');
-        $this->getDataGenerator()->create_group_member(['userid' => $user1->id, 'groupid' => $group1->id]);
-        $this->getDataGenerator()->create_group_member(['userid' => $user1->id, 'groupid' => $group2->id]);
-
-        // Create second user, add them to group 1 only.
-        $user2 = $this->getDataGenerator()->create_and_enrol($course, 'student');
-        $this->getDataGenerator()->create_group_member(['userid' => $user2->id, 'groupid' => $group1->id]);
-
-        // Call our method, and assertion.
-        [$sql, $params] = groups_get_names_concat_sql($course->id);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $this->assertEqualsCanonicalizing([
-            (object) [
-                'userid' => $user1->id,
-                'groupnames' => "{$group1->name}, {$group2->name}",
-            ],
-            (object) [
-                'userid' => $user2->id,
-                'groupnames' => $group1->name,
-            ],
-        ], $records);
-    }
-
     public function test_groups_get_group_by_name() {
         $this->resetAfterTest(true);
 
@@ -679,8 +641,8 @@ class core_grouplib_testcase extends advanced_testcase {
         $this->assertSame($group3->name, $data->groups[$group3->id]->name);
 
         // Check we have the expected number of groupings.
-        $this->assertArrayHasKey($grouping1->id, $data->groupings);
-        $this->assertArrayHasKey($grouping2->id, $data->groupings);
+        $this->assertContains($grouping1->id, array_keys($data->groupings));
+        $this->assertContains($grouping2->id, array_keys($data->groupings));
 
         // Test a grouping-id is mapped correctly.
         $this->assertEquals($grouping2->name, $data->groupings[$grouping2->id]->name);
@@ -695,10 +657,10 @@ class core_grouplib_testcase extends advanced_testcase {
         foreach ($data->mappings as $mapping) {
             if ($mapping->groupingid === $grouping1->id) {
                 $grouping1maps++;
-                $this->assertContainsEquals($mapping->groupid, array($group1->id, $group2->id));
+                $this->assertContains($mapping->groupid, array($group1->id, $group2->id));
             } else if ($mapping->groupingid === $grouping2->id) {
                 $grouping2maps++;
-                $this->assertContainsEquals($mapping->groupid, array($group3->id, $group4->id));
+                $this->assertContains($mapping->groupid, array($group3->id, $group4->id));
             } else {
                 $this->fail('Unexpected groupingid');
             }
@@ -718,31 +680,35 @@ class core_grouplib_testcase extends advanced_testcase {
 
         // Test the groups_get_all_groups which uses this functionality.
         $groups  = groups_get_all_groups($course->id);
+        $groupkeys = array_keys($groups);
         $this->assertCount(4, $groups);
-        $this->assertArrayHasKey($group1->id, $groups);
-        $this->assertArrayHasKey($group2->id, $groups);
-        $this->assertArrayHasKey($group3->id, $groups);
-        $this->assertArrayHasKey($group4->id, $groups);
+        $this->assertContains($group1->id, $groupkeys);
+        $this->assertContains($group2->id, $groupkeys);
+        $this->assertContains($group3->id, $groupkeys);
+        $this->assertContains($group4->id, $groupkeys);
 
         $groups  = groups_get_all_groups($course->id, null, $grouping1->id);
+        $groupkeys = array_keys($groups);
         $this->assertCount(2, $groups);
-        $this->assertArrayHasKey($group1->id, $groups);
-        $this->assertArrayHasKey($group2->id, $groups);
-        $this->assertArrayNotHasKey($group3->id, $groups);
-        $this->assertArrayNotHasKey($group4->id, $groups);
+        $this->assertContains($group1->id, $groupkeys);
+        $this->assertContains($group2->id, $groupkeys);
+        $this->assertNotContains($group3->id, $groupkeys);
+        $this->assertNotContains($group4->id, $groupkeys);
 
         $groups  = groups_get_all_groups($course->id, null, $grouping2->id);
+        $groupkeys = array_keys($groups);
         $this->assertCount(2, $groups);
-        $this->assertArrayNotHasKey($group1->id, $groups);
-        $this->assertArrayNotHasKey($group2->id, $groups);
-        $this->assertArrayHasKey($group3->id, $groups);
-        $this->assertArrayHasKey($group4->id, $groups);
+        $this->assertNotContains($group1->id, $groupkeys);
+        $this->assertNotContains($group2->id, $groupkeys);
+        $this->assertContains($group3->id, $groupkeys);
+        $this->assertContains($group4->id, $groupkeys);
 
         // Test this function using an alternate column for the result index
         $groups  = groups_get_all_groups($course->id, null, $grouping2->id, 'g.name, g.id');
+        $groupkeys = array_keys($groups);
         $this->assertCount(2, $groups);
-        $this->assertArrayNotHasKey($group3->id, $groups);
-        $this->assertArrayHasKey($group3->name, $groups);
+        $this->assertNotContains($group3->id, $groupkeys);
+        $this->assertContains($group3->name, $groupkeys);
         $this->assertEquals($group3->id, $groups[$group3->name]->id);
     }
 

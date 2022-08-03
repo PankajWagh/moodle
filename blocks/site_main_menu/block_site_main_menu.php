@@ -47,20 +47,13 @@ class block_site_main_menu extends block_list {
             return $this->content;
         }
 
-        require_once($CFG->dirroot . '/course/lib.php');
-
         $course = get_site();
-        $format = course_get_format($course);
-        $courserenderer = $format->get_renderer($this->page);
-
+        require_once($CFG->dirroot.'/course/lib.php');
         $context = context_course::instance($course->id);
         $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
+        $courserenderer = $this->page->get_renderer('core', 'course');
 
-        // Output classes.
-        $cmnameclass = $format->get_output_classname('content\\cm\\cmname');
-        $controlmenuclass = $format->get_output_classname('content\\cm\\controlmenu');
-
-        // Extra fast view mode.
+/// extra fast view mode
         if (!$isediting) {
             $modinfo = get_fast_modinfo($course);
             if (!empty($modinfo->sections[0])) {
@@ -76,43 +69,13 @@ class block_site_main_menu extends block_list {
                         $indent = '';
                     }
 
-                    $badges = '';
-                    if (!$cm->visible) {
-                        $badges = html_writer::tag(
-                            'span',
-                            get_string('hiddenfromstudents'),
-                            ['class' => 'badge badge-pill badge-warning mt-2']
-                        );
-                    }
-
-                    if ($cm->is_stealth()) {
-                        $badges = html_writer::tag(
-                            'span',
-                            get_string('hiddenoncoursepage'),
-                            ['class' => 'badge badge-pill badge-warning mt-2']
-                        );
-                    }
-
-                    if (!$cm->url) {
-                        $activitybasis = html_writer::div(
-                            $indent . $cm->get_formatted_content(['overflowdiv' => true, 'noclean' => true]),
-                            'activity-basis d-flex align-items-center');
-                        $content = html_writer::div(
-                            $activitybasis . $badges,
-                            'contentwithoutlink activity-item activity'
-                        );
+                    if (!empty($cm->url)) {
+                        $content = html_writer::div($courserenderer->course_section_cm_name($cm), 'activity');
                     } else {
-                        $cmname = new $cmnameclass($format, $cm->get_section_info(), $cm, $isediting);
-                        $activitybasis = html_writer::div(
-                            $indent . $courserenderer->render($cmname),
-                            'activity-basis d-flex align-items-center');
-                        $content = html_writer::div(
-                            $activitybasis . $badges,
-                            'activity-item activity'
-                        );
+                        $content = $courserenderer->course_section_cm_text($cm);
                     }
 
-                    $this->content->items[] = html_writer::div($content, 'main-menu-content section');
+                    $this->content->items[] = $indent . html_writer::div($content, 'main-menu-content');
                 }
             }
             return $this->content;
@@ -143,31 +106,22 @@ class block_site_main_menu extends block_list {
                     continue;
                 }
                 if (!$ismoving) {
+                    $actions = course_get_cm_edit_actions($mod, $mod->indent);
 
-                    $controlmenu = new $controlmenuclass(
-                        $format,
-                        $mod->get_section_info(),
-                        $mod
-                    );
+                    // Prepend list of actions with the 'move' action.
+                    $actions = array('move' => new action_menu_link_primary(
+                        new moodle_url('/course/mod.php', array('sesskey' => sesskey(), 'copy' => $mod->id)),
+                        new pix_icon('t/move', $strmove, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                        $strmove
+                    )) + $actions;
 
-                    $menu = $controlmenu->get_action_menu($OUTPUT);
-
-                    $moveaction = html_writer::link(
-                        new moodle_url('/course/mod.php', ['sesskey' => sesskey(), 'copy' => $mod->id]),
-                        $OUTPUT->pix_icon('i/dragdrop', $strmove),
-                        ['class' => 'editing_move_activity']
-                    );
-
-                    $editbuttons = html_writer::tag(
-                        'div',
-                        $courserenderer->render($controlmenu),
-                        ['class' => 'buttons activity-actions ml-auto']
+                    $editbuttons = html_writer::tag('div',
+                        $courserenderer->course_section_cm_edit_actions($actions, $mod, array('donotenhance' => true)),
+                        array('class' => 'buttons')
                     );
                 } else {
                     $editbuttons = '';
-                    $moveaction = '';
                 }
-
                 if ($mod->visible || has_capability('moodle/course:viewhiddenactivities', $mod->context)) {
                     if ($ismoving) {
                         if ($mod->id == $USER->activitycopy) {
@@ -178,55 +132,17 @@ class block_site_main_menu extends block_list {
                             'class' => 'movehere'));
                         $this->content->icons[] = '';
                     }
-
                     if ($mod->indent > 0) {
                         $indent = '<div class="mod-indent mod-indent-'.$mod->indent.'"></div>';
                     } else {
                         $indent = '';
                     }
-
-                    $badges = '';
-                    if (!$mod->visible) {
-                        $badges = html_writer::tag(
-                            'span',
-                            get_string('hiddenfromstudents'),
-                            ['class' => 'badge badge-pill badge-warning mt-2']
-                        );
-                    }
-
-                    if ($mod->is_stealth()) {
-                        $badges = html_writer::tag(
-                            'span',
-                            get_string('hiddenoncoursepage'),
-                            ['class' => 'badge badge-pill badge-warning mt-2']
-                        );
-                    }
-
                     if (!$mod->url) {
-                        $activitybasis = html_writer::div(
-                            $moveaction .
-                            $indent .
-                            $mod->get_formatted_content(['overflowdiv' => true, 'noclean' => true]) .
-                            $editbuttons,
-                            'activity-basis d-flex align-items-center');
-                        $content = html_writer::div(
-                            $activitybasis . $badges,
-                            'contentwithoutlink activity-item activity'
-                        );
+                        $content = $courserenderer->course_section_cm_text($mod);
                     } else {
-                        $cmname = new $cmnameclass($format, $mod->get_section_info(), $mod, $isediting);
-                        $activitybasis = html_writer::div(
-                            $moveaction .
-                            $indent .
-                            $courserenderer->render($cmname) .
-                            $editbuttons,
-                            'activity-basis d-flex align-items-center');
-                        $content = html_writer::div(
-                            $activitybasis . $badges,
-                            'activity-item activity'
-                        );
+                        $content = html_writer::div($courserenderer->course_section_cm_name($mod), ' activity');
                     }
-                    $this->content->items[] = html_writer::div($content, 'main-menu-content');
+                    $this->content->items[] = $indent . html_writer::div($content . $editbuttons, 'main-menu-content');
                 }
             }
         }
@@ -243,3 +159,5 @@ class block_site_main_menu extends block_list {
         return $this->content;
     }
 }
+
+

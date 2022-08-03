@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_qtype_essay_upgrade($oldversion) {
     global $CFG, $DB;
 
-    $dbman = $DB->get_manager();
+    // Automatically generated Moodle v3.5.0 release upgrade line.
+    // Put any upgrade step following this.
 
     // Automatically generated Moodle v3.6.0 release upgrade line.
     // Put any upgrade step following this.
@@ -46,7 +47,8 @@ function xmldb_qtype_essay_upgrade($oldversion) {
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
 
-    if ($oldversion < 2021052501) {
+    $dbman = $DB->get_manager();
+    if ($oldversion < 2020091600) {
 
         // Define field maxbytes to be added to qtype_essay_options.
         $table = new xmldb_table('qtype_essay_options');
@@ -59,32 +61,11 @@ function xmldb_qtype_essay_upgrade($oldversion) {
         }
 
         // Essay savepoint reached.
-        upgrade_plugin_savepoint(true, 2021052501, 'qtype', 'essay');
+        upgrade_plugin_savepoint(true, 2020091600, 'qtype', 'essay');
     }
 
-    if ($oldversion < 2021052502) {
-
-        // Define field minwordlimit to be added to qtype_essay_options.
-        $table = new xmldb_table('qtype_essay_options');
-        $field = new xmldb_field('minwordlimit', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'responsefieldlines');
-
-        // Conditionally launch add field minwordlimit.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Define field maxwordlimit to be added to qtype_essay_options.
-        $table = new xmldb_table('qtype_essay_options');
-        $field = new xmldb_field('maxwordlimit', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'minwordlimit');
-
-        // Conditionally launch add field maxwordlimit.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Essay savepoint reached.
-        upgrade_plugin_savepoint(true, 2021052502, 'qtype', 'essay');
-    }
+    // Automatically generated Moodle v3.10.0 release upgrade line.
+    // Put any upgrade step following this.
 
     return true;
 }

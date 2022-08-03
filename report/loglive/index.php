@@ -24,8 +24,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core\report_helper;
-
 require('../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->dirroot.'/course/lib.php');
@@ -80,16 +78,11 @@ $strupdatesevery = get_string('updatesevery', 'moodle', $refresh);
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
-$PAGE->set_title("$coursename: $strlivelogs");
-$PAGE->set_heading($coursename);
+$PAGE->set_title("$coursename: $strlivelogs ($strupdatesevery)");
+$PAGE->set_heading("$coursename: $strlivelogs ($strupdatesevery)");
 
 $output = $PAGE->get_renderer('report_loglive');
 echo $output->header();
-
-// Print selector dropdown.
-$pluginname = get_string('pluginname', 'report_loglive');
-report_helper::print_report_selector($pluginname);
-echo html_writer::div(get_string('livelogswithupdate', 'report_loglive', $strupdatesevery), 'mb-3');
 echo $output->reader_selector($renderable);
 echo $output->toggle_liveupdate_button($renderable);
 echo $output->render($renderable);

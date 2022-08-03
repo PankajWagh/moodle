@@ -16,9 +16,7 @@ Feature: Change number of discussions displayed
       | teacher1 | C1 | editingteacher |
     And I log in as "teacher1"
     And I am on "Course 1" course homepage
-    And I turn editing mode on
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 10 |
       | Message | This is forum post ten |
@@ -26,8 +24,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 9 |
       | Message | This is forum post nine |
@@ -35,8 +32,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 8 |
       | Message | This is forum post eight |
@@ -44,8 +40,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 7 |
       | Message | This is forum post seven |
@@ -53,8 +48,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 6 |
       | Message | This is forum post six |
@@ -62,8 +56,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 5 |
       | Message | This is forum post five |
@@ -71,8 +64,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 4 |
       | Message | This is forum post four |
@@ -80,8 +72,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 3 |
       | Message | This is forum post three |
@@ -89,8 +80,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 2 |
       | Message | This is forum post two |
@@ -98,8 +88,7 @@ Feature: Change number of discussions displayed
     And I wait to be redirected
     And I am on "Course 1" course homepage
     And I wait "1" seconds
-    And I click on "Social forum" "link"
-    And I follow "Add discussion topic"
+    And I follow "Add a new discussion topic"
     And I set the following fields to these values:
       | Subject | Forum Post 1 |
       | Message | This is forum post one |
@@ -108,7 +97,7 @@ Feature: Change number of discussions displayed
     And I am on "Course 1" course homepage
 
   Scenario: When number of discussions is decreased fewer discussions appear
-    Given I navigate to "Settings" in current page administration
+    Given I navigate to "Edit settings" in current page administration
     And I set the following fields to these values:
       | numdiscussions | 5 |
     When I press "Save and display"
@@ -117,7 +106,7 @@ Feature: Change number of discussions displayed
     And I should not see "This is forum post six"
 
   Scenario: When number of discussions is decreased to less than 1 only 1 discussion should appear
-    Given I navigate to "Settings" in current page administration
+    Given I navigate to "Edit settings" in current page administration
     And I set the following fields to these values:
       | numdiscussions | -1 |
     When I press "Save and display"
@@ -126,7 +115,7 @@ Feature: Change number of discussions displayed
     And I should not see "This is forum post ten"
 
   Scenario: When number of discussions is increased more discussions appear
-    Given I navigate to "Settings" in current page administration
+    Given I navigate to "Edit settings" in current page administration
     And I set the following fields to these values:
       | numdiscussions | 9 |
     When I press "Save and display"

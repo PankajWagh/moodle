@@ -43,6 +43,7 @@ Feature: Test editing a Matching question
     And I press "id_submitbutton"
     Then I should see "Edited Matching name"
     When I choose "Preview" action for "Edited Matching name" in the question bank
+    And I switch to "questionpreview" window
     Then I should see "frog"
     And I should see "dog"
     And I should see "newt"

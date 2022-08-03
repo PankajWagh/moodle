@@ -1,6 +1,6 @@
 <?php
 /*
-@version   v5.21.0  2021-02-27
+@version   v5.20.16  12-Jan-2020
 @copyright (c) 2000-2013 John Lim (jlim#natsoft.com). All rights reserved.
 @copyright (c) 2014      Damien Regad, Mark Newnham and the ADOdb community
   Released under both BSD license and Lesser GPL library license.
@@ -8,7 +8,7 @@
   the BSD license will take precedence.
 Set tabs to 4 for best viewing.
 
-  Latest version is available at https://adodb.org/
+  Latest version is available at http://adodb.org/
 
 	Microsoft ADO data driver. Requires ADO. Works only on MS Windows. PHP5 compat version.
 */
@@ -52,7 +52,9 @@ class ADODB_ado extends ADOConnection {
 
 	function _affectedrows()
 	{
-		return $this->_affectedRows;
+		if (PHP_VERSION >= 5) return $this->_affectedRows;
+
+		return $this->_affectedRows->value;
 	}
 
 	// you can also pass a connection string like this:
@@ -95,7 +97,7 @@ class ADODB_ado extends ADOConnection {
 			// not yet
 			//if ($argDatabasename) $argHostname .= ";Initial Catalog=$argDatabasename";
 
-			//use trusted connection for SQL if username not specified
+			//use trusted conection for SQL if username not specified
 			if (!$argUsername) $argHostname .= ";Trusted_Connection=Yes";
 		} else if ($argProvider=='access')
 			$argProvider = "Microsoft.Jet.OLEDB.4.0"; // Microsoft Jet Provider
@@ -382,7 +384,7 @@ class ADORecordSet_ado extends ADORecordSet {
 			$mode = $ADODB_FETCH_MODE;
 		}
 		$this->fetchMode = $mode;
-		parent::__construct($id);
+		return parent::__construct($id,$mode);
 	}
 
 
@@ -577,7 +579,7 @@ class ADORecordSet_ado extends ADORecordSet {
 		case 19://adUnsignedInt	= 19,
 		case 20://adUnsignedBigInt	= 21,
 			return 'I';
-		default: return ADODB_DEFAULT_METATYPE;
+		default: return 'N';
 		}
 	}
 

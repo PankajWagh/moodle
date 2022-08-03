@@ -79,18 +79,6 @@ $override = $DB->record_exists('grade_letters', array('contextid' => $context->i
 
 //if were viewing the letters
 if (!$edit) {
-    $heading = get_string('gradeletters', 'grades');
-    $actionbar = new \core_grades\output\grade_letters_action_bar($context);
-
-    if ($admin) {
-        echo $OUTPUT->header();
-        $renderer = $PAGE->get_renderer('core_grades');
-        echo $renderer->render_action_bar($actionbar);
-        echo $OUTPUT->heading($heading);
-    } else {
-        print_grade_page_head($course->id, 'letter', 'view', $heading, false, false,
-            true, null, null, null, $actionbar);
-    }
 
     $data = array();
 
@@ -104,9 +92,15 @@ if (!$edit) {
         $max = $boundary - 0.01;
     }
 
+    print_grade_page_head($COURSE->id, 'letter', 'view', get_string('gradeletters', 'grades'));
+
     if (!empty($override)) {
         echo $OUTPUT->notification(get_string('gradeletteroverridden', 'grades'), 'notifymessage');
     }
+
+    $stredit = get_string('editgradeletters', 'grades');
+    $editlink = html_writer::nonempty_tag('div', html_writer::link($returnurl.$editparam, $stredit), array('class'=>'mdl-align'));
+    echo $editlink;
 
     $table = new html_table();
     $table->id = 'grade-letters-view';
@@ -118,6 +112,7 @@ if (!$edit) {
     $table->tablealign  = 'center';
     echo html_writer::table($table);
 
+    echo $editlink;
 } else { //else we're editing
     require_once('edit_form.php');
 
@@ -257,8 +252,7 @@ if (!$edit) {
         redirect($returnurl);
     }
 
-    print_grade_page_head($COURSE->id, 'letter', 'edit', get_string('editgradeletters', 'grades'),
-        false, false, false);
+    print_grade_page_head($COURSE->id, 'letter', 'edit', get_string('editgradeletters', 'grades'));
 
     $mform->display();
 }

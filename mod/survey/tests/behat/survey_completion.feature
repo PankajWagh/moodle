@@ -17,68 +17,36 @@ Feature: A teacher can use activity completion to track a student progress
       | teacher1 | C1 | editingteacher |
       | student1 | C1 | student |
     And I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
 
   Scenario: Require survey view
-    Given the following "activities" exist:
-      | activity   | name                   | intro                         | course | idnumber    |
-      | survey     | Test survey name       | Test survey description       | C1     | survey1     |
-    And I am on the "Test survey name" "survey activity editing" page
-    And I set the following fields to these values:
+    Given I add a "Survey" to section "1" and I fill the form with:
+      | Name | Test survey name |
       | Survey type | Critical incidents |
+      | Description | Test survey description |
       | Completion tracking | Show activity as complete when conditions are met |
-      | completionview   | 1 |
-      | completionsubmit | 0 |
-    And I press "Save and return to course"
-    And I follow "Test survey name"
-    # Teacher view.
-    And "Test survey name" should have the "View" completion condition
+      | id_completionview   | 1 |
+      | id_completionsubmit | 0 |
     And I log out
-    # Student view.
     When I log in as "student1"
     And I am on "Course 1" course homepage
-    And the "View" completion condition of "Test survey name" is displayed as "todo"
+    And the "Test survey name" "survey" activity with "auto" completion should be marked as not complete
     And I follow "Test survey name"
     And I am on "Course 1" course homepage
-    Then the "View" completion condition of "Test survey name" is displayed as "done"
+    Then the "Test survey name" "survey" activity with "auto" completion should be marked as complete
 
   Scenario: Require survey submission
-    Given the following "activities" exist:
-      | activity   | name                   | intro                         | course | idnumber    |
-      | survey     | Test survey name       | Test survey description       | C1     | survey1     |
-    And I am on the "Test survey name" "survey activity editing" page
-    And I set the following fields to these values:
+    Given I add a "Survey" to section "1" and I fill the form with:
+      | Name | Test survey name |
       | Survey type | Critical incidents |
+      | Description | Test survey description |
       | Completion tracking | Show activity as complete when conditions are met |
-      | completionview   | 1 |
-      | completionsubmit | 1 |
-    And I press "Save and return to course"
-    And I am on the "Test survey name" "survey activity" page
-    # Teacher view.
-    And "Test survey name" should have the "Submit answers" completion condition
+      | id_completionsubmit | 1 |
     And I log out
-    # Student view.
     When I log in as "student1"
     And I am on "Course 1" course homepage
-    And the "Submit answers" completion condition of "Test survey name" is displayed as "todo"
+    And the "Test survey name" "survey" activity with "auto" completion should be marked as not complete
     And I follow "Test survey name"
-    And the "Submit answers" completion condition of "Test survey name" is displayed as "todo"
-    And I press "Submit"
+    And I press "Click here to continue"
     And I am on "Course 1" course homepage
-    And the "Submit answers" completion condition of "Test survey name" is displayed as "done"
-    And I follow "Test survey name"
-    And the "Submit answers" completion condition of "Test survey name" is displayed as "done"
-
-  @javascript
-  Scenario: Use manual completion
-    Given the following "activities" exist:
-      | activity   | name                   | intro                         | course | idnumber    | completion |
-      | survey     | Test survey name       | Test survey description       | C1     | survey1     | 1          |
-    And I am on "Course 1" course homepage
-    # Teacher view.
-    And the manual completion button for "Test survey name" should be disabled
-    And I log out
-    # Student view.
-    When I am on the "survey1" Activity page logged in as student1
-    Then the manual completion button of "Test survey name" is displayed as "Mark as done"
-    And I toggle the manual completion state of "Test survey name"
-    And the manual completion button of "Test survey name" is displayed as "Done"
+    Then the "Test survey name" "survey" activity with "auto" completion should be marked as complete

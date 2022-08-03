@@ -164,6 +164,7 @@ $functions = array(
 
     'mod_glossary_delete_entry' => [
         'classname'     => 'mod_glossary\external\delete_entry',
+        'methodname'    => 'execute',
         'classpath'     => '',
         'description'   => 'Delete the given entry from the glossary.',
         'type'          => 'write',
@@ -172,6 +173,7 @@ $functions = array(
 
     'mod_glossary_update_entry' => [
         'classname'     => 'mod_glossary\external\update_entry',
+        'methodname'    => 'execute',
         'classpath'     => '',
         'description'   => 'Updates the given glossary entry.',
         'type'          => 'write',
@@ -180,6 +182,7 @@ $functions = array(
 
     'mod_glossary_prepare_entry_for_edition' => [
         'classname'     => 'mod_glossary\external\prepare_entry',
+        'methodname'    => 'execute',
         'classpath'     => '',
         'description'   => 'Prepares the given entry for edition returning draft item areas and file areas information.',
         'type'          => 'read',

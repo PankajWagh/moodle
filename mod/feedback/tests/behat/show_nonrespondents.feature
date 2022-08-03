@@ -46,8 +46,10 @@ Feature: Show users who have not responded to the feedback survey
       | Access restrictions | Grouping: GX1                                     |
     And I am on the Frogs "feedback activity" page
     And I click on "Edit questions" "link" in the "[role=main]" "css_element"
-    And I add a "Short text answer" question to the feedback with:
+    And I set the field "Add question" to "Short text answer"
+    And I set the following fields to these values:
       | Question | Y/N? |
+    And I press "Save question"
     And I log out
 
     # Go in as student 1 and do the feedback.
@@ -59,8 +61,8 @@ Feature: Show users who have not responded to the feedback survey
 
     # Go in as teacher and check the users who haven't completed it.
     And I am on the Frogs "feedback activity" page logged in as teacher1
-    And I navigate to "Responses" in current page administration
-    And I select "Show non-respondents" from the "jump" singleselect
+    And I navigate to "Show non-respondents" in current page administration
+
     # Should only show student 2; not student 1 (they did it) or 3 (not in grouping).
     Then I should see "Student 2"
     And I should not see "Student 1"

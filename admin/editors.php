@@ -39,19 +39,22 @@ if (!confirm_sesskey()) {
     redirect($returnurl);
 }
 
+
 $return = true;
 switch ($action) {
     case 'disable':
-        // Remove from enabled list.
-        $class = \core_plugin_manager::resolve_plugininfo_class('editor');
-        $class::enable_plugin($editor, false);
+        // remove from enabled list
+        $key = array_search($editor, $active_editors);
+        unset($active_editors[$key]);
+        add_to_config_log('editor_visibility', '1', '0', $editor);
         break;
 
     case 'enable':
-        // Add to enabled list.
+        // add to enabled list
         if (!in_array($editor, $active_editors)) {
-            $class = \core_plugin_manager::resolve_plugininfo_class('editor');
-            $class::enable_plugin($editor, true);
+            $active_editors[] = $editor;
+            $active_editors = array_unique($active_editors);
+            add_to_config_log('editor_visibility', '0', '1', $editor);
         }
         break;
 
@@ -65,8 +68,6 @@ switch ($action) {
                 $active_editors[$key] = $active_editors[$key + 1];
                 $active_editors[$key + 1] = $fsave;
                 add_to_config_log('editor_position', $key, $key + 1, $editor);
-                set_config('texteditors', implode(',', $active_editors));
-                core_plugin_manager::reset_caches();
             }
         }
         break;
@@ -81,8 +82,6 @@ switch ($action) {
                 $active_editors[$key] = $active_editors[$key - 1];
                 $active_editors[$key - 1] = $fsave;
                 add_to_config_log('editor_position', $key, $key - 1, $editor);
-                set_config('texteditors', implode(',', $active_editors));
-                core_plugin_manager::reset_caches();
             }
         }
         break;
@@ -90,6 +89,14 @@ switch ($action) {
     default:
         break;
 }
+
+// at least one editor must be active
+if (empty($active_editors)) {
+    $active_editors = array('textarea');
+}
+
+set_config('texteditors', implode(',', $active_editors));
+core_plugin_manager::reset_caches();
 
 if ($return) {
     redirect ($returnurl);

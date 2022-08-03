@@ -49,13 +49,11 @@ if (!array_key_exists($media, $plugins)) {
 
 switch ($action) {
     case 'disable':
-        $class = \core_plugin_manager::resolve_plugininfo_class('media');
-        $class::enable_plugin($media, false);
+        $plugins[$media]->set_enabled(false);
         break;
 
     case 'enable':
-        $class = \core_plugin_manager::resolve_plugininfo_class('media');
-        $class::enable_plugin($media, true);
+        $plugins[$media]->set_enabled(true);
         break;
 
     case 'up':

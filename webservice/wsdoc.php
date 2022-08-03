@@ -24,9 +24,10 @@
  */
 
 require_once('../config.php');
-require_once($CFG->dirroot . '/webservice/lib.php');
+require($CFG->dirroot . '/webservice/lib.php');
 
 require_login();
+require_sesskey();
 
 $usercontext = context_user::instance($USER->id);
 $tokenid = required_param('id', PARAM_INT);
@@ -42,7 +43,9 @@ $PAGE->set_pagelayout('standard');
 $PAGE->navbar->ignore_active(true);
 $PAGE->navbar->add(get_string('preferences'), new moodle_url('/user/preferences.php'));
 $PAGE->navbar->add(get_string('useraccount'));
-$PAGE->navbar->add(get_string('securitykeys', 'webservice'), new moodle_url('/user/managetoken.php'));
+$PAGE->navbar->add(get_string('securitykeys', 'webservice'),
+        new moodle_url('/user/managetoken.php',
+                array('id' => $tokenid, 'sesskey' => sesskey())));
 $PAGE->navbar->add(get_string('wsdocumentation', 'webservice'));
 
 // check web service are enabled

@@ -1292,10 +1292,12 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
      * Test get_messages.
      */
     public function test_get_messages() {
-        global $CFG, $DB, $PAGE;
+        global $CFG, $DB;
         $this->resetAfterTest(true);
 
         $this->preventResetByRollback();
+        // This mark the messages as read!.
+        $sink = $this->redirectMessages();
 
         $user1 = self::getDataGenerator()->create_user();
         $user2 = self::getDataGenerator()->create_user();
@@ -1304,64 +1306,58 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $course = self::getDataGenerator()->create_course();
 
         // Send a message from one user to another.
-        $im1 = message_post_message($user1, $user2, 'some random text 1', FORMAT_MOODLE);
-        $im2 = message_post_message($user1, $user3, 'some random text 2', FORMAT_MOODLE);
-        $im3 = message_post_message($user2, $user3, 'some random text 3', FORMAT_MOODLE);
-        $im4 = message_post_message($user3, $user2, 'some random text 4', FORMAT_MOODLE);
-        $im5 = message_post_message($user3, $user1, 'some random text 5', FORMAT_MOODLE);
-        $im6 = message_post_message($user1, $user2, 'some random text 6', FORMAT_MOODLE);
-
-        // Mark a message as read by user2.
-        $message = $DB->get_record('messages', ['id' => $im6]);
-        \core_message\api::mark_message_as_read($user2->id, $message);
+        message_post_message($user1, $user2, 'some random text 1', FORMAT_MOODLE);
+        message_post_message($user1, $user3, 'some random text 2', FORMAT_MOODLE);
+        message_post_message($user2, $user3, 'some random text 3', FORMAT_MOODLE);
+        message_post_message($user3, $user2, 'some random text 4', FORMAT_MOODLE);
+        message_post_message($user3, $user1, 'some random text 5', FORMAT_MOODLE);
 
         $this->setUser($user1);
-        // Get unread conversations from user1 to user2.
-        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
-        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
-        $this->assertCount(1, $messages['messages']);
-        $this->assertEquals($im1, $messages['messages'][0]['id']);
-
         // Get read conversations from user1 to user2.
-        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', MESSAGE_GET_READ, true, 0, 0);
-        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
-        $this->assertCount(1, $messages['messages']);
-        $this->assertEquals($im6, $messages['messages'][0]['id']);
-
-        // Get both read and unread conversations from user1 to user2.
-        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', MESSAGE_GET_READ_AND_UNREAD,
-            true, 0, 0);
-        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
-        $this->assertCount(2, $messages['messages']);
-
-        // Delete an unread message.
-        \core_message\api::delete_message($user1->id, $im1);
-
-        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
-        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
-        $this->assertCount(0, $messages['messages']);
-
-        $this->setUser($user2);
-        // Get unread conversations from any user to user2.
-        $messages = core_message_external::get_messages($user2->id, 0, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
-        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
-        $this->assertCount(2, $messages['messages']);
-
-        // Conversations from user3 to user2.
-        $messages = core_message_external::get_messages($user2->id, $user3->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(1, $messages['messages']);
 
         // Delete the message.
-        \core_message\api::delete_message($user2->id, $im4);
+        $message = array_shift($messages['messages']);
+        \core_message\api::delete_message($user1->id, $message['id']);
 
-        $messages = core_message_external::get_messages($user2->id, $user3->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', true, true, 0, 0);
+        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
+        $this->assertCount(0, $messages['messages']);
+
+        // Get unread conversations from user1 to user2.
+        $messages = core_message_external::get_messages($user2->id, $user1->id, 'conversations', false, true, 0, 0);
+        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
+        $this->assertCount(0, $messages['messages']);
+
+        // Get read messages send from user1.
+        $messages = core_message_external::get_messages(0, $user1->id, 'conversations', true, true, 0, 0);
+        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
+        $this->assertCount(1, $messages['messages']);
+
+        $this->setUser($user2);
+        // Get read conversations from any user to user2.
+        $messages = core_message_external::get_messages($user2->id, 0, 'conversations', true, true, 0, 0);
+        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
+        $this->assertCount(2, $messages['messages']);
+
+        // Conversations from user3 to user2.
+        $messages = core_message_external::get_messages($user2->id, $user3->id, 'conversations', true, true, 0, 0);
+        $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
+        $this->assertCount(1, $messages['messages']);
+
+        // Delete the message.
+        $message = array_shift($messages['messages']);
+        \core_message\api::delete_message($user2->id, $message['id']);
+
+        $messages = core_message_external::get_messages($user2->id, $user3->id, 'conversations', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(0, $messages['messages']);
 
         $this->setUser($user3);
-        // Get unread notifications received by user3.
-        $messages = core_message_external::get_messages($user3->id, 0, 'notifications', MESSAGE_GET_UNREAD, true, 0, 0);
+        // Get read notifications received by user3.
+        $messages = core_message_external::get_messages($user3->id, 0, 'notifications', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(0, $messages['messages']);
 
@@ -1449,46 +1445,44 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         message_send($eventdata);
 
         $this->setUser($user1);
-        // Get unread notifications from any user to user1.
-        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', MESSAGE_GET_UNREAD, true, 0, 0);
+        // Get read notifications from any user to user1.
+        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(3, $messages['messages']);
 
-        // Get one unread notifications from any user to user1.
-        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', MESSAGE_GET_UNREAD, true, 0, 1);
+        // Get one read notifications from any user to user1.
+        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', true, true, 0, 1);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(1, $messages['messages']);
 
-        // Get read notifications from any user to user1.
-        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', MESSAGE_GET_READ, true, 0, 0);
+        // Get unread notifications from any user to user1.
+        $messages = core_message_external::get_messages($user1->id, 0, 'notifications', false, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(0, $messages['messages']);
 
-        // Get unread both type of messages from any user to user1.
-        $messages = core_message_external::get_messages($user1->id, 0, 'both', MESSAGE_GET_UNREAD, true, 0, 0);
+        // Get read both type of messages from any user to user1.
+        $messages = core_message_external::get_messages($user1->id, 0, 'both', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(4, $messages['messages']);
 
-        // Get unread notifications from no-reply-user to user1.
-        $messages = core_message_external::get_messages($user1->id, $userfrom->id, 'notifications', MESSAGE_GET_UNREAD, true, 0, 0);
+        // Get read notifications from no-reply-user to user1.
+        $messages = core_message_external::get_messages($user1->id, $userfrom->id, 'notifications', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(1, $messages['messages']);
 
         // Get notifications send by user1 to any user.
-        $messages = core_message_external::get_messages(0, $user1->id, 'notifications', MESSAGE_GET_UNREAD, true, 0, 0);
+        $messages = core_message_external::get_messages(0, $user1->id, 'notifications', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(1, $messages['messages']);
         // Check we receive custom data as a unserialisable json.
         $this->assertObjectHasAttribute('datakey', json_decode($messages['messages'][0]['customdata']));
         $this->assertEquals('mod_feedback', $messages['messages'][0]['component']);
         $this->assertEquals('submission', $messages['messages'][0]['eventtype']);
-        $feedbackicon = clean_param($PAGE->get_renderer('core')->image_url('icon', 'mod_feedback')->out(), PARAM_URL);
-        $this->assertEquals($feedbackicon, $messages['messages'][0]['iconurl']);
 
         // Test warnings.
         $CFG->messaging = 0;
 
-        $messages = core_message_external::get_messages(0, $user1->id, 'both', MESSAGE_GET_UNREAD, true, 0, 0);
+        $messages = core_message_external::get_messages(0, $user1->id, 'both', true, true, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
         $this->assertCount(1, $messages['warnings']);
 
@@ -1496,7 +1490,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
 
         // Messaging disabled.
         try {
-            $messages = core_message_external::get_messages(0, $user1->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+            $messages = core_message_external::get_messages(0, $user1->id, 'conversations', true, true, 0, 0);
             $this->fail('Exception expected due messaging disabled.');
         } catch (moodle_exception $e) {
             $this->assertEquals('disabled', $e->errorcode);
@@ -1506,7 +1500,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
 
         // Invalid users.
         try {
-            $messages = core_message_external::get_messages(0, 0, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+            $messages = core_message_external::get_messages(0, 0, 'conversations', true, true, 0, 0);
             $this->fail('Exception expected due invalid users.');
         } catch (moodle_exception $e) {
             $this->assertEquals('accessdenied', $e->errorcode);
@@ -1514,7 +1508,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
 
         // Invalid user ids.
         try {
-            $messages = core_message_external::get_messages(2500, 0, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+            $messages = core_message_external::get_messages(2500, 0, 'conversations', true, true, 0, 0);
             $this->fail('Exception expected due invalid users.');
         } catch (moodle_exception $e) {
             $this->assertEquals('invaliduser', $e->errorcode);
@@ -1523,7 +1517,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         // Invalid users (permissions).
         $this->setUser($user2);
         try {
-            $messages = core_message_external::get_messages(0, $user1->id, 'conversations', MESSAGE_GET_UNREAD, true, 0, 0);
+            $messages = core_message_external::get_messages(0, $user1->id, 'conversations', true, true, 0, 0);
             $this->fail('Exception expected due invalid user.');
         } catch (moodle_exception $e) {
             $this->assertEquals('accessdenied', $e->errorcode);
@@ -1548,7 +1542,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->send_message($user1, $user3, 'some random text 2', 0, 2);
 
         // Get messages sent from user 1.
-        $messages = core_message_external::get_messages(0, $user1->id, 'conversations', MESSAGE_GET_UNREAD, false, 0, 0);
+        $messages = core_message_external::get_messages(0, $user1->id, 'conversations', false, false, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
 
         // Confirm the data is correct.
@@ -1582,7 +1576,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->send_message($user3, $user1, 'some random text 2', 0, 2);
 
         // Get messages sent to user 1.
-        $messages = core_message_external::get_messages($user1->id, 0, 'conversations', MESSAGE_GET_UNREAD, false, 0, 0);
+        $messages = core_message_external::get_messages($user1->id, 0, 'conversations', false, false, 0, 0);
         $messages = external_api::clean_returnvalue(core_message_external::get_messages_returns(), $messages);
 
         // Confirm the data is correct.
@@ -1666,7 +1660,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->send_message($user3, $user2, 'How you goin?');
 
         // Retrieve all messages sent by user2 (they are currently unread).
-        $lastmessages = message_get_messages($user1->id, $user2->id, 0, MESSAGE_GET_UNREAD);
+        $lastmessages = message_get_messages($user1->id, $user2->id, 0, false);
 
         $messageids = array();
         foreach ($lastmessages as $m) {
@@ -1675,13 +1669,13 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         }
 
         // Retrieve all messages sent (they are currently read).
-        $lastmessages = message_get_messages($user1->id, $user2->id, 0, MESSAGE_GET_READ);
+        $lastmessages = message_get_messages($user1->id, $user2->id, 0, true);
         $this->assertCount(2, $lastmessages);
         $this->assertArrayHasKey($messageids[0]['messageid'], $lastmessages);
         $this->assertArrayHasKey($messageids[1]['messageid'], $lastmessages);
 
         // Retrieve all messages sent by any user (that are currently unread).
-        $lastmessages = message_get_messages($user1->id, 0, 0, MESSAGE_GET_UNREAD);
+        $lastmessages = message_get_messages($user1->id, 0, 0, false);
         $this->assertCount(1, $lastmessages);
 
         // Invalid message ids.
@@ -1693,7 +1687,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         }
 
         // A message to a different user.
-        $lastmessages = message_get_messages($user2->id, $user3->id, 0, MESSAGE_GET_UNREAD);
+        $lastmessages = message_get_messages($user2->id, $user3->id, 0, false);
         $messageid = array_pop($lastmessages)->id;
         try {
             $messageid = core_message_external::mark_message_read($messageid, time());
@@ -1725,7 +1719,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->send_message($user3, $user2, 'How you goin?', 1);
 
         // Retrieve all notifications sent by user2 (they are currently unread).
-        $lastnotifications = message_get_messages($user1->id, $user2->id, 1, MESSAGE_GET_UNREAD);
+        $lastnotifications = message_get_messages($user1->id, $user2->id, 1, false);
 
         $notificationids = array();
         foreach ($lastnotifications as $n) {
@@ -1735,13 +1729,13 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         }
 
         // Retrieve all notifications sent (they are currently read).
-        $lastnotifications = message_get_messages($user1->id, $user2->id, 1, MESSAGE_GET_READ);
+        $lastnotifications = message_get_messages($user1->id, $user2->id, 1, true);
         $this->assertCount(2, $lastnotifications);
         $this->assertArrayHasKey($notificationids[1]['notificationid'], $lastnotifications);
         $this->assertArrayHasKey($notificationids[0]['notificationid'], $lastnotifications);
 
         // Retrieve all notifications sent by any user (that are currently unread).
-        $lastnotifications = message_get_messages($user1->id, 0, 1, MESSAGE_GET_UNREAD);
+        $lastnotifications = message_get_messages($user1->id, 0, 1, false);
         $this->assertCount(1, $lastnotifications);
 
         // Invalid notification ids.
@@ -1753,7 +1747,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         }
 
         // A notification to a different user.
-        $lastnotifications = message_get_messages($user2->id, $user3->id, 1, MESSAGE_GET_UNREAD);
+        $lastnotifications = message_get_messages($user2->id, $user3->id, 1, false);
         $notificationid = array_pop($lastnotifications)->id;
         try {
             $notificationid = core_message_external::mark_notification_read($notificationid, time());
@@ -1787,7 +1781,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $m3to4 = message_post_message($user3, $user4, 'some random text 4', FORMAT_MOODLE);
 
         // Retrieve all messages sent by user2 (they are currently unread).
-        $lastmessages = message_get_messages($user1->id, $user2->id, 0, MESSAGE_GET_UNREAD);
+        $lastmessages = message_get_messages($user1->id, $user2->id, 0, false);
 
         // Delete a message not read, as a user from.
         $result = core_message_external::delete_message($m1to2, $user1->id, false);
@@ -2097,7 +2091,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->assertCount(2, $contacts[0]['conversations']);
         // We can't rely on the ordering of conversations within the results, so sort by id first.
         usort($contacts[0]['conversations'], function($a, $b) {
-            return $b['id'] <=> $a['id'];
+            return $a['id'] < $b['id'];
         });
         $this->assertEquals(\core_message\api::MESSAGE_CONVERSATION_TYPE_GROUP, $contacts[0]['conversations'][0]['type']);
         $this->assertEquals(\core_message\api::MESSAGE_CONVERSATION_TYPE_INDIVIDUAL, $contacts[0]['conversations'][1]['type']);
@@ -2193,7 +2187,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $this->assertCount(2, $contacts[0]['conversations']);
         // We can't rely on the ordering of conversations within the results, so sort by id first.
         usort($contacts[0]['conversations'], function($a, $b) {
-            return $b['id'] <=> $a['id'];
+            return $a['id'] < $b['id'];
         });
         $this->assertEquals(\core_message\api::MESSAGE_CONVERSATION_TYPE_GROUP, $contacts[0]['conversations'][0]['type']);
         $this->assertEquals(\core_message\api::MESSAGE_CONVERSATION_TYPE_INDIVIDUAL, $contacts[0]['conversations'][1]['type']);
@@ -2834,14 +2828,14 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $members = $result['members'];
         $this->assertCount(3, $members);
         $membersid = [$members[0]['id'], $members[1]['id'], $members[2]['id']];
-        $this->assertContainsEquals($user1->id, $membersid);
-        $this->assertContainsEquals($user2->id, $membersid);
-        $this->assertContainsEquals($user3->id, $membersid);
+        $this->assertContains($user1->id, $membersid);
+        $this->assertContains($user2->id, $membersid);
+        $this->assertContains($user3->id, $membersid);
 
         $membersfullnames = [$members[0]['fullname'], $members[1]['fullname'], $members[2]['fullname']];
-        $this->assertContainsEquals(fullname($user1), $membersfullnames);
-        $this->assertContainsEquals(fullname($user2), $membersfullnames);
-        $this->assertContainsEquals(fullname($user3), $membersfullnames);
+        $this->assertContains(fullname($user1), $membersfullnames);
+        $this->assertContains(fullname($user2), $membersfullnames);
+        $this->assertContains(fullname($user3), $membersfullnames);
 
         // Confirm the messages data is correct.
         $messages = $result['messages'];
@@ -2963,9 +2957,9 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $members = $result['members'];
         $this->assertCount(3, $members);
         $membersid = [$members[0]['id'], $members[1]['id'], $members[2]['id']];
-        $this->assertContainsEquals($user1->id, $membersid);
-        $this->assertContainsEquals($user2->id, $membersid);
-        $this->assertContainsEquals($user3->id, $membersid);
+        $this->assertContains($user1->id, $membersid);
+        $this->assertContains($user2->id, $membersid);
+        $this->assertContains($user3->id, $membersid);
 
         // Confirm the message data is correct.
         $messages = $result['messages'];
@@ -3544,7 +3538,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
      * @return bool
      */
     protected static function sort_contacts($a, $b) {
-        return $a['userid'] <=> $b['userid'];
+        return $a['userid'] > $b['userid'];
     }
 
     /**
@@ -3555,7 +3549,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
      * @return bool
      */
     protected static function sort_contacts_id($a, $b) {
-        return $a['id'] <=> $b['id'];
+        return $a['id'] > $b['id'];
     }
 
     /**
@@ -4428,7 +4422,7 @@ class core_message_externallib_testcase extends externallib_advanced_testcase {
         $conversations = $result['conversations'];
 
         usort($conversations, function($first, $second){
-            return $first['id'] <=> $second['id'];
+            return $first['id'] > $second['id'];
         });
 
         $selfconversation = array_shift($conversations);

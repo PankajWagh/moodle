@@ -45,7 +45,7 @@ class context_bogus1 extends context {
      *
      * @return array
      */
-    public function get_capabilities(string $sort = self::DEFAULT_CAPABILITY_SORT) {
+    public function get_capabilities() {
         return array();
     }
 }
@@ -69,7 +69,7 @@ class context_bogus2 extends context {
      *
      * @return array
      */
-    public function get_capabilities(string $sort = self::DEFAULT_CAPABILITY_SORT) {
+    public function get_capabilities() {
         return array();
     }
 }
@@ -93,7 +93,7 @@ class context_bogus3 extends context {
      *
      * @return array
      */
-    public function get_capabilities(string $sort = self::DEFAULT_CAPABILITY_SORT) {
+    public function get_capabilities() {
         return array();
     }
 }

@@ -8,7 +8,7 @@ namespace Box\Spout\Common\Entity\Style;
  */
 class Style
 {
-    /** Default values */
+    /** Default font values */
     const DEFAULT_FONT_SIZE = 11;
     const DEFAULT_FONT_COLOR = Color::BLACK;
     const DEFAULT_FONT_NAME = 'Arial';
@@ -54,13 +54,6 @@ class Style
     /** @var bool Whether specific font properties should be applied */
     private $shouldApplyFont = false;
 
-    /** @var bool Whether specific cell alignment should be applied */
-    private $shouldApplyCellAlignment = false;
-    /** @var string Cell alignment */
-    private $cellAlignment;
-    /** @var bool Whether the cell alignment property was set */
-    private $hasSetCellAlignment = false;
-
     /** @var bool Whether the text should wrap in the cell (useful for long or multi-lines text) */
     private $shouldWrapText = false;
     /** @var bool Whether the wrap text property was set */
@@ -77,18 +70,6 @@ class Style
 
     /** @var bool */
     private $hasSetBackgroundColor = false;
-
-    /** @var string Format */
-    private $format;
-
-    /** @var bool */
-    private $hasSetFormat = false;
-
-    /** @var bool */
-    private $isRegistered = false;
-
-    /** @var bool */
-    private $isEmpty = true;
 
     /**
      * @return int|null
@@ -125,7 +106,6 @@ class Style
     {
         $this->shouldApplyBorder = true;
         $this->border = $border;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -154,7 +134,6 @@ class Style
         $this->fontBold = true;
         $this->hasSetFontBold = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -183,7 +162,6 @@ class Style
         $this->fontItalic = true;
         $this->hasSetFontItalic = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -212,7 +190,6 @@ class Style
         $this->fontUnderline = true;
         $this->hasSetFontUnderline = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -241,7 +218,6 @@ class Style
         $this->fontStrikethrough = true;
         $this->hasSetFontStrikethrough = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -271,7 +247,6 @@ class Style
         $this->fontSize = $fontSize;
         $this->hasSetFontSize = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -303,7 +278,6 @@ class Style
         $this->fontColor = $fontColor;
         $this->hasSetFontColor = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -333,7 +307,6 @@ class Style
         $this->fontName = $fontName;
         $this->hasSetFontName = true;
         $this->shouldApplyFont = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -344,45 +317,6 @@ class Style
     public function hasSetFontName()
     {
         return $this->hasSetFontName;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCellAlignment()
-    {
-        return $this->cellAlignment;
-    }
-
-    /**
-     * @param string $cellAlignment The cell alignment
-     *
-     * @return Style
-     */
-    public function setCellAlignment($cellAlignment)
-    {
-        $this->cellAlignment = $cellAlignment;
-        $this->hasSetCellAlignment = true;
-        $this->shouldApplyCellAlignment = true;
-        $this->isEmpty = false;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasSetCellAlignment()
-    {
-        return $this->hasSetCellAlignment;
-    }
-
-    /**
-     * @return bool Whether specific cell alignment should be applied
-     */
-    public function shouldApplyCellAlignment()
-    {
-        return $this->shouldApplyCellAlignment;
     }
 
     /**
@@ -401,7 +335,6 @@ class Style
     {
         $this->shouldWrapText = $shouldWrap;
         $this->hasSetWrapText = true;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -431,7 +364,6 @@ class Style
     {
         $this->hasSetBackgroundColor = true;
         $this->backgroundColor = $color;
-        $this->isEmpty = false;
 
         return $this;
     }
@@ -450,60 +382,5 @@ class Style
     public function shouldApplyBackgroundColor()
     {
         return $this->hasSetBackgroundColor;
-    }
-
-    /**
-     * Sets format
-     * @param string $format
-     * @return Style
-     */
-    public function setFormat($format)
-    {
-        $this->hasSetFormat = true;
-        $this->format = $format;
-        $this->isEmpty = false;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFormat()
-    {
-        return $this->format;
-    }
-
-    /**
-     * @return bool Whether format should be applied
-     */
-    public function shouldApplyFormat()
-    {
-        return $this->hasSetFormat;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isRegistered() : bool
-    {
-        return $this->isRegistered;
-    }
-
-    public function markAsRegistered(?int $id) : void
-    {
-        $this->setId($id);
-        $this->isRegistered = true;
-    }
-
-    public function unmarkAsRegistered() : void
-    {
-        $this->setId(0);
-        $this->isRegistered = false;
-    }
-
-    public function isEmpty() : bool
-    {
-        return $this->isEmpty;
     }
 }

@@ -69,7 +69,6 @@ class manager {
             new performance\debugging(),
             new performance\backups(),
             new performance\stats(),
-            new performance\dbschema(),
         ];
 
         // Any plugin can add status checks to this report by implementing a callback
@@ -96,7 +95,6 @@ class manager {
         $checks = [
             new environment\environment(),
             new environment\upgradecheck(),
-            new environment\antivirus(),
         ];
 
         // Any plugin can add status checks to this report by implementing a callback
@@ -123,9 +121,11 @@ class manager {
         $checks = [
             new environment\displayerrors(),
             new environment\unsecuredataroot(),
-            new environment\publicpaths(),
+            new environment\vendordir(),
+            new environment\nodemodules(),
             new environment\configrw(),
             new environment\preventexecpath(),
+            new security\mediafilterswf(),
             new security\embed(),
             new security\openprofiles(),
             new security\crawlers(),
@@ -155,3 +155,4 @@ class manager {
         return $checks;
     }
 }
+

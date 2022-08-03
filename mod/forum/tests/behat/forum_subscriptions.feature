@@ -15,22 +15,14 @@ Feature: A user can control their own subscription preferences for a forum
       | user | course | role |
       | student1 | C1 | student |
     And I log in as "admin"
+    And I am on "Course 1" course homepage with editing mode on
 
   Scenario: A disallowed subscription forum cannot be subscribed to
-    Given the following "activity" exists:
-      | activity         | forum                  |
-      | course           | C1                     |
-      | idnumber         | forum1                 |
-      | name             | Test forum name        |
-      | intro            | Test forum description |
-      | type             | general                |
-      | section          | 1                      |
-    And I am on "Course 1" course homepage
-    Given I follow "Test forum name"
-    And I navigate to "Settings" in current page administration
-    And I set the following fields to these values:
+    Given I add a "Forum" to section "1" and I fill the form with:
+      | Forum name        | Test forum name |
+      | Forum type        | Standard forum for general use |
+      | Description       | Test forum description |
       | Subscription mode | Subscription disabled |
-    And I press "Save and return to course"
     And I add a new discussion to "Test forum name" forum with:
       | Subject | Test post subject |
       | Message | Test post message |
@@ -44,20 +36,11 @@ Feature: A user can control their own subscription preferences for a forum
     And "You are not subscribed to this discussion. Click to subscribe." "link" should not exist in the "Test post subject" "table_row"
 
   Scenario: A forced subscription forum cannot be subscribed to
-    Given the following "activity" exists:
-      | activity       | forum                  |
-      | course         | C1                     |
-      | idnumber       | forum1                 |
-      | name           | Test forum name        |
-      | intro          | Test forum description |
-      | type           | general                |
-      | section        | 1                      |
-    And I am on "Course 1" course homepage
-    Given I follow "Test forum name"
-    And I navigate to "Settings" in current page administration
-    And I set the following fields to these values:
+    Given I add a "Forum" to section "1" and I fill the form with:
+      | Forum name        | Test forum name |
+      | Forum type        | Standard forum for general use |
+      | Description       | Test forum description |
       | Subscription mode | Forced subscription |
-    And I press "Save and return to course"
     And I add a new discussion to "Test forum name" forum with:
       | Subject | Test post subject |
       | Message | Test post message |
@@ -71,20 +54,11 @@ Feature: A user can control their own subscription preferences for a forum
     And "You are not subscribed to this discussion. Click to subscribe." "link" should not exist in the "Test post subject" "table_row"
 
   Scenario: An optional forum can be subscribed to
-    Given the following "activity" exists:
-      | activity       | forum                  |
-      | course         | C1                     |
-      | idnumber       | forum1                 |
-      | name           | Test forum name        |
-      | intro          | Test forum description |
-      | type           | general                |
-      | section        | 1                      |
-    And I am on "Course 1" course homepage
-    Given I follow "Test forum name"
-    And I navigate to "Settings" in current page administration
-    And I set the following fields to these values:
+    Given I add a "Forum" to section "1" and I fill the form with:
+      | Forum name        | Test forum name |
+      | Forum type        | Standard forum for general use |
+      | Description       | Test forum description |
       | Subscription mode | Optional subscription |
-    And I press "Save and return to course"
     And I add a new discussion to "Test forum name" forum with:
       | Subject | Test post subject |
       | Message | Test post message |
@@ -92,28 +66,19 @@ Feature: A user can control their own subscription preferences for a forum
     When I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test forum name"
-    Then I should see "Subscribe to forum"
-    And I should not see "Unsubscribe from forum"
-    And I follow "Subscribe to forum"
+    Then I should see "Subscribe to this forum"
+    And I should not see "Unsubscribe from this forum"
+    And I follow "Subscribe to this forum"
     And I should see "Student One will be notified of new posts in 'Test forum name'"
-    And I should see "Unsubscribe from forum"
-    And I should not see "Subscribe to forum"
+    And I should see "Unsubscribe from this forum"
+    And I should not see "Subscribe to this forum"
 
   Scenario: An Automatic forum can be unsubscribed from
-    Given the following "activity" exists:
-      | activity       | forum                  |
-      | course         | C1                     |
-      | idnumber       | forum1                 |
-      | name           | Test forum name        |
-      | intro          | Test forum description |
-      | type           | general                |
-      | section        | 1                      |
-    And I am on "Course 1" course homepage
-    Given I follow "Test forum name"
-    And I navigate to "Settings" in current page administration
-    And I set the following fields to these values:
+    Given I add a "Forum" to section "1" and I fill the form with:
+      | Forum name        | Test forum name |
+      | Forum type        | Standard forum for general use |
+      | Description       | Test forum description |
       | Subscription mode | Auto subscription |
-    And I press "Save and return to course"
     And I add a new discussion to "Test forum name" forum with:
       | Subject | Test post subject |
       | Message | Test post message |
@@ -121,9 +86,9 @@ Feature: A user can control their own subscription preferences for a forum
     When I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test forum name"
-    Then I should see "Unsubscribe from forum"
-    And I should not see "Subscribe to forum"
-    And I follow "Unsubscribe from forum"
+    Then I should see "Unsubscribe from this forum"
+    And I should not see "Subscribe to this forum"
+    And I follow "Unsubscribe from this forum"
     And I should see "Student One will NOT be notified of new posts in 'Test forum name'"
-    And I should see "Subscribe to forum"
-    And I should not see "Unsubscribe from forum"
+    And I should see "Subscribe to this forum"
+    And I should not see "Unsubscribe from this forum"

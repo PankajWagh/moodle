@@ -50,10 +50,14 @@ class availability_profile_condition_testcase extends advanced_testcase {
 
         $this->resetAfterTest();
 
-        // Add a custom profile field type.
-        $this->profilefield = $this->getDataGenerator()->create_custom_profile_field(array(
-                'shortname' => 'frogtype', 'name' => 'Type of frog',
+        // Add a custom profile field type. The API for doing this is indescribably
+        // horrid and tightly intertwined with the form UI, so it's best to add
+        // it directly in database.
+        $DB->insert_record('user_info_field', array(
+                'shortname' => 'frogtype', 'name' => 'Type of frog', 'categoryid' => 1,
                 'datatype' => 'text'));
+        $this->profilefield = $DB->get_record('user_info_field',
+                array('shortname' => 'frogtype'));
 
         // Clear static cache.
         \availability_profile\condition::wipe_static_cache();
@@ -310,7 +314,7 @@ class availability_profile_condition_testcase extends advanced_testcase {
         // is evidence that it called the right function to get the name).
         $information = $cond->get_description(false, false, $info);
         $information = \core_availability\info::format_info($information, $info->get_course());
-        $this->assertMatchesRegularExpression('~Department~', $information);
+        $this->assertRegExp('~Department~', $information);
 
         // Set the field to true for both users and retry.
         $DB->set_field('user', 'department', 'Cheese Studies', array('id' => $user->id));
@@ -330,9 +334,11 @@ class availability_profile_condition_testcase extends advanced_testcase {
         $info = new \core_availability\mock_info();
 
         // Add custom textarea type.
-        $customfield = $this->getDataGenerator()->create_custom_profile_field(array(
-                'shortname' => 'longtext', 'name' => 'Long text',
+        $DB->insert_record('user_info_field', array(
+                'shortname' => 'longtext', 'name' => 'Long text', 'categoryid' => 1,
                 'datatype' => 'textarea'));
+        $customfield = $DB->get_record('user_info_field',
+                array('shortname' => 'longtext'));
 
         // The list of fields should include the text field added in setUp(),
         // but should not include the textarea field added just now.
@@ -390,7 +396,7 @@ class availability_profile_condition_testcase extends advanced_testcase {
         if (!$yes) {
             $information = $cond->get_description(false, false, $info);
             $information = \core_availability\info::format_info($information, $info->get_course());
-            $this->assertMatchesRegularExpression($failpattern, $information);
+            $this->assertRegExp($failpattern, $information);
         }
 
         // Negative (NOT) test.
@@ -399,7 +405,7 @@ class availability_profile_condition_testcase extends advanced_testcase {
         if ($yes) {
             $information = $cond->get_description(false, true, $info);
             $information = \core_availability\info::format_info($information, $info->get_course());
-            $this->assertMatchesRegularExpression($failpattern, $information);
+            $this->assertRegExp($failpattern, $information);
         }
     }
 
@@ -462,9 +468,11 @@ class availability_profile_condition_testcase extends advanced_testcase {
         condition::wipe_static_cache();
 
         // For testing, make another info field with default value.
-        $otherprofilefield = $this->getDataGenerator()->create_custom_profile_field(array(
-                'shortname' => 'tonguestyle', 'name' => 'Tongue style',
+        $DB->insert_record('user_info_field', array(
+                'shortname' => 'tonguestyle', 'name' => 'Tongue style', 'categoryid' => 1,
                 'datatype' => 'text', 'defaultdata' => 'Slimy'));
+        $otherprofilefield = $DB->get_record('user_info_field',
+                array('shortname' => 'tonguestyle'));
 
         // Make a test course and some users.
         $generator = $this->getDataGenerator();

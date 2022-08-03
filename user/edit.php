@@ -128,7 +128,6 @@ if ($user->deleted) {
 }
 
 $PAGE->set_pagelayout('admin');
-$PAGE->add_body_class('limitedwidth');
 $PAGE->set_context($personalcontext);
 if ($USER->id != $user->id) {
     $PAGE->navigation->extend_for_user($user);
@@ -300,7 +299,7 @@ if ($userform->is_cancelled()) {
     }
 
     if (!$emailchanged || !$CFG->emailchangeconfirmation) {
-        redirect($returnurl, get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect($returnurl);
     }
 }
 
@@ -325,3 +324,4 @@ if ($emailchanged) {
 
 // And proper footer.
 echo $OUTPUT->footer();
+

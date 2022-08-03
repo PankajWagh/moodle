@@ -1726,21 +1726,16 @@ class core_plugin_manager {
         // branch, listed should be no plugins that were removed at 1.9.x - 2.1.x versions as
         // Moodle 2.3 supports upgrades from 2.2.x only.
         $plugins = array(
-            'qformat' => array('blackboard', 'learnwise', 'examview'),
+            'qformat' => array('blackboard', 'learnwise'),
             'auth' => array('radius', 'fc', 'nntp', 'pam', 'pop3', 'imap'),
-            'block' => array('course_overview', 'messages', 'community', 'participants', 'quiz_results'),
+            'block' => array('course_overview', 'messages', 'community', 'participants'),
             'cachestore' => array('memcache'),
             'enrol' => array('authorize'),
-            'filter' => array('censor'),
-            'media' => array('swf'),
-            'portfolio' => array('picasa', 'boxnet'),
-            'qformat' => array('webct'),
-            'message' => array('jabber'),
             'quizaccess' => array('safebrowser'),
             'report' => array('search'),
-            'repository' => array('alfresco', 'picasa', 'skydrive', 'boxnet'),
+            'repository' => array('alfresco'),
             'tinymce' => array('dragmath'),
-            'tool' => array('bloglevelupgrade', 'qeupgradehelper', 'timezoneimport', 'assignmentupgrade', 'health'),
+            'tool' => array('bloglevelupgrade', 'qeupgradehelper', 'timezoneimport', 'assignmentupgrade'),
             'theme' => array('bootstrapbase', 'clean', 'more', 'afterburner', 'anomaly', 'arialist', 'base',
                 'binarius', 'boxxie', 'brick', 'canvas', 'formal_white', 'formfactor', 'fusion', 'leatherbound',
                 'magazine', 'mymobile', 'nimble', 'nonzero', 'overlay', 'serenity', 'sky_high', 'splash',
@@ -1799,14 +1794,14 @@ class core_plugin_manager {
             ),
 
             'block' => array(
-                'accessreview', 'activity_modules', 'activity_results', 'admin_bookmarks', 'badges',
+                'activity_modules', 'activity_results', 'admin_bookmarks', 'badges',
                 'blog_menu', 'blog_recent', 'blog_tags', 'calendar_month',
                 'calendar_upcoming', 'comments',
                 'completionstatus', 'course_list', 'course_summary',
                 'feedback', 'globalsearch', 'glossary_random', 'html',
                 'login', 'lp', 'mentees', 'mnet_hosts', 'myoverview', 'myprofile',
                 'navigation', 'news_items', 'online_users',
-                'private_files', 'recent_activity', 'recentlyaccesseditems',
+                'private_files', 'quiz_results', 'recent_activity', 'recentlyaccesseditems',
                 'recentlyaccessedcourses', 'rss_client', 'search_forums', 'section_links',
                 'selfcompletion', 'settings', 'site_main_menu',
                 'social_activities', 'starredcourses', 'tag_flickr', 'tag_youtube', 'tags', 'timeline'
@@ -1868,7 +1863,7 @@ class core_plugin_manager {
             ),
 
             'filter' => array(
-                'activitynames', 'algebra', 'emailprotect',
+                'activitynames', 'algebra', 'censor', 'emailprotect',
                 'emoticon', 'displayh5p', 'mathjaxloader', 'mediaplugin', 'multilang', 'tex', 'tidy',
                 'urltolink', 'data', 'glossary'
             ),
@@ -1917,11 +1912,11 @@ class core_plugin_manager {
             ),
 
             'media' => array(
-                'html5audio', 'html5video', 'videojs', 'vimeo', 'youtube'
+                'html5audio', 'html5video', 'swf', 'videojs', 'vimeo', 'youtube'
             ),
 
             'message' => array(
-                'airnotifier', 'email', 'popup'
+                'airnotifier', 'email', 'jabber', 'popup'
             ),
 
             'mnetservice' => array(
@@ -1929,7 +1924,7 @@ class core_plugin_manager {
             ),
 
             'mod' => array(
-                'assign', 'assignment', 'bigbluebuttonbn', 'book', 'chat', 'choice', 'data', 'feedback', 'folder',
+                'assign', 'assignment', 'book', 'chat', 'choice', 'data', 'feedback', 'folder',
                 'forum', 'glossary', 'h5pactivity', 'imscp', 'label', 'lesson', 'lti', 'page',
                 'quiz', 'resource', 'scorm', 'survey', 'url', 'wiki', 'workshop'
             ),
@@ -1942,32 +1937,12 @@ class core_plugin_manager {
             ),
 
             'portfolio' => array(
-                'download', 'flickr', 'googledocs', 'mahara'
+                'boxnet', 'download', 'flickr', 'googledocs', 'mahara', 'picasa'
             ),
 
             'profilefield' => array(
-                'checkbox', 'datetime', 'menu', 'social', 'text', 'textarea'
+                'checkbox', 'datetime', 'menu', 'text', 'textarea'
             ),
-
-            'qbank' => [
-                'bulkmove',
-                'comment',
-                'customfields',
-                'deletequestion',
-                'editquestion',
-                'exporttoxml',
-                'exportquestions',
-                'importquestions',
-                'managecategories',
-                'previewquestion',
-                'statistics',
-                'tagquestion',
-                'usage',
-                'viewcreator',
-                'viewquestionname',
-                'viewquestiontext',
-                'viewquestiontype',
-            ],
 
             'qbehaviour' => array(
                 'adaptive', 'adaptivenopenalty', 'deferredcbm',
@@ -1977,8 +1952,8 @@ class core_plugin_manager {
             ),
 
             'qformat' => array(
-                'aiken', 'blackboard_six', 'gift',
-                'missingword', 'multianswer',
+                'aiken', 'blackboard_six', 'examview', 'gift',
+                'missingword', 'multianswer', 'webct',
                 'xhtml', 'xml'
             ),
 
@@ -2006,9 +1981,9 @@ class core_plugin_manager {
             ),
 
             'repository' => array(
-                'areafiles', 'contentbank', 'coursefiles', 'dropbox', 'equella', 'filesystem',
+                'areafiles', 'boxnet', 'contentbank', 'coursefiles', 'dropbox', 'equella', 'filesystem',
                 'flickr', 'flickr_public', 'googledocs', 'local', 'merlot', 'nextcloud',
-                'onedrive', 'recent', 's3', 'upload', 'url', 'user', 'webdav',
+                'onedrive', 'picasa', 'recent', 'skydrive', 's3', 'upload', 'url', 'user', 'webdav',
                 'wikimedia', 'youtube'
             ),
 
@@ -2033,8 +2008,8 @@ class core_plugin_manager {
             ),
 
             'tool' => array(
-                'admin_presets', 'analytics', 'availabilityconditions', 'behat', 'brickfield', 'capability', 'cohortroles',
-                'componentlibrary', 'customlang', 'dataprivacy', 'dbtransfer', 'filetypes', 'generator', 'httpsreplace', 'innodb',
+                'analytics', 'availabilityconditions', 'behat', 'capability', 'cohortroles', 'customlang',
+                'dataprivacy', 'dbtransfer', 'filetypes', 'generator', 'health', 'httpsreplace', 'innodb',
                 'installaddon', 'langimport', 'licensemanager', 'log', 'lp', 'lpimportcsv', 'lpmigrate', 'messageinbound',
                 'mobile', 'moodlenet', 'multilangupgrade', 'monitor', 'oauth2', 'phpunit', 'policy', 'profiling', 'recyclebin',
                 'replace', 'spamcleaner', 'task', 'templatelibrary', 'uploadcourse', 'uploaduser', 'unsuproles',
@@ -2272,7 +2247,6 @@ class core_plugin_manager {
         $fix['mod']        = $types['mod'];
         $fix['block']      = $types['block'];
         $fix['qtype']      = $types['qtype'];
-        $fix['qbank']      = $types['qbank'];
         $fix['qbehaviour'] = $types['qbehaviour'];
         $fix['qformat']    = $types['qformat'];
         $fix['filter']     = $types['filter'];

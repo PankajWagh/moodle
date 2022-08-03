@@ -93,12 +93,6 @@ class course_modinfo {
     private $sections;
 
     /**
-     * Array from section id => section num.
-     * @var array
-     */
-    private $sectionids;
-
-    /**
      * Array from int (cm id) => cm_info object
      * @var cm_info[]
      */
@@ -337,24 +331,6 @@ class course_modinfo {
     }
 
     /**
-     * Gets data about specific section ID.
-     * @param int $sectionid ID (not number) of section
-     * @param int $strictness Use MUST_EXIST to throw exception if it doesn't
-     * @return section_info|null Information for numbered section or null if not found
-     */
-    public function get_section_info_by_id(int $sectionid, int $strictness = IGNORE_MISSING): ?section_info {
-
-        if (!isset($this->sectionids[$sectionid])) {
-            if ($strictness === MUST_EXIST) {
-                throw new moodle_exception('sectionnotexist');
-            } else {
-                return null;
-            }
-        }
-        return $this->get_section_info($this->sectionids[$sectionid], $strictness);
-    }
-
-    /**
      * Static cache for generated course_modinfo instances
      *
      * @see course_modinfo::instance()
@@ -493,7 +469,6 @@ class course_modinfo {
         // Set initial values
         $this->userid = $userid;
         $this->sections = array();
-        $this->sectionids = [];
         $this->cms = array();
         $this->instances = array();
         $this->groups = null;
@@ -565,7 +540,6 @@ class course_modinfo {
         // Expand section objects
         $this->sectioninfo = array();
         foreach ($coursemodinfo->sectioncache as $number => $data) {
-            $this->sectionids[$data->id] = $number;
             $this->sectioninfo[$number] = new section_info($data, $number, null, null,
                     $this, null);
         }
@@ -727,7 +701,7 @@ class course_modinfo {
  * {@link cached_cm_info}
  *
  * <b>Stage 2 - dynamic data.</b>
- * Dynamic data is user-dependent, it is stored in request-level cache. To reset this cache
+ * Dynamic data is user-dependend, it is stored in request-level cache. To reset this cache
  * {@link get_fast_modinfo()} with $reset argument may be called.
  *
  * Dynamic data is obtained when any of the following properties/methods is requested:
@@ -748,7 +722,6 @@ class course_modinfo {
  * - {@link cm_info::set_user_visible()}
  * - {@link cm_info::set_on_click()}
  * - {@link cm_info::set_icon_url()}
- * - {@link cm_info::override_customdata()}
  * Any methods affecting view elements can also be set in this callback.
  *
  * <b>Stage 3 (view data).</b>
@@ -843,7 +816,6 @@ class course_modinfo {
  * @property-read string $afterlink Extra HTML code to display after link - calculated on request
  * @property-read string $afterediticons Extra HTML code to display after editing icons (e.g. more icons) - calculated on request
  * @property-read bool $deletioninprogress True if this course module is scheduled for deletion, false otherwise.
- * @property-read bool $downloadcontent True if content download is enabled for this course module, false otherwise.
  */
 class cm_info implements IteratorAggregate {
     /**
@@ -970,12 +942,6 @@ class cm_info implements IteratorAggregate {
      * @var mixed
      */
     private $completiongradeitemnumber;
-
-    /**
-     * 1 if pass grade completion is enabled, 0 otherwise - from course_modules table
-     * @var int
-     */
-    private $completionpassgrade;
 
     /**
      * 1 if 'on view' completion is enabled, 0 otherwise - from course_modules table
@@ -1158,11 +1124,6 @@ class cm_info implements IteratorAggregate {
     private $deletioninprogress;
 
     /**
-     * @var int enable/disable download content for this course module
-     */
-    private $downloadcontent;
-
-    /**
      * List of class read-only properties and their getter methods.
      * Used by magic functions __get(), __isset(), __empty()
      * @var array
@@ -1185,7 +1146,6 @@ class cm_info implements IteratorAggregate {
         'completion' => false,
         'completionexpected' => false,
         'completiongradeitemnumber' => false,
-        'completionpassgrade' => false,
         'completionview' => false,
         'conditionscompletion' => false,
         'conditionsfield' => false,
@@ -1215,8 +1175,7 @@ class cm_info implements IteratorAggregate {
         'visible' => false,
         'visibleoncoursepage' => false,
         'visibleold' => false,
-        'deletioninprogress' => false,
-        'downloadcontent' => false
+        'deletioninprogress' => false
     );
 
     /**
@@ -1460,15 +1419,9 @@ class cm_info implements IteratorAggregate {
         return $this->onclick;
     }
     /**
-     * Getter method for property $customdata, ensures that dynamic data is retrieved.
-     *
-     * This method is normally called by the property ->customdata, but can be called directly if there
-     * is a case when it might be called recursively (you can't call property values recursively).
-     *
      * @return mixed Optional custom data stored in modinfo cache for this activity, or null if none
      */
-    public function get_custom_data() {
-        $this->obtain_dynamic_data();
+    private function get_custom_data() {
         return $this->customdata;
     }
 
@@ -1662,9 +1615,8 @@ class cm_info implements IteratorAggregate {
         // Standard fields from table course_modules.
         static $cmfields = array('id', 'course', 'module', 'instance', 'section', 'idnumber', 'added',
             'score', 'indent', 'visible', 'visibleoncoursepage', 'visibleold', 'groupmode', 'groupingid',
-            'completion', 'completiongradeitemnumber', 'completionview', 'completionexpected', 'completionpassgrade',
-            'showdescription', 'availability', 'deletioninprogress', 'downloadcontent');
-
+            'completion', 'completiongradeitemnumber', 'completionview', 'completionexpected',
+            'showdescription', 'availability', 'deletioninprogress');
         foreach ($cmfields as $key) {
             $cmrecord->$key = $this->$key;
         }
@@ -1725,19 +1677,6 @@ class cm_info implements IteratorAggregate {
     public function set_on_click($onclick) {
         $this->check_not_view_only();
         $this->onclick = $onclick;
-    }
-
-    /**
-     * Overrides the value of an element in the customdata array.
-     *
-     * @param string $name The key in the customdata array
-     * @param mixed $value The value
-     */
-    public function override_customdata($name, $value) {
-        if (!is_array($this->customdata)) {
-            $this->customdata = [];
-        }
-        $this->customdata[$name] = $value;
     }
 
     /**
@@ -1877,13 +1816,11 @@ class cm_info implements IteratorAggregate {
         $this->score = isset($mod->score) ? $mod->score : 0;
         $this->visibleold = isset($mod->visibleold) ? $mod->visibleold : 0;
         $this->deletioninprogress = isset($mod->deletioninprogress) ? $mod->deletioninprogress : 0;
-        $this->downloadcontent = $mod->downloadcontent ?? null;
 
         // Note: it saves effort and database space to always include the
         // availability and completion fields, even if availability or completion
         // are actually disabled
         $this->completion = isset($mod->completion) ? $mod->completion : 0;
-        $this->completionpassgrade = isset($mod->completionpassgrade) ? $mod->completionpassgrade : 0;
         $this->completiongradeitemnumber = isset($mod->completiongradeitemnumber)
                 ? $mod->completiongradeitemnumber : null;
         $this->completionview = isset($mod->completionview)
@@ -1944,8 +1881,7 @@ class cm_info implements IteratorAggregate {
      * the module or not.
      *
      * As part of this function, the module's _cm_info_dynamic function from its lib.php will
-     * be called (if it exists). Make sure that the functions that are called here do not use
-     * any getter magic method from cm_info.
+     * be called (if it exists).
      * @return void
      */
     private function obtain_dynamic_data() {
@@ -1971,7 +1907,7 @@ class cm_info implements IteratorAggregate {
         // Check parent section.
         if ($this->available) {
             $parentsection = $this->modinfo->get_section_info($this->sectionnum);
-            if (!$parentsection->get_available()) {
+            if (!$parentsection->available) {
                 // Do not store info from section here, as that is already
                 // presented from the section (if appropriate) - just change
                 // the flag
@@ -2436,7 +2372,10 @@ function rebuild_course_cache($courseid=0, $clearonly=false) {
     // Destroy navigation caches
     navigation_cache::destroy_volatile_caches();
 
-    core_courseformat\base::reset_course_cache($courseid);
+    if (class_exists('format_base')) {
+        // if file containing class is not loaded, there is no cache there anyway
+        format_base::reset_course_cache($courseid);
+    }
 
     $cachecoursemodinfo = cache::make('core', 'coursemodinfo');
     if (empty($courseid)) {
@@ -2830,12 +2769,11 @@ class section_info implements IteratorAggregate {
     /**
      * Finds whether this section is available at the moment for the current user.
      *
-     * The value can be accessed publicly as $sectioninfo->available, but can be called directly if there
-     * is a case when it might be called recursively (you can't call property values recursively).
+     * The value can be accessed publicly as $sectioninfo->available
      *
      * @return bool
      */
-    public function get_available() {
+    private function get_available() {
         global $CFG;
         $userid = $this->modinfo->get_user_id();
         if ($this->_available !== null || $userid == -1) {

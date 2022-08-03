@@ -41,7 +41,7 @@ class core_enrol_renderer extends plugin_renderer_base {
                             'value'    => $button->label,
                             'disabled' => $button->disabled ? 'disabled' : null,
                             'title'    => $button->tooltip,
-                            'class'    => 'btn ' . ($button->primary ? 'btn-primary' : 'btn-secondary'));
+                            'class'    => 'btn btn-secondary my-1');
 
         if ($button->actions) {
             $id = html_writer::random_id('single_button');
@@ -96,10 +96,18 @@ class core_enrol_renderer extends plugin_renderer_base {
         $table->initialise_javascript();
 
         $content = '';
+        $searchbutton = $table->get_user_search_button();
+        if ($searchbutton) {
+            $content .= $this->output->render($searchbutton);
+        }
         $content .= html_writer::tag('div', get_string('otheruserdesc', 'enrol'), array('class'=>'otherusersdesc'));
         $content .= $this->output->render($table->get_paging_bar());
         $content .= html_writer::table($table);
         $content .= $this->output->render($table->get_paging_bar());
+        $searchbutton = $table->get_user_search_button();
+        if ($searchbutton) {
+            $content .= $this->output->render($searchbutton);
+        }
         return $content;
     }
 

@@ -430,8 +430,7 @@ class helper {
         }
 
         list($useridsql, $usersparams) = $DB->get_in_or_equal($userids);
-        $userfieldsapi = \core_user\fields::for_userpic()->including('lastaccess');
-        $userfields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $userfields = \user_picture::fields('u', array('lastaccess'));
         $userssql = "SELECT $userfields, u.deleted, mc.id AS contactid, mub.id AS blockedid
                        FROM {user} u
                   LEFT JOIN {message_contacts} mc
@@ -551,7 +550,10 @@ class helper {
         global $USER, $CFG, $PAGE;
 
         // Early bail out conditions.
-        if (empty($CFG->messaging) || !isloggedin() || isguestuser() || \core_user::awaiting_action()) {
+        if (empty($CFG->messaging) || !isloggedin() || isguestuser() || user_not_fully_set_up($USER) ||
+            get_user_preferences('auth_forcepasswordchange') ||
+            (!$USER->policyagreed && !is_siteadmin() &&
+                ($manager = new \core_privacy\local\sitepolicy\manager()) && $manager->is_defined())) {
             return '';
         }
 

@@ -39,6 +39,7 @@ Feature: Test all the basic functionality of this question type
 
     # Preview it.
     When I choose "Preview" action for "Select missing words 001" in the question bank
+    And I switch to "questionpreview" window
 
     # Gaps (drop-down menus) do not have labels. ids and names are generated
     # dynamically and therefore not reliable, i.e. this is an accessibility bug
@@ -121,7 +122,7 @@ Feature: Test all the basic functionality of this question type
     Then I should see "Your answer is incorrect"
     And I should see "The cat sat on the mat"
     And I should see "The correct answer is: The [cat] [sat] on the [mat]."
-    And I press "Close preview"
+    And I switch to the main window
 
     # Backup the course and restore it.
     When I log out

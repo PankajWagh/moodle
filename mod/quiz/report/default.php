@@ -61,20 +61,14 @@ abstract class quiz_default_report {
      * @param string $reportmode the report name.
      */
     public function print_header_and_tabs($cm, $course, $quiz, $reportmode = 'overview') {
-        global $PAGE, $OUTPUT, $CFG;
+        global $PAGE, $OUTPUT;
 
         // Print the page header.
         $PAGE->set_title($quiz->name);
         $PAGE->set_heading($course->fullname);
         echo $OUTPUT->header();
         $context = context_module::instance($cm->id);
-        if (!$PAGE->has_secondary_navigation()) {
-            echo $OUTPUT->heading(format_string($quiz->name, true, array('context' => $context)));
-        }
-        if (!empty($CFG->enableplagiarism)) {
-            require_once($CFG->libdir . '/plagiarismlib.php');
-            echo plagiarism_update_status($course, $cm);
-        }
+        echo $OUTPUT->heading(format_string($quiz->name, true, array('context' => $context)));
     }
 
     /**

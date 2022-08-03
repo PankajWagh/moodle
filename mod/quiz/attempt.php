@@ -47,8 +47,6 @@ $PAGE->set_url($attemptobj->attempt_url(null, $page));
 // During quiz attempts, the browser back/forwards buttons should force a reload.
 $PAGE->set_cacheable(false);
 
-$PAGE->set_secondary_active_tab("modulepage");
-
 // Check login.
 require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
 
@@ -127,9 +125,8 @@ $PAGE->blocks->add_fake_block($navbc, reset($regions));
 
 $headtags = $attemptobj->get_html_head_contributions($page);
 $PAGE->set_title($attemptobj->attempt_page_title($page));
-$PAGE->add_body_class('limitedwidth');
 $PAGE->set_heading($attemptobj->get_course()->fullname);
-$PAGE->activityheader->disable();
+
 if ($attemptobj->is_last_page($page)) {
     $nextpage = -1;
 } else {

@@ -295,12 +295,6 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
 
             $DB->insert_record('quizaccess_seb_quizsettings', $sebsettings);
         }
-
-        // If we are dealing with a backup from < 4.0 then we need to move completionpass to core.
-        if (!empty($data->completionpass)) {
-            $params = ['id' => $this->task->get_moduleid()];
-            $DB->set_field('course_modules', 'completionpassgrade', $data->completionpass, $params);
-        }
     }
 
     protected function process_quiz_question_instance($data) {
@@ -477,12 +471,6 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
             $data->timecheckstate = $this->apply_date_offset($data->timecheckstate);
         } else {
             $data->timecheckstate = 0;
-        }
-
-        if (!isset($data->gradednotificationsenttime)) {
-            // For attempts restored from old Moodle sites before this field
-            // existed, we never want to send emails.
-            $data->gradednotificationsenttime = $data->timefinish;
         }
 
         // Deals with up-grading pre-2.3 back-ups to 2.3+.

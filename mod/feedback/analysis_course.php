@@ -71,9 +71,10 @@ $strfeedback  = get_string("modulename", "feedback");
 $PAGE->set_heading($course->fullname);
 $PAGE->set_title($feedback->name);
 echo $OUTPUT->header();
-if (!$PAGE->has_secondary_navigation()) {
-    echo $OUTPUT->heading(format_string($feedback->name));
-}
+echo $OUTPUT->heading(format_string($feedback->name));
+
+/// print the tabs
+require('tabs.php');
 
 //get the groupid
 //lstgroupid is the choosen id

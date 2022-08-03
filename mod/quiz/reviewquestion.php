@@ -41,7 +41,6 @@ if (!is_null($seq)) {
 $PAGE->set_url($currenturl);
 
 $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
-$attemptobj->preload_all_attempt_step_users();
 
 // Check login.
 require_login($attemptobj->get_course(), false, $attemptobj->get_cm());

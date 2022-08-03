@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core\report_helper;
-
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 
@@ -113,10 +111,7 @@ if (!empty($action) && $ruleid) {
     echo $OUTPUT->header();
 }
 
-// Print the selected dropdown.
-$managerules = get_string('managerules', 'tool_monitor');
-report_helper::print_report_selector($managerules);
-
+echo $OUTPUT->heading(get_string('managerules', 'tool_monitor'));
 $status = get_config('tool_monitor', 'enablemonitor');
 $help = new help_icon('enablehelp', 'tool_monitor');
 

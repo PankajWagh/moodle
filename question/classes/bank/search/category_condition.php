@@ -24,14 +24,12 @@
  */
 
 namespace core_question\bank\search;
-
-use qbank_managecategories\helper;
+defined('MOODLE_INTERNAL') || die();
 
 /**
  *  This class controls from which category questions are listed.
  *
  * @copyright 2013 Ray Morris
- * @author    2021 Safat Shahin <safatshahin@catalyst-au.net>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class category_condition extends condition {
@@ -68,7 +66,7 @@ class category_condition extends condition {
      * @param \stdClass   $course        Course record
      * @param integer    $maxinfolength The maximum displayed length of the category info.
      */
-    public function __construct($cat, $recurse, $contexts, $baseurl, $course, $maxinfolength = null) {
+    public function __construct($cat = null, $recurse = false, $contexts, $baseurl, $course, $maxinfolength = null) {
         $this->cat = $cat;
         $this->recurse = $recurse;
         $this->contexts = $contexts;
@@ -89,25 +87,16 @@ class category_condition extends condition {
         if ($this->recurse) {
             $categoryids = question_categorylist($this->category->id);
         } else {
-            $categoryids = [$this->category->id];
+            $categoryids = array($this->category->id);
         }
         list($catidtest, $this->params) = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED, 'cat');
         $this->where = 'q.category ' . $catidtest;
     }
 
-    /**
-     * SQL fragment to add to the where clause.
-     *
-     * @return string
-     */
     public function where() {
         return  $this->where;
     }
 
-    /**
-     * Return parameters to be bound to the above WHERE clause fragment.
-     * @return array parameter name => value.
-     */
     public function params() {
         return $this->params;
     }
@@ -116,17 +105,8 @@ class category_condition extends condition {
      * Called by question_bank_view to display the GUI for selecting a category
      */
     public function display_options() {
-        global $PAGE;
-        $displaydata = [];
-        $catmenu = helper::question_category_options($this->contexts, true, 0,
-                true, -1, false);
-        $displaydata['categoryselect'] = \html_writer::select($catmenu, 'category', $this->cat, [],
-                array('class' => 'searchoptions custom-select', 'id' => 'id_selectacategory'));
-        $displaydata['categorydesc'] = '';
-        if ($this->category) {
-            $displaydata['categorydesc'] = $this->print_category_info($this->category);
-        }
-        return $PAGE->get_renderer('core_question', 'bank')->render_category_condition($displaydata);
+        $this->display_category_form($this->contexts, $this->baseurl, $this->cat);
+        $this->print_category_info($this->category);
     }
 
     /**
@@ -134,12 +114,12 @@ class category_condition extends condition {
      * question_bank_view places this within the section that is hidden by default
      */
     public function display_options_adv() {
-        global $PAGE;
-        $displaydata = [];
-        if ($this->recurse) {
-            $displaydata['checked'] = 'checked="true"';
-        }
-        return $PAGE->get_renderer('core_question', 'bank')->render_category_condition_advanced($displaydata);
+        echo \html_writer::start_div();
+        echo \html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'recurse',
+                                               'value' => 0, 'id' => 'recurse_off'));
+        echo \html_writer::checkbox('recurse', '1', $this->recurse, get_string('includesubcategories', 'question'),
+                                       array('id' => 'recurse_on', 'class' => 'searchoptions mr-1'));
+        echo \html_writer::end_div() . "\n";
     }
 
     /**
@@ -148,15 +128,12 @@ class category_condition extends condition {
      * @param array $contexts of contexts that can be accessed from here.
      * @param \moodle_url $pageurl the URL of this page.
      * @param string $current 'categoryID,contextID'.
-     * @deprecated since Moodle 4.0
      */
     protected function display_category_form($contexts, $pageurl, $current) {
-        debugging('Function display_category_form() is deprecated,
-         please use the core_question renderer instead.', DEBUG_DEVELOPER);
         echo \html_writer::start_div('choosecategory');
         $catmenu = question_category_options($contexts, true, 0, true, -1, false);
-        echo \html_writer::label(get_string('selectacategory', 'question'), 'id_selectacategory', true, ["class" => "mr-1"]);
-        echo \html_writer::select($catmenu, 'category', $current, [],
+        echo \html_writer::label(get_string('selectacategory', 'question'), 'id_selectacategory', true, array("class" => "mr-1"));
+        echo \html_writer::select($catmenu, 'category', $current, array(),
                 array('class' => 'searchoptions custom-select', 'id' => 'id_selectacategory'));
         echo \html_writer::end_div() . "\n";
     }
@@ -174,7 +151,8 @@ class category_condition extends condition {
             return false;
         }
 
-        if (!$category = $DB->get_record('question_categories', ['id' => $categoryid, 'contextid' => $contextid])) {
+        if (!$category = $DB->get_record('question_categories',
+                array('id' => $categoryid, 'contextid' => $contextid))) {
             echo $OUTPUT->box_start('generalbox questionbank');
             echo $OUTPUT->notification('Category not found!');
             echo $OUTPUT->box_end();
@@ -186,17 +164,19 @@ class category_condition extends condition {
 
     /**
      * Print the category description
-     * @param \stdClass $category the category information form the database.
+     * @param stdClass $category the category information form the database.
      */
-    protected function print_category_info($category): string {
+    protected function print_category_info($category) {
         $formatoptions = new \stdClass();
         $formatoptions->noclean = true;
         $formatoptions->overflowdiv = true;
+        echo \html_writer::start_div('boxaligncenter categoryinfo pl-0');
         if (isset($this->maxinfolength)) {
-            return shorten_text(format_text($category->info, $category->infoformat, $formatoptions, $this->course->id),
-                    $this->maxinfolength);
+            echo shorten_text(format_text($category->info, $category->infoformat, $formatoptions, $this->course->id),
+                                     $this->maxinfolength);
         } else {
-            return format_text($category->info, $category->infoformat, $formatoptions, $this->course->id);
+            echo format_text($category->info, $category->infoformat, $formatoptions, $this->course->id);
         }
+        echo \html_writer::end_div() . "\n";
     }
 }

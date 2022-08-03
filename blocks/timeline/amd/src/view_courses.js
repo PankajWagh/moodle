@@ -25,6 +25,7 @@ define(
     'jquery',
     'core/notification',
     'core/custom_interaction_events',
+    'core/str',
     'core/templates',
     'block_timeline/event_list',
     'core_course/repository',
@@ -34,6 +35,7 @@ function(
     $,
     Notification,
     CustomEvents,
+    Str,
     Templates,
     EventList,
     CourseRepository,
@@ -48,9 +50,7 @@ function(
         COURSE_ITEMS_LOADING_PLACEHOLDER: '[data-region="course-items-loading-placeholder"]',
         COURSE_EVENTS_CONTAINER: '[data-region="course-events-container"]',
         COURSE_NAME: '[data-region="course-name"]',
-        LOADING_ICON: '.loading-icon',
-        TIMELINE_BLOCK: '[data-region="timeline"]',
-        TIMELINE_SEARCH: '[data-action="search"]'
+        LOADING_ICON: '.loading-icon'
     };
 
     var TEMPLATES = {
@@ -63,8 +63,6 @@ function(
     var COURSE_EVENT_LIMIT = 5;
     var COURSE_LIMIT = 2;
     var SECONDS_IN_DAY = 60 * 60 * 24;
-
-    const additionalConfig = {courseview: true};
 
     /**
      * Hide the loading placeholder elements.
@@ -252,10 +250,9 @@ function(
      * @param {Number} startTime Timestamp to fetch events from.
      * @param {Number} limit Limit to the number of events (this applies per course, not total)
      * @param {Number} endTime Timestamp to fetch events to.
-     * @param {string|undefined} searchValue Search value
      * @return {object} jQuery promise.
      */
-    var getEventsForCourseIds = function(courseIds, startTime, limit, endTime, searchValue) {
+    var getEventsForCourseIds = function(courseIds, startTime, limit, endTime) {
         var args = {
             courseids: courseIds,
             starttime: startTime,
@@ -264,10 +261,6 @@ function(
 
         if (endTime) {
             args.endtime = endTime;
-        }
-
-        if (searchValue) {
-            args.searchvalue = searchValue;
         }
 
         return EventsRepository.queryByCourses(args);
@@ -311,15 +304,14 @@ function(
      * @param {array} courses List of course objects.
      * @param {Number} startTime Timestamp to load events after.
      * @param {int|undefined} endTime Timestamp to load events up until.
-     * @param {string|undefined} searchValue Search value
      * @return {object} jQuery promise resolved with the events.
      */
-    var loadEventsForCourses = function(courses, startTime, endTime, searchValue) {
+    var loadEventsForCourses = function(courses, startTime, endTime) {
         var courseIds = courses.map(function(course) {
             return course.id;
         });
 
-        return getEventsForCourseIds(courseIds, startTime, COURSE_EVENT_LIMIT + 1, endTime, searchValue);
+        return getEventsForCourseIds(courseIds, startTime, COURSE_EVENT_LIMIT + 1, endTime);
     };
 
     /**
@@ -330,9 +322,10 @@ function(
      * @param {Number} midnight The midnight timestamp in the user's timezone.
      * @param {Number} daysOffset Number of days from today to offset the events.
      * @param {Number} daysLimit Number of days from today to limit the events to.
+     * @param {string} noEventsURL URL for the image to display for no events.
      * @return {object} jQuery promise resolved after rendering is complete.
      */
-    var updateDisplayFromCourses = function(courses, root, midnight, daysOffset, daysLimit) {
+    var updateDisplayFromCourses = function(courses, root, midnight, daysOffset, daysLimit, noEventsURL) {
         // Render the courses template.
         return Templates.render(TEMPLATES.COURSE_ITEMS, {
             courses: courses,
@@ -342,7 +335,9 @@ function(
             daysoffset: daysOffset,
             dayslimit: daysLimit,
             nodayslimit: daysLimit == undefined,
-            courseview: true,
+            urls: {
+                noevents: noEventsURL
+            }
         }).then(function(html) {
             hideLoadingPlaceholder(root);
 
@@ -403,14 +398,13 @@ function(
             var midnight = getMidnight(root);
             var startTime = getStartTime(root);
             var endTime = getEndTime(root);
-            const searchValue = root.closest(SELECTORS.TIMELINE_BLOCK).find(SELECTORS.TIMELINE_SEARCH).val();
-
+            var noEventsURL = root.attr('data-no-events-url');
             // Record the next offset if we want to request more courses.
             setOffset(root, nextOffset);
             // Load the events for these courses.
-            var eventsPromise = loadEventsForCourses(courses, startTime, endTime, searchValue);
+            var eventsPromise = loadEventsForCourses(courses, startTime, endTime);
             // Render the courses in the DOM.
-            var renderPromise = updateDisplayFromCourses(courses, root, midnight, daysOffset, daysLimit);
+            var renderPromise = updateDisplayFromCourses(courses, root, midnight, daysOffset, daysLimit, noEventsURL);
 
             return $.when(eventsPromise, renderPromise)
                 .then(function(eventsByCourse) {
@@ -423,11 +417,32 @@ function(
                     // correct course event list.
                     courses.forEach(function(course) {
                         var courseId = course.id;
+                        var events = [];
                         var containerSelector = '[data-region="course-events-container"][data-course-id="' + courseId + '"]';
                         var courseEventsContainer = root.find(containerSelector);
                         var eventListRoot = courseEventsContainer.find(EventList.rootSelector);
+                        var courseGroups = eventsByCourse.groupedbycourse.filter(function(group) {
+                            return group.courseid == courseId;
+                        });
 
-                        EventList.init(eventListRoot, additionalConfig);
+                        if (courseGroups.length) {
+                            // Get the events for this course.
+                            events = courseGroups[0].events;
+                        }
+
+                        // Create a preloaded page to pass to the event list because we've already
+                        // loaded the first page of events.
+                        var pageOnePreload = $.Deferred().resolve({events: events}).promise();
+                        // Initialise the event list pagination area for this course.
+                        Str.get_string('ariaeventlistpaginationnavcourses', 'block_timeline', course.fullnamedisplay)
+                            .then(function(string) {
+                                EventList.init(eventListRoot, COURSE_EVENT_LIMIT, {'1': pageOnePreload}, string);
+                                return string;
+                            })
+                            .catch(function() {
+                                // An error is ok, just render with the default string.
+                                EventList.init(eventListRoot, COURSE_EVENT_LIMIT, {'1': pageOnePreload});
+                            });
                     });
 
                     return eventsByCourse;
@@ -450,13 +465,12 @@ function(
         var courseIds = courseEventsContainers.map(function() {
             return $(this).attr('data-course-id');
         }).get();
-        const searchValue = root.closest(SELECTORS.TIMELINE_BLOCK).find(SELECTORS.TIMELINE_SEARCH).val();
 
         // Record when we started our request.
         setEventReloadTime(root, startReloadTime);
 
         // Load all of the events for the given courses.
-        return getEventsForCourseIds(courseIds, startTime, COURSE_EVENT_LIMIT + 1, endTime, searchValue)
+        return getEventsForCourseIds(courseIds, startTime, COURSE_EVENT_LIMIT + 1, endTime)
             .then(function(eventsByCourse) {
                 if (hasReloadedEventsSince(root, startReloadTime)) {
                     // A new reload has begun so ignore our results.
@@ -465,9 +479,33 @@ function(
 
                 courseEventsContainers.each(function(index, container) {
                     container = $(container);
+                    var courseId = container.attr('data-course-id');
+                    var courseName = container.find(SELECTORS.COURSE_NAME).text();
                     var eventListContainer = container.find(EventList.rootSelector);
+                    var pageDeferred = $.Deferred();
+                    var events = [];
+                    var courseGroups = eventsByCourse.groupedbycourse.filter(function(group) {
+                        return group.courseid == courseId;
+                    });
 
-                    EventList.init(eventListContainer, additionalConfig);
+                    if (courseGroups.length) {
+                        // Get the events just for this course.
+                        events = courseGroups[0].events;
+                    }
+
+                    pageDeferred.resolve({events: events});
+
+                    // Re-initialise the events list with the preloaded events we just got from
+                    // the server.
+                    Str.get_string('ariaeventlistpaginationnavcourses', 'block_timeline', courseName)
+                        .then(function(string) {
+                            EventList.init(eventListContainer, COURSE_EVENT_LIMIT, {'1': pageDeferred.promise()}, string);
+                            return string;
+                        })
+                        .catch(function() {
+                            // Ignore a failure to load the string. Just render with the default string.
+                            EventList.init(eventListContainer, COURSE_EVENT_LIMIT, {'1': pageDeferred.promise()});
+                        });
                 });
 
                 return eventsByCourse;

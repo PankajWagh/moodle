@@ -1,4 +1,4 @@
-@mod @mod_quiz @core_completion
+@mod @mod_quiz
 Feature: Set a quiz to be marked complete when the student completes a minimum amount of attempts
   In order to ensure a student has completed the quiz before being marked complete
   As a teacher
@@ -41,22 +41,16 @@ Feature: Set a quiz to be marked complete when the student completes a minimum a
     And I log out
     And I log in as "student1"
     And I am on "Course 1" course homepage
-    And the "Make attempts: 2" completion condition of "Test quiz name" is displayed as "todo"
+    And the "Test quiz name" "quiz" activity with "auto" completion should be marked as not complete
     And I follow "Test quiz name"
-    And I follow "Attempt quiz"
+    And I press "Re-attempt quiz"
     And I set the field "False" to "1"
     And I press "Finish attempt ..."
     And I press "Submit all and finish"
     And I am on "Course 1" course homepage
-    Then the "Make attempts: 2" completion condition of "Test quiz name" is displayed as "done"
-    And I follow "Test quiz name"
-    And the "Make attempts: 2" completion condition of "Test quiz name" is displayed as "done"
+    Then "Completed: Test quiz name" "icon" should exist in the "Test quiz name" "list_item"
     And I log out
     And I log in as "teacher1"
     And I am on "Course 1" course homepage
-    And I follow "Test quiz name"
-    And "Test quiz name" should have the "Make attempts: 2" completion condition
-    And I am on "Course 1" course homepage
-    And I navigate to "Reports" in current page administration
-    And I select "Activity completion" from the "Report type" singleselect
+    And I navigate to "Reports > Activity completion" in current page administration
     And "Completed" "icon" should exist in the "Student 1" "table_row"

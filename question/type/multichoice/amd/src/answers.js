@@ -54,3 +54,4 @@ const init = (rootId) => {
 export default {
     init: init
 };
+

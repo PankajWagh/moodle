@@ -125,9 +125,7 @@ class behat_block_site_main_menu extends behat_base {
      * @param string $activityname
      */
     public function activity_in_site_main_menu_block_should_be_hidden($activityname) {
-        $activitynode = $this->get_site_menu_activity_node($activityname);
-        $exception = new ExpectationException('"' . $activityname . '" is not hidden', $this->getSession());
-        $this->find('named_partial', array('badge', get_string('hiddenfromstudents')), $exception, $activitynode);
+        $this->get_site_menu_activity_element("a.dimmed", "css_element", $activityname);
     }
 
     /**
@@ -137,9 +135,7 @@ class behat_block_site_main_menu extends behat_base {
      * @param string $activityname
      */
     public function activity_in_site_main_menu_block_should_be_available_but_hidden_from_course_page($activityname) {
-        $activitynode = $this->get_site_menu_activity_node($activityname);
-        $exception = new ExpectationException('"' . $activityname . '" is not hidden but available', $this->getSession());
-        $this->find('named_partial', array('badge', get_string('hiddenoncoursepage')), $exception, $activitynode);
+        $this->get_site_menu_activity_element("a.stealth", "css_element", $activityname);
     }
 
     /**

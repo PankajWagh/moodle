@@ -20,25 +20,8 @@
  * @copyright  2018 David Monllao
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define([
-    'jquery',
-    'core/str',
-    'core/ajax',
-    'core/notification',
-    'core/modal_factory',
-    'core/modal_events',
-    'core/fragment',
-    'core_form/changechecker',
-], function(
-    $,
-    Str,
-    Ajax,
-    Notification,
-    ModalFactory,
-    ModalEvents,
-    Fragment,
-    FormChangeChecker
-) {
+define(['jquery', 'core/str', 'core/ajax', 'core/notification', 'core/modal_factory', 'core/modal_events', 'core/fragment'],
+    function($, Str, Ajax, Notification, ModalFactory, ModalEvents, Fragment) {
 
         var SELECTORS = {
             CATEGORY_LINK: '[data-add-element="category"]',
@@ -168,7 +151,9 @@ define([
         };
 
         AddCategory.prototype.destroy = function() {
-            FormChangeChecker.resetAllFormDirtyStates();
+            Y.use('moodle-core-formchangechecker', function() {
+                M.core_formchangechecker.reset_form_dirty_state();
+            });
             this.modal.destroy();
         };
 

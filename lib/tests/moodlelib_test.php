@@ -210,7 +210,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             @optional_param('username');
@@ -219,7 +219,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             optional_param('', 'default_user', PARAM_RAW);
@@ -262,7 +262,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             @optional_param_array('username');
@@ -271,7 +271,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             optional_param_array('', array('a'=>'default_user'), PARAM_RAW);
@@ -325,7 +325,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             required_param('username', '');
@@ -371,7 +371,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('coding_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
         try {
             required_param_array('', PARAM_RAW);
@@ -435,7 +435,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('moodle_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
     }
 
@@ -458,7 +458,7 @@ class core_moodlelib_testcase extends advanced_testcase {
             $this->assertInstanceOf('moodle_exception', $ex);
         } catch (Error $error) {
             // PHP 7.1 throws Error even earlier.
-            $this->assertMatchesRegularExpression('/Too few arguments to function/', $error->getMessage());
+            $this->assertRegExp('/Too few arguments to function/', $error->getMessage());
         }
 
         try {
@@ -1317,12 +1317,6 @@ class core_moodlelib_testcase extends advanced_testcase {
         $this->assertSame(356, $yday);
         $this->assertSame('Wednesday', $weekday);
         $this->assertSame('December', $month);
-
-        // Edge cases - 0 and null - they all mean 1st Jan 1970. Null shows debugging message.
-        $this->assertSame(1970, usergetdate(0)['year']);
-        $this->assertDebuggingNotCalled();
-        $this->assertSame(1970, usergetdate(null)['year']);
-        $this->assertDebuggingCalled(null, DEBUG_DEVELOPER);
     }
 
     public function test_mark_user_preferences_changed() {
@@ -1511,8 +1505,6 @@ class core_moodlelib_testcase extends advanced_testcase {
 
     /**
      * Test essential features implementation of {@link get_extra_user_fields()} as the admin user with all capabilities.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_essentials() {
         global $CFG, $USER, $DB;
@@ -1544,15 +1536,12 @@ class core_moodlelib_testcase extends advanced_testcase {
         // Two fields.
         $CFG->showuseridentity = 'frog,zombie';
         $this->assertEquals(array('zombie'), get_extra_user_fields($context, array('frog')));
-
-        $this->assertDebuggingCalledCount(6);
     }
 
     /**
      * Prepare environment for couple of tests related to permission checks in {@link get_extra_user_fields()}.
      *
      * @return stdClass
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     protected function environment_for_get_extra_user_fields_tests() {
         global $CFG, $DB;
@@ -1582,8 +1571,6 @@ class core_moodlelib_testcase extends advanced_testcase {
 
     /**
      * No identity fields shown to student user (no permission to view identity fields).
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_no_access() {
 
@@ -1593,14 +1580,10 @@ class core_moodlelib_testcase extends advanced_testcase {
 
         $this->assertEquals(array(), get_extra_user_fields($env->coursecontext));
         $this->assertEquals(array(), get_extra_user_fields(context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
     }
 
     /**
      * Teacher can see students' identity fields only within the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_course_only_access() {
 
@@ -1610,14 +1593,10 @@ class core_moodlelib_testcase extends advanced_testcase {
 
         $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
         $this->assertEquals(array(), get_extra_user_fields(context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
     }
 
     /**
      * Teacher can be prevented from seeing students' identity fields even within the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_course_prevented_access() {
 
@@ -1627,14 +1606,10 @@ class core_moodlelib_testcase extends advanced_testcase {
 
         assign_capability('moodle/course:viewhiddenuserfields', CAP_PREVENT, $env->teacherrole->id, $env->coursecontext->id);
         $this->assertEquals(array('idnumber'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(1);
     }
 
     /**
      * Manager can see students' identity fields anywhere.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_anywhere_access() {
 
@@ -1644,14 +1619,10 @@ class core_moodlelib_testcase extends advanced_testcase {
 
         $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
         $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields(context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
     }
 
     /**
      * Manager can be prevented from seeing hidden fields outside the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_schismatic_access() {
 
@@ -1664,14 +1635,10 @@ class core_moodlelib_testcase extends advanced_testcase {
         // Note that inside the course, the manager can still see the hidden identifiers as this is currently
         // controlled by a separate capability for legacy reasons.
         $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(2);
     }
 
     /**
      * Two capabilities must be currently set to prevent manager from seeing hidden fields.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
      */
     public function test_get_extra_user_fields_hard_to_prevent_access() {
 
@@ -1684,15 +1651,8 @@ class core_moodlelib_testcase extends advanced_testcase {
 
         $this->assertEquals(array('idnumber'), get_extra_user_fields(context_system::instance()));
         $this->assertEquals(array('idnumber'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(2);
     }
 
-    /**
-     * Tests get_extra_user_fields_sql.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
     public function test_get_extra_user_fields_sql() {
         global $CFG, $USER, $DB;
         $this->resetAfterTest();
@@ -1726,8 +1686,6 @@ class core_moodlelib_testcase extends advanced_testcase {
         $CFG->showuseridentity = 'frog,zombie';
         $this->assertEquals(', u1.zombie AS u_zombie',
             get_extra_user_fields_sql($context, 'u1', 'u_', array('frog')));
-
-        $this->assertDebuggingCalledCount(6);
     }
 
     /**
@@ -2272,47 +2230,10 @@ class core_moodlelib_testcase extends advanced_testcase {
         $COURSE->lang = $originallang;
     }
 
-    public function test_lang_string_var_export() {
-
-        // Call var_export() on a newly generated lang_string.
-        $str = new lang_string('no');
-
-        $expected1 = <<<EOF
-lang_string::__set_state(array(
-   'identifier' => 'no',
-   'component' => 'moodle',
-   'a' => NULL,
-   'lang' => NULL,
-   'string' => NULL,
-   'forcedstring' => false,
-))
-EOF;
-
-        $v = var_export($str, true);
-        $this->assertEquals($expected1, $v);
-
-        // Now execute the code that was returned - it should produce a correct string.
-        $str = lang_string::__set_state(array(
-            'identifier' => 'no',
-            'component' => 'moodle',
-            'a' => NULL,
-            'lang' => NULL,
-            'string' => NULL,
-            'forcedstring' => false,
-        ));
-
-        $this->assertInstanceOf(lang_string::class, $str);
-        $this->assertEquals('No', $str);
-    }
-
     public function test_get_string_limitation() {
         // This is one of the limitations to the lang_string class. It can't be
         // used as a key.
-        if (PHP_VERSION_ID >= 80000) {
-            $this->expectException(TypeError::class);
-        } else {
-            $this->expectWarning();
-        }
+        $this->expectException(\PHPUnit\Framework\Error\Warning::class);
         $array = array(get_string('yes', null, null, true) => 'yes');
     }
 
@@ -2470,7 +2391,7 @@ EOF;
         $this->assertEquals(0, $deluser->picture);
         $this->assertSame('', $deluser->idnumber);
         $this->assertSame(md5($user->username), $deluser->email);
-        $this->assertMatchesRegularExpression('/^'.preg_quote($user->email, '/').'\.\d*$/', $deluser->username);
+        $this->assertRegExp('/^'.preg_quote($user->email, '/').'\.\d*$/', $deluser->username);
 
         $this->assertEquals(1, $DB->count_records('user', array('deleted'=>1)));
 
@@ -2571,7 +2492,7 @@ EOF;
 
         // It should start with the user name, and end with the current time.
         $this->assertStringStartsWith("{$user->username}.{$user->id}@", $usernamedeleted);
-        $this->assertMatchesRegularExpression('/\.\d{' . $timestrlength . '}$/', $usernamedeleted);
+        $this->assertRegExp('/\.\d{' . $timestrlength . '}$/', $usernamedeleted);
     }
 
     /**
@@ -2597,8 +2518,7 @@ EOF;
 
         // Max username length is 100 chars. Select up to limit - (length of current time + 1 [period character]) from users email.
         $expectedemail = core_text::substr($user->email, 0, 100 - ($timestrlength + 1));
-        $this->assertMatchesRegularExpression('/^' . preg_quote($expectedemail) . '\.\d{' . $timestrlength . '}$/',
-            $usernamedeleted);
+        $this->assertRegExp('/^' . preg_quote($expectedemail) . '\.\d{' . $timestrlength . '}$/', $usernamedeleted);
     }
 
     /**
@@ -2743,8 +2663,7 @@ EOF;
         $modulebytes = 10240;
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes);
 
-        $nbsp = "\xc2\xa0";
-        $this->assertSame("Activity upload limit (10{$nbsp}KB)", $result['0']);
+        $this->assertSame('Activity upload limit (10KB)', $result['0']);
         $this->assertCount(2, $result);
 
         // Test course limit smallest.
@@ -2753,7 +2672,7 @@ EOF;
         $modulebytes = 51200;
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes);
 
-        $this->assertSame("Course upload limit (10{$nbsp}KB)", $result['0']);
+        $this->assertSame('Course upload limit (10KB)', $result['0']);
         $this->assertCount(2, $result);
 
         // Test site limit smallest.
@@ -2762,7 +2681,7 @@ EOF;
         $modulebytes = 51200;
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes);
 
-        $this->assertSame("Site upload limit (10{$nbsp}KB)", $result['0']);
+        $this->assertSame('Site upload limit (10KB)', $result['0']);
         $this->assertCount(2, $result);
 
         // Test site limit not set.
@@ -2771,7 +2690,7 @@ EOF;
         $modulebytes = 51200;
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes);
 
-        $this->assertSame("Activity upload limit (50{$nbsp}KB)", $result['0']);
+        $this->assertSame('Activity upload limit (50KB)', $result['0']);
         $this->assertCount(3, $result);
 
         $sitebytes = 0;
@@ -2779,7 +2698,7 @@ EOF;
         $modulebytes = 102400;
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes);
 
-        $this->assertSame("Course upload limit (50{$nbsp}KB)", $result['0']);
+        $this->assertSame('Course upload limit (50KB)', $result['0']);
         $this->assertCount(3, $result);
 
         // Test custom bytes in range.
@@ -2822,9 +2741,9 @@ EOF;
         $sitebytes = 51200;
         $result = get_max_upload_sizes($sitebytes);
 
-        $this->assertSame("Site upload limit (50{$nbsp}KB)", $result['0']);
-        $this->assertSame("50{$nbsp}KB", $result['51200']);
-        $this->assertSame("10{$nbsp}KB", $result['10240']);
+        $this->assertSame('Site upload limit (50KB)', $result['0']);
+        $this->assertSame('50KB', $result['51200']);
+        $this->assertSame('10KB', $result['10240']);
         $this->assertCount(3, $result);
 
         // Test no limit.
@@ -2891,8 +2810,8 @@ EOF;
             $this->assertFalse(password_is_legacy_hash($hash));
 
             // Check that cost factor in hash is correctly set.
-            $this->assertMatchesRegularExpression('/\$10\$/', $hash);
-            $this->assertMatchesRegularExpression('/\$04\$/', $fasthash);
+            $this->assertRegExp('/\$10\$/', $hash);
+            $this->assertRegExp('/\$04\$/', $fasthash);
         }
     }
 
@@ -3123,11 +3042,6 @@ EOF;
         $CFG->alternativefullnameformat = $originalcfg->alternativefullnameformat;
     }
 
-    /**
-     * Tests the get_all_user_name_fields() deprecated function.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
     public function test_get_all_user_name_fields() {
         $this->resetAfterTest();
 
@@ -3175,8 +3089,6 @@ EOF;
         // Returning a string.
         $teststring = 'firstname,lastname,firstnamephonetic,lastnamephonetic,middlename,alternatename';
         $this->assertEquals($teststring, get_all_user_name_fields(true, null, null, null, true));
-
-        $this->assertDebuggingCalledCount(7);
     }
 
     public function test_order_in_string() {
@@ -3579,7 +3491,7 @@ EOF;
 
         // Verify attachment in message body (attachment is in MIME format, but we can detect some Content fields).
         $messagebody = reset($messages)->body;
-        $this->assertStringContainsString('Content-Type: text/plain; name=' . $filename, $messagebody);
+        $this->assertStringContainsString('Content-Type: text/plain; name="' . $filename . '"', $messagebody);
         $this->assertStringContainsString('Content-Disposition: attachment; filename=' . $filename, $messagebody);
 
         // Cleanup.
@@ -3838,7 +3750,7 @@ EOF;
 
         // User information for showing a picture.
         $user = new stdClass();
-        $additionalfields = explode(',', implode(',', \core_user\fields::get_picture_fields()));
+        $additionalfields = explode(',', user_picture::fields());
         $user = username_load_fields_from_object($user, $userinfo, null, $additionalfields);
         $user->id = $userinfo->userid;
         $expectedarray = new stdClass();
@@ -3867,7 +3779,7 @@ EOF;
 
         // Return an object with user picture information.
         $user = new stdClass();
-        $additionalfields = explode(',', implode(',', \core_user\fields::get_picture_fields()));
+        $additionalfields = explode(',', user_picture::fields());
         $user = username_load_fields_from_object($user, $userinfo, 'author', $additionalfields);
         $user->id = $userinfo->userid;
         $expectedarray = new stdClass();
@@ -4094,21 +4006,21 @@ EOF;
 
         $result = random_string(10);
         $this->assertSame(10, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
         $this->assertNotSame($result, random_string(10));
 
         $result = random_string(21);
         $this->assertSame(21, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
         $this->assertNotSame($result, random_string(21));
 
         $result = random_string(666);
         $this->assertSame(666, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
 
         $result = random_string();
         $this->assertSame(15, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
 
         $this->assertDebuggingNotCalled();
 
@@ -4129,21 +4041,21 @@ EOF;
 
         $result = complex_random_string(10);
         $this->assertSame(10, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
         $this->assertNotSame($result, complex_random_string(10));
 
         $result = complex_random_string(21);
         $this->assertSame(21, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
         $this->assertNotSame($result, complex_random_string(21));
 
         $result = complex_random_string(666);
         $this->assertSame(666, strlen($result));
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
 
         $result = complex_random_string();
         $this->assertEqualsWithDelta(28, strlen($result), 4); // Expected length is 24 - 32.
-        $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
+        $this->assertRegExp('/^[' . $pool . ']+$/', $result);
 
         $this->assertDebuggingNotCalled();
 
@@ -4544,6 +4456,16 @@ EOF;
     }
 
     /**
+     * Test that the component_class_callback returns the correct default value when the class was not found.
+     *
+     * @dataProvider component_class_callback_default_provider
+     * @param $default
+     */
+    public function test_component_class_callback_not_found($default) {
+        $this->assertSame($default, component_class_callback('thisIsNotTheClassYouWereLookingFor', 'anymethod', [], $default));
+    }
+
+    /**
      * Test method for safely unserializing a serialized object of type stdClass
      */
     public function test_unserialize_object(): void {
@@ -4564,16 +4486,6 @@ EOF;
         $serializedlangstr = serialize($langstr);
         $unserializedlangstr = unserialize_object($serializedlangstr);
         $this->assertInstanceOf(stdClass::class, $unserializedlangstr);
-    }
-
-    /**
-     * Test that the component_class_callback returns the correct default value when the class was not found.
-     *
-     * @dataProvider component_class_callback_default_provider
-     * @param $default
-     */
-    public function test_component_class_callback_not_found($default) {
-        $this->assertSame($default, component_class_callback('thisIsNotTheClassYouWereLookingFor', 'anymethod', [], $default));
     }
 
     /**
@@ -4954,7 +4866,7 @@ EOF;
         $newname = rename_to_unused_name($file);
 
         // Check new name has expected format.
-        $this->assertMatchesRegularExpression('~/_temp_[a-f0-9]+$~', $newname);
+        $this->assertRegExp('~/_temp_[a-f0-9]+$~', $newname);
 
         // Check it's still in the same folder.
         $this->assertEquals($CFG->dataroot, dirname($newname));
@@ -4980,7 +4892,7 @@ EOF;
         $newname = rename_to_unused_name($file);
 
         // Check new name has expected format.
-        $this->assertMatchesRegularExpression('~/_temp_[a-f0-9]+$~', $newname);
+        $this->assertRegExp('~/_temp_[a-f0-9]+$~', $newname);
 
         // Check it's still in the same folder.
         $this->assertEquals($CFG->dataroot, dirname($newname));
@@ -5011,25 +4923,25 @@ EOF;
     public function display_size_provider() {
 
         return [
-            [0, '0 bytes'],
-            [1, '1 bytes'],
-            [1023, '1023 bytes'],
-            [1024, '1.0 KB'],
-            [2222, '2.2 KB'],
-            [33333, '32.6 KB'],
-            [444444, '434.0 KB'],
-            [5555555, '5.3 MB'],
-            [66666666, '63.6 MB'],
-            [777777777, '741.7 MB'],
-            [8888888888, '8.3 GB'],
-            [99999999999, '93.1 GB'],
-            [111111111111, '103.5 GB'],
-            [2222222222222, '2.0 TB'],
-            [33333333333333, '30.3 TB'],
-            [444444444444444, '404.2 TB'],
-            [5555555555555555, '4.9 PB'],
-            [66666666666666666, '59.2 PB'],
-            [777777777777777777, '690.8 PB'],
+            [0,     '0 bytes'    ],
+            [1,     '1 bytes'    ],
+            [1023,  '1023 bytes' ],
+            [1024,      '1KB'    ],
+            [2222,      '2.2KB'  ],
+            [33333,     '32.6KB' ],
+            [444444,    '434KB'  ],
+            [5555555,       '5.3MB'  ],
+            [66666666,      '63.6MB' ],
+            [777777777,     '741.7MB'],
+            [8888888888,        '8.3GB'  ],
+            [99999999999,       '93.1GB' ],
+            [111111111111,      '103.5GB'],
+            [2222222222222,         '2TB'    ],
+            [33333333333333,        '30.3TB' ],
+            [444444444444444,       '404.2TB'],
+            [5555555555555555,          '4.9PB'  ],
+            [66666666666666666,         '59.2PB' ],
+            [777777777777777777,        '690.8PB'],
         ];
     }
 
@@ -5041,161 +4953,6 @@ EOF;
      */
     public function test_display_size($size, $expected) {
         $result = display_size($size);
-        $expected = str_replace(' ', "\xc2\xa0", $expected); // Should be non-breaking space.
         $this->assertEquals($expected, $result);
-    }
-
-    /**
-     * Provider for display_size using fixed units.
-     *
-     * @return array of ($size, $units, $expected)
-     */
-    public function display_size_fixed_provider(): array {
-        return [
-            [0, 'KB', '0.0 KB'],
-            [1, 'MB', '0.0 MB'],
-            [777777777, 'GB', '0.7 GB'],
-            [8888888888, 'PB', '0.0 PB'],
-            [99999999999, 'TB', '0.1 TB'],
-            [99999999999, 'B', '99999999999 bytes'],
-        ];
-    }
-
-    /**
-     * Test display_size using fixed units.
-     *
-     * @dataProvider display_size_fixed_provider
-     * @param int $size Size in bytes
-     * @param string $units Fixed units
-     * @param string $expected Expected string.
-     */
-    public function test_display_size_fixed(int $size, string $units, string $expected): void {
-        $result = display_size($size, 1, $units);
-        $expected = str_replace(' ', "\xc2\xa0", $expected); // Should be non-breaking space.
-        $this->assertEquals($expected, $result);
-    }
-
-    /**
-     * Provider for display_size using specified decimal places.
-     *
-     * @return array of ($size, $decimalplaces, $units, $expected)
-     */
-    public function display_size_dp_provider(): array {
-        return [
-            [0, 1, 'KB', '0.0 KB'],
-            [1, 6, 'MB', '0.000001 MB'],
-            [777777777, 0, 'GB', '1 GB'],
-            [777777777, 0, '', '742 MB'],
-            [42, 6, '', '42 bytes'],
-        ];
-    }
-
-    /**
-     * Test display_size using specified decimal places.
-     *
-     * @dataProvider display_size_dp_provider
-     * @param int $size Size in bytes
-     * @param int $places Number of decimal places
-     * @param string $units Fixed units
-     * @param string $expected Expected string.
-     */
-    public function test_display_size_dp(int $size, int $places, string $units, string $expected): void {
-        $result = display_size($size, $places, $units);
-        $expected = str_replace(' ', "\xc2\xa0", $expected); // Should be non-breaking space.
-        $this->assertEquals($expected, $result);
-    }
-
-    /**
-     * Test that the get_list_of_plugins function includes/excludes directories as appropriate.
-     *
-     * @dataProvider get_list_of_plugins_provider
-     * @param   array $expectedlist The expected list of folders
-     * @param   array $content The list of file content to set up in the virtual file root
-     * @param   string $dir The base dir to look at in the virtual file root
-     * @param   string $exclude Any additional folder to exclude
-     */
-    public function test_get_list_of_plugins(array $expectedlist, array $content, string $dir, string $exclude): void {
-        $vfileroot = \org\bovigo\vfs\vfsStream::setup('root', null, $content);
-        $base = \org\bovigo\vfs\vfsStream::url('root');
-
-        $this->assertEquals($expectedlist, get_list_of_plugins($dir, $exclude, $base));
-    }
-
-    /**
-     * Data provider for get_list_of_plugins checks.
-     *
-     * @return  array
-     */
-    public function get_list_of_plugins_provider(): array {
-        return [
-            'Standard excludes' => [
-                ['amdd', 'class', 'local', 'test'],
-                [
-                    '.' => [],
-                    '..' => [],
-                    'amd' => [],
-                    'amdd' => [],
-                    'class' => [],
-                    'classes' => [],
-                    'local' => [],
-                    'test' => [],
-                    'tests' => [],
-                    'yui' => [],
-                ],
-                '',
-                '',
-            ],
-            'Standard excludes with addition' => [
-                ['amdd', 'local', 'test'],
-                [
-                    '.' => [],
-                    '..' => [],
-                    'amd' => [],
-                    'amdd' => [],
-                    'class' => [],
-                    'classes' => [],
-                    'local' => [],
-                    'test' => [],
-                    'tests' => [],
-                    'yui' => [],
-                ],
-                '',
-                'class',
-            ],
-            'Files excluded' => [
-                ['def'],
-                [
-                    '.' => [],
-                    '..' => [],
-                    'abc' => 'File with filename abc',
-                    'def' => [
-                        '.' => [],
-                        '..' => [],
-                        'example.txt' => 'In a directory called "def"',
-                    ],
-                ],
-                '',
-                '',
-            ],
-            'Subdirectories only' => [
-                ['abc'],
-                [
-                    '.' => [],
-                    '..' => [],
-                    'foo' => [
-                        '.' => [],
-                        '..' => [],
-                        'abc' => [],
-                    ],
-                    'bar' => [
-                        '.' => [],
-                        '..' => [],
-                        'def' => [],
-                    ],
-                ],
-                'foo',
-                '',
-            ],
-        ];
     }
 }

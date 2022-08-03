@@ -482,12 +482,12 @@ abstract class question_testcase extends advanced_testcase {
     public function assert($expectation, $compare, $notused = '') {
 
         if (get_class($expectation) === 'question_pattern_expectation') {
-            $this->assertMatchesRegularExpression($expectation->pattern, $compare,
+            $this->assertRegExp($expectation->pattern, $compare,
                     'Expected regex ' . $expectation->pattern . ' not found in ' . $compare);
             return;
 
         } else if (get_class($expectation) === 'question_no_pattern_expectation') {
-            $this->assertDoesNotMatchRegularExpression($expectation->pattern, $compare,
+            $this->assertNotRegExp($expectation->pattern, $compare,
                     'Unexpected regex ' . $expectation->pattern . ' found in ' . $compare);
             return;
 

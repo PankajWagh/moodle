@@ -1,9 +1,8 @@
 <?php
-
 /**
  * SCSSPHP
  *
- * @copyright 2012-2020 Leaf Corcoran
+ * @copyright 2012-2019 Leaf Corcoran
  *
  * @license http://opensource.org/licenses/MIT MIT
  *
@@ -17,32 +16,6 @@ namespace ScssPhp\ScssPhp\Exception;
  *
  * @author Oleksandr Savchenko <traveltino@gmail.com>
  */
-class ParserException extends \Exception implements SassException
+class ParserException extends \Exception
 {
-    /**
-     * @var array
-     */
-    private $sourcePosition;
-
-    /**
-     * Get source position
-     *
-     * @api
-     */
-    public function getSourcePosition()
-    {
-        return $this->sourcePosition;
-    }
-
-    /**
-     * Set source position
-     *
-     * @api
-     *
-     * @param array $sourcePosition
-     */
-    public function setSourcePosition($sourcePosition)
-    {
-        $this->sourcePosition = $sourcePosition;
-    }
 }

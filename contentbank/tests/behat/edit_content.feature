@@ -1,4 +1,4 @@
-@core @core_contentbank @core_h5p @contentbank_h5p @_file_upload @javascript
+@core @core_contentbank @contentbank_h5p @_file_upload @javascript
 Feature: Content bank use editor feature
   In order to add/edit content
   As a user
@@ -20,7 +20,7 @@ Feature: Content bank use editor feature
     Then the "[data-action=Add-content]" "css_element" should be disabled
 
   Scenario: Users can see the Add button if there is content type available for creation
-    Given I follow "Dashboard"
+    Given I follow "Dashboard" in the user menu
     And I follow "Manage private files..."
     And I upload "h5p/tests/fixtures/filltheblanks.h5p" file to "Files" filemanager
     And I click on "Save changes" "button"
@@ -39,7 +39,7 @@ Feature: Content bank use editor feature
     And I should see "Fill in the Blanks"
 
   Scenario: Users can edit content if they have the required permission
-    Given I follow "Dashboard"
+    Given I follow "Dashboard" in the user menu
     And I follow "Manage private files..."
     And I upload "h5p/tests/fixtures/filltheblanks.h5p" file to "Files" filemanager
     And I click on "Save changes" "button"
@@ -117,12 +117,7 @@ Feature: Content bank use editor feature
     Then the field "Title" matches value "New title"
 
   Scenario: Teachers can edit their own content in the content bank
-    Given I navigate to "H5P > Manage H5P content types" in site administration
-    And I upload "h5p/tests/fixtures/filltheblanks.h5p" file to "H5P content type" filemanager
-    And I click on "Upload H5P content types" "button" in the "#fitem_id_uploadlibraries" "css_element"
-    And I upload "h5p/tests/fixtures/ipsums.h5p" file to "H5P content type" filemanager
-    And I click on "Upload H5P content types" "button" in the "#fitem_id_uploadlibraries" "css_element"
-    And the following "users" exist:
+    Given the following "users" exist:
       | username | firstname | lastname | email                |
       | teacher1 | Teacher   | 1        | teacher1@example.com |
     And the following "courses" exist:
@@ -179,7 +174,8 @@ Feature: Content bank use editor feature
       | contextlevel | reference | contenttype     | user     | contentname       | filepath                              |
       | Course       | C1        | contenttype_h5p | admin    | filltheblanks.h5p | /h5p/tests/fixtures/filltheblanks.h5p |
       | Course       | C1        | contenttype_h5p | teacher1 | ipsums.h5p        | /h5p/tests/fixtures/ipsums.h5p        |
-    And I am on the "Course 1" "course copy" page
+    And I am on "Course 1" course homepage
+    And I navigate to "Copy course" in current page administration
     And I set the following fields to these values:
       | Course full name  | Copy |
       | Course short name | Copy |
@@ -194,6 +190,6 @@ Feature: Content bank use editor feature
     And I click on "Content bank" "link"
     And I follow "ipsums.h5p"
     Then "Edit" "link" should exist in the "region-main" "region"
-    And I navigate to "Content bank" in current page administration
+    And I click on "Content bank" "link"
     And I follow "filltheblanks.h5p"
     Then "Edit" "link" should not exist in the "region-main" "region"

@@ -22,9 +22,6 @@
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace enrol_manual;
-
-use course_enrolment_manager;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -37,7 +34,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class lib_test extends \advanced_testcase {
+class enrol_manual_lib_testcase extends advanced_testcase {
     /**
      * Test enrol migration function used when uninstalling enrol plugins.
      */
@@ -63,10 +60,10 @@ class lib_test extends \advanced_testcase {
         $course4 = $this->getDataGenerator()->create_course();
         $course5 = $this->getDataGenerator()->create_course();
 
-        $context1 = \context_course::instance($course1->id);
-        $context2 = \context_course::instance($course2->id);
-        $context3 = \context_course::instance($course3->id);
-        $context4 = \context_course::instance($course4->id);
+        $context1 = context_course::instance($course1->id);
+        $context2 = context_course::instance($course2->id);
+        $context3 = context_course::instance($course3->id);
+        $context4 = context_course::instance($course4->id);
 
         $user1 = $this->getDataGenerator()->create_user();
         $user2 = $this->getDataGenerator()->create_user();
@@ -213,7 +210,7 @@ class lib_test extends \advanced_testcase {
         /** @var $manualplugin enrol_manual_plugin */
         $manualplugin = enrol_get_plugin('manual');
 
-        $trace = new \null_progress_trace();
+        $trace = new null_progress_trace();
 
         $now = time();
 
@@ -234,9 +231,9 @@ class lib_test extends \advanced_testcase {
         $course1 = $this->getDataGenerator()->create_course();
         $course2 = $this->getDataGenerator()->create_course();
         $course3 = $this->getDataGenerator()->create_course();
-        $context1 = \context_course::instance($course1->id);
-        $context2 = \context_course::instance($course2->id);
-        $context3 = \context_course::instance($course3->id);
+        $context1 = context_course::instance($course1->id);
+        $context2 = context_course::instance($course2->id);
+        $context3 = context_course::instance($course3->id);
 
         $this->assertEquals(3, $DB->count_records('enrol', array('enrol'=>'manual')));
         $instance1 = $DB->get_record('enrol', array('courseid'=>$course1->id, 'enrol'=>'manual'), '*', MUST_EXIST);
@@ -338,7 +335,7 @@ class lib_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->preventResetByRollback(); // Messaging does not like transactions...
 
-        $trace = new \null_progress_trace();
+        $trace = new null_progress_trace();
 
         /** @var $manualplugin enrol_manual_plugin */
         $manualplugin = enrol_get_plugin('manual');

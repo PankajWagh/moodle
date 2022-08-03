@@ -27,6 +27,8 @@ $string['auth_oauth2description'] = 'OAuth 2 standards based authentication';
 $string['auth_oauth2settings'] = 'OAuth 2 authentication settings.';
 $string['confirmaccountemail'] = 'Hi {$a->fullname},
 
+Welcome to Ducisgroup – Registration to access exam simulators is free. The login can be accessed for 3 months from date of registration, however each test can be taken only once. There are more than 30 exam simulators for English and IT Process available.
+
 A new account has been requested at \'{$a->sitename}\'
 using your email address.
 

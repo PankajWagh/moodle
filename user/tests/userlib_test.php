@@ -200,9 +200,10 @@ class core_userliblib_testcase extends advanced_testcase {
         $user->lang = 'xy';
         $user->theme = 'somewrongthemename';
         $user->timezone = '30.5';
+        $user->url = 'wwww.somewrong@#$url.com.aus';
         $debugmessages = $this->getDebuggingMessages();
         user_update_user($user, true, false);
-        $this->assertDebuggingCalledCount(5, $debugmessages);
+        $this->assertDebuggingCalledCount(6, $debugmessages);
 
         // Now, with valid user data.
         $user->username = 'johndoe321';
@@ -211,6 +212,7 @@ class core_userliblib_testcase extends advanced_testcase {
         $user->lang = 'en';
         $user->theme = 'classic';
         $user->timezone = 'Australia/Perth';
+        $user->url = 'www.moodle.org';
         user_update_user($user, true, false);
         $this->assertDebuggingNotCalled();
     }
@@ -281,9 +283,10 @@ class core_userliblib_testcase extends advanced_testcase {
         $user['lang'] = 'xy';
         $user['theme'] = 'somewrongthemename';
         $user['timezone'] = '-30.5';
+        $user['url'] = 'wwww.somewrong@#$url.com.aus';
         $debugmessages = $this->getDebuggingMessages();
         $user['id'] = user_create_user($user, true, false);
-        $this->assertDebuggingCalledCount(5, $debugmessages);
+        $this->assertDebuggingCalledCount(6, $debugmessages);
         $dbuser = $DB->get_record('user', array('id' => $user['id']));
         $this->assertEquals($dbuser->country, 0);
         $this->assertEquals($dbuser->lang, 'en');
@@ -296,6 +299,7 @@ class core_userliblib_testcase extends advanced_testcase {
         $user['lang'] = 'en';
         $user['theme'] = 'classic';
         $user['timezone'] = 'Australia/Perth';
+        $user['url'] = 'www.moodle.org';
         user_create_user($user, true, false);
         $this->assertDebuggingNotCalled();
     }
@@ -583,13 +587,15 @@ class core_userliblib_testcase extends advanced_testcase {
 
         $PAGE->set_url('/');
         $user = $this->getDataGenerator()->create_user();
-        $this->setUser($user);
         $opts = user_get_user_navigation_info($user, $PAGE, array('avatarsize' => $testsize));
         $avatarhtml = $opts->metadata['useravatar'];
 
         $matches = [];
-        preg_match('/size-100/', $avatarhtml, $matches);
-        $this->assertCount(1, $matches);
+        preg_match('/(?:.*width=")(\d*)(?:" height=")(\d*)(?:".*\/>)/', $avatarhtml, $matches);
+        $this->assertCount(3, $matches);
+
+        $this->assertEquals(intval($matches[1]), $testsize);
+        $this->assertEquals(intval($matches[2]), $testsize);
     }
 
     /**

@@ -402,15 +402,6 @@ $tasks = array(
         'month' => '*'
     ),
     array(
-        'classname' => 'core\task\h5p_clean_orphaned_records_task',
-        'blocking' => 0,
-        'minute' => 'R',
-        'hour' => '0',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
         'classname' => 'core\task\antivirus_cleanup_task',
         'blocking' => 0,
         'minute' => 'R',
@@ -418,14 +409,5 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*',
-    ),
-    array(
-        'classname' => 'core_reportbuilder\task\send_schedules',
-        'blocking' => 0,
-        'minute' => '*',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
     ),
 );

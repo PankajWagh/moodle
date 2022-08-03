@@ -23,7 +23,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace core_course;
+namespace tests\core_course;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -31,12 +31,11 @@ global $CFG;
 require_once($CFG->dirroot . '/course/tests/fixtures/mock_hooks.php');
 
 use PHPUnit\Framework\MockObject\MockObject;
-use core_course\test\mock_hooks;
 
 /**
  * Functional test for class core_course_category methods invoking hooks.
  */
-class category_hooks_test extends \advanced_testcase {
+class core_course_category_hooks_testcase extends \advanced_testcase {
 
     protected function setUp(): void {
         $this->resetAfterTest();
@@ -57,7 +56,7 @@ class category_hooks_test extends \advanced_testcase {
         // Setup mock object for \core_course_category.
         // Disable original constructor, since we can't use it directly since it is private.
         $mockcategory = $this->getMockBuilder(\core_course_category::class)
-            ->onlyMethods(['get_plugins_callback_function'])
+            ->setMethods(['get_plugins_callback_function'])
             ->disableOriginalConstructor()
             ->getMock();
 

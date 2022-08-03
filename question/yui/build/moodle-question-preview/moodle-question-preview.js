@@ -23,11 +23,8 @@ YUI.add('moodle-question-preview', function (Y, NAME) {
 /**
  * JavaScript required by the question preview pop-up.
  *
- * @deprecated since Moodle 4.0
- * @todo Final deprecation on Moodle 4.4 MDL-72438
  * @module moodle-question-preview
  */
-
 
 M.question = M.question || {};
 M.question.preview = M.question.preview || {};
@@ -39,7 +36,7 @@ M.question.preview.init = function() {
     M.core_question_engine.init_form(Y, '#responseform');
 
     // Add a close button to the window.
-    var closebutton = Y.Node.create('<input type="button" class="btn btn-secondary mb-1"/>')
+    var closebutton = Y.Node.create('<input type="button" class="btn btn-secondary"/>')
             .set('value', M.util.get_string('closepreview', 'question'));
 
     closebutton.on('click', function() {
@@ -53,3 +50,4 @@ M.question.preview.init = function() {
 
 
 }, '@VERSION@', {"requires": ["base", "dom", "event-delegate", "event-key", "core_question_engine"]});
+

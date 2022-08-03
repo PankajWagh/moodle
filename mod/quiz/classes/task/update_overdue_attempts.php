@@ -48,7 +48,7 @@ class update_overdue_attempts extends \core\task\scheduled_task {
      * Close off any overdue attempts.
      */
     public function execute() {
-        global $CFG;
+        global $CFG,$DB;
 
         require_once($CFG->dirroot . '/mod/quiz/cronlib.php');
         $timenow = time();
@@ -61,5 +61,7 @@ class update_overdue_attempts extends \core\task\scheduled_task {
         list($count, $quizcount) = $overduehander->update_overdue_attempts($timenow, $processto);
 
         mtrace('  Considered ' . $count . ' attempts in ' . $quizcount . ' quizzes.');
+		
+
     }
 }

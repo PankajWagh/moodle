@@ -142,10 +142,10 @@ class core_medialib_testcase extends advanced_testcase {
         $manager = core_media_manager::instance();
         $this->assertSame('youtube, html5audio', $this->get_players_test($manager));
 
-        // Test HTML5 media order.
-        \core\plugininfo\media::set_enabled_plugins('html5video,html5audio');
+        // Test SWF and HTML5 media order.
+        \core\plugininfo\media::set_enabled_plugins('html5video,html5audio,swf');
         $manager = core_media_manager::instance();
-        $this->assertSame('html5video, html5audio', $this->get_players_test($manager));
+        $this->assertSame('html5video, html5audio, swf', $this->get_players_test($manager));
 
         // Make sure that our test plugin is considered installed.
         \core\plugininfo\media::set_enabled_plugins('test,html5video');
@@ -181,6 +181,11 @@ class core_medialib_testcase extends advanced_testcase {
         \core\plugininfo\media::set_enabled_plugins('html5video');
         $manager = core_media_manager::instance();
         $this->assertTrue($manager->can_embed_url($url));
+
+        // Only SWF.
+        \core\plugininfo\media::set_enabled_plugins('swf');
+        $manager = core_media_manager::instance();
+        $this->assertFalse($manager->can_embed_url($url));
     }
 
     /**
@@ -190,6 +195,7 @@ class core_medialib_testcase extends advanced_testcase {
     public function test_embed_url_fallbacks() {
 
         // Key strings in the embed code that identify with the media formats being tested.
+        $swf = '</object>';
         $html5video = '</video>';
         $html5audio = '</audio>';
         $link = 'mediafallbacklink';
@@ -212,7 +218,7 @@ class core_medialib_testcase extends advanced_testcase {
         $this->assertStringContainsString($link, $t);
 
         // Enable media players that can play the same media formats. (ie. test & html5audio for mp3 files, etc.)
-        \core\plugininfo\media::set_enabled_plugins('test,html5video,html5audio');
+        \core\plugininfo\media::set_enabled_plugins('test,html5video,html5audio,swf');
         $manager = core_media_manager::instance();
 
         // Test media formats that can be played by 2 or more players.
@@ -228,11 +234,13 @@ class core_medialib_testcase extends advanced_testcase {
                     $this->assertStringContainsString($test, $textwithlink);
                     $this->assertStringNotContainsString($html5video, $textwithlink);
                     $this->assertStringContainsString($html5audio, $textwithlink);
+                    $this->assertStringNotContainsString($swf, $textwithlink);
                     $this->assertStringContainsString($link, $textwithlink);
 
                     $this->assertStringContainsString($test, $textwithoutlink);
                     $this->assertStringNotContainsString($html5video, $textwithoutlink);
                     $this->assertStringContainsString($html5audio, $textwithoutlink);
+                    $this->assertStringNotContainsString($swf, $textwithoutlink);
                     $this->assertStringNotContainsString($link, $textwithoutlink);
                     break;
 
@@ -240,11 +248,13 @@ class core_medialib_testcase extends advanced_testcase {
                     $this->assertStringContainsString($test, $textwithlink);
                     $this->assertStringContainsString($html5video, $textwithlink);
                     $this->assertStringNotContainsString($html5audio, $textwithlink);
+                    $this->assertStringNotContainsString($swf, $textwithlink);
                     $this->assertStringContainsString($link, $textwithlink);
 
                     $this->assertStringContainsString($test, $textwithoutlink);
                     $this->assertStringContainsString($html5video, $textwithoutlink);
                     $this->assertStringNotContainsString($html5audio, $textwithoutlink);
+                    $this->assertStringNotContainsString($swf, $textwithoutlink);
                     $this->assertStringNotContainsString($link, $textwithoutlink);
                     break;
 
@@ -256,9 +266,10 @@ class core_medialib_testcase extends advanced_testcase {
 
     /**
      * Test for embed_url.
-     * SWF shouldn't be converted to objects because media_swf has been removed.
+     * Check SWF works including the special option required to enable it
      */
     public function test_embed_url_swf() {
+        \core\plugininfo\media::set_enabled_plugins('swf');
         $manager = core_media_manager::instance();
 
         // Without any options...
@@ -269,7 +280,7 @@ class core_medialib_testcase extends advanced_testcase {
         // ...and with the 'no it's safe, I checked it' option.
         $url = new moodle_url('http://example.org/test.swf');
         $t = $manager->embed_url($url, '', 0, 0, array(core_media_manager::OPTION_TRUSTED => true));
-        $this->assertStringNotContainsString('</object>', $t);
+        $this->assertStringContainsString('</object>', $t);
     }
 
     /**

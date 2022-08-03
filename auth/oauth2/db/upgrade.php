@@ -35,6 +35,9 @@ function xmldb_auth_oauth2_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    // Automatically generated Moodle v3.5.0 release upgrade line.
+    // Put any upgrade step following this.
+
     // Automatically generated Moodle v3.6.0 release upgrade line.
     // Put any upgrade step following this.
 
@@ -79,6 +82,9 @@ function xmldb_auth_oauth2_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
+    // Put any upgrade step following this.
+
+    // Automatically generated Moodle v3.10.0 release upgrade line.
     // Put any upgrade step following this.
 
     return true;

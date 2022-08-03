@@ -110,8 +110,6 @@ abstract class persistent {
      *
      * @param  string $property The property name.
      * @return $this
-     *
-     * @throws coding_exception
      */
     final public function set($property, $value) {
         if (!static::has_property($property)) {
@@ -123,21 +121,6 @@ abstract class persistent {
             return $this;
         }
         return $this->raw_set($property, $value);
-    }
-
-    /**
-     * Data setter for multiple properties
-     *
-     * Internally calls {@see set} on each property
-     *
-     * @param array $values Array of property => value elements
-     * @return $this
-     */
-    final public function set_many(array $values): self {
-        foreach ($values as $property => $value) {
-            $this->set($property, $value);
-        }
-        return $this;
     }
 
     /**
@@ -160,18 +143,7 @@ abstract class persistent {
         if (method_exists($this, $methodname)) {
             return $this->$methodname();
         }
-
-        $properties = static::properties_definition();
-        // If property can be NULL and value is NULL it needs to return null.
-        if ($properties[$property]['null'] === NULL_ALLOWED && $this->raw_get($property) === null) {
-            return null;
-        }
-        // Deliberately cast boolean types as such, because clean_param will cast them to integer.
-        if ($properties[$property]['type'] === PARAM_BOOL) {
-            return (bool)$this->raw_get($property);
-        }
-
-        return clean_param($this->raw_get($property), $properties[$property]['type']);
+        return $this->raw_get($property);
     }
 
     /**
@@ -274,13 +246,12 @@ abstract class persistent {
     final public static function properties_definition() {
         global $CFG;
 
-        static $cachedef = [];
-        if (isset($cachedef[static::class])) {
-            return $cachedef[static::class];
+        static $def = null;
+        if ($def !== null) {
+            return $def;
         }
 
-        $cachedef[static::class] = static::define_properties();
-        $def = &$cachedef[static::class];
+        $def = static::define_properties();
         $def['id'] = array(
             'default' => 0,
             'type' => PARAM_INT,
@@ -421,8 +392,7 @@ abstract class persistent {
      * @return static
      */
     final public function from_record(stdClass $record) {
-        $properties = static::properties_definition();
-        $record = array_intersect_key((array) $record, $properties);
+        $record = (array) $record;
         foreach ($record as $property => $value) {
             $this->raw_set($property, $value);
         }

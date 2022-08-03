@@ -242,6 +242,9 @@ function theme_build_css_for_themes($themeconfigs = [], $directions = ['rtl', 'l
         }
     }
 
+    // Iomad - This can break our themes.
+    purge_caches();
+
     return $themescss;
 }
 
@@ -678,12 +681,6 @@ class theme_config {
     public $precompiledcsscallback = null;
 
     /**
-     * Whether the theme uses course index.
-     * @var bool
-     */
-    public $usescourseindex = false;
-
-    /**
      * Load the config.php file for a particular theme, and return an instance
      * of this class. (That is, this is a factory method.)
      *
@@ -760,7 +757,7 @@ class theme_config {
             'rendererfactory', 'csspostprocess', 'editor_sheets', 'editor_scss', 'rarrow', 'larrow', 'uarrow', 'darrow',
             'hidefromselector', 'doctype', 'yuicssmodules', 'blockrtlmanipulations', 'blockrendermethod',
             'scss', 'extrascsscallback', 'prescsscallback', 'csstreepostprocessor', 'addblockposition',
-            'iconsystem', 'precompiledcsscallback', 'haseditswitch', 'usescourseindex', 'activityheaderconfig');
+            'iconsystem', 'precompiledcsscallback');
 
         foreach ($config as $key=>$value) {
             if (in_array($key, $configurable)) {
@@ -2457,22 +2454,22 @@ class theme_config {
      * @return string
      */
     protected function get_region_name($region, $theme) {
-
-        $stringman = get_string_manager();
-
-        // Check if the name is defined in the theme.
-        if ($stringman->string_exists('region-' . $region, 'theme_' . $theme)) {
-            return get_string('region-' . $region, 'theme_' . $theme);
+        $regionstring = get_string('region-' . $region, 'theme_' . $theme);
+        // A name exists in this theme, so use it
+        if (substr($regionstring, 0, 1) != '[') {
+            return $regionstring;
         }
 
-        // Check the theme parents.
+        // Otherwise, try to find one elsewhere
+        // Check parents, if any
         foreach ($this->parents as $parentthemename) {
-            if ($stringman->string_exists('region-' . $region, 'theme_' . $parentthemename)) {
-                return get_string('region-' . $region, 'theme_' . $parentthemename);
+            $regionstring = get_string('region-' . $region, 'theme_' . $parentthemename);
+            if (substr($regionstring, 0, 1) != '[') {
+                return $regionstring;
             }
         }
 
-        // Last resort, try the boost theme for names.
+        // Last resort, try the boost theme for names
         return get_string('region-' . $region, 'theme_boost');
     }
 

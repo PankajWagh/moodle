@@ -52,14 +52,13 @@ if (($plugin = optional_param('plugin', '', PARAM_PLUGIN))) {
     $action = required_param('action', PARAM_ALPHA);
     switch ($action) {
         case 'hide' :
-            $class = \core_plugin_manager::resolve_plugininfo_class('availability');
-            $class::enable_plugin($plugin, false);
+            set_config('disabled', 1, 'availability_' . $plugin);
             break;
         case 'show' :
-            $class = \core_plugin_manager::resolve_plugininfo_class('availability');
-            $class::enable_plugin($plugin, true);
+            unset_config('disabled', 'availability_' . $plugin);
             break;
     }
+    core_plugin_manager::reset_caches();
 
     // Always redirect back after an action.
     redirect($pageurl);
@@ -100,6 +99,7 @@ foreach ($plugins as $plugin => $name) {
         $enabledstr = get_string('show');
         $class = 'dimmed_text';
     }
+    $namespan = html_writer::span($name, $class);
 
     // Make enable control. This is a POST request (using a form control rather
     // than just a link) because it makes a database change.
@@ -107,7 +107,7 @@ foreach ($plugins as $plugin => $name) {
     $url = new moodle_url('/' . $CFG->admin . '/tool/availabilityconditions/', $params);
     $enablecontrol = html_writer::link($url, $OUTPUT->pix_icon('t/' . $enabledaction, $enabledstr));
 
-    $table->add_data([$name, $version, $enablecontrol], $class);
+    $table->add_data(array($namespan, $version, $enablecontrol));
 }
 
 $table->print_html();

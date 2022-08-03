@@ -511,3 +511,4 @@ define(['jquery', 'core/dragdrop'], function($, dragDrop) {
         init: dragDropToImageForm.init
     };
 });
+

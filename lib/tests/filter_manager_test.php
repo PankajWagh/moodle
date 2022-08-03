@@ -54,10 +54,8 @@ class core_filter_manager_testcase extends advanced_testcase {
     public function test_filter_normal() {
         $this->resetAfterTest();
         filter_set_global_state('emoticon', TEXTFILTER_ON);
-        $this->assertMatchesRegularExpression(
-            '~^<p><img class="icon emoticon" alt="smile" title="smile" ' .
-                'src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /></p>$~',
-            $this->filter_text('<p>:-)</p>', array()));
+        $this->assertRegExp('~^<p><img class="icon emoticon" alt="smile" title="smile" src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /></p>$~',
+                $this->filter_text('<p>:-)</p>', array()));
     }
 
     public function test_one_filter_disabled() {
@@ -70,17 +68,15 @@ class core_filter_manager_testcase extends advanced_testcase {
     public function test_disabling_other_filter_does_not_break_it() {
         $this->resetAfterTest();
         filter_set_global_state('emoticon', TEXTFILTER_ON);
-        $this->assertMatchesRegularExpression('~^<p><img class="icon emoticon" alt="smile" ' .
-                'title="smile" src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /></p>$~',
-            $this->filter_text('<p>:-)</p>', array('urltolink')));
+        $this->assertRegExp('~^<p><img class="icon emoticon" alt="smile" title="smile" src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /></p>$~',
+                $this->filter_text('<p>:-)</p>', array('urltolink')));
     }
 
     public function test_one_filter_of_two_disabled() {
         $this->resetAfterTest();
         filter_set_global_state('emoticon', TEXTFILTER_ON);
         filter_set_global_state('urltolink', TEXTFILTER_ON);
-        $this->assertMatchesRegularExpression('~^<p><img class="icon emoticon" alt="smile" title="smile" ' .
-                'src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /> http://google.com/</p>$~',
-            $this->filter_text('<p>:-) http://google.com/</p>', array('glossary', 'urltolink')));
+        $this->assertRegExp('~^<p><img class="icon emoticon" alt="smile" title="smile" src="https://www.example.com/moodle/theme/image.php/_s/boost/core/1/s/smiley" /> http://google.com/</p>$~',
+                $this->filter_text('<p>:-) http://google.com/</p>', array('glossary', 'urltolink')));
     }
 }

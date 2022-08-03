@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die;
 $functions = [
     'media_videojs_get_language' => [
         'classname'     => 'media_videojs\external\get_language',
+        'methodname'    => 'execute',
         'classpath'     => '',
         'description'   => 'get language.',
         'type'          => 'read',

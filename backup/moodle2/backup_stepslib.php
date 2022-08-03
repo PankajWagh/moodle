@@ -44,9 +44,11 @@ class create_and_clean_temp_stuff extends backup_execution_step {
 }
 
 /**
- * Delete the temp dir used by backup/restore (conditionally) and drop temp ids table.
- * Note we delete the directory but not the corresponding log file that will be
- * there until cron cleans it up.
+ * Delete the temp dir used by backup/restore (conditionally),
+ * delete old directories and drop temp ids table. Note we delete
+ * the directory but not the corresponding log file that will be
+ * there for, at least, 1 week - only delete_old_backup_dirs() or cron
+ * deletes log files (for easier access to them).
  */
 class drop_and_clean_temp_stuff extends backup_execution_step {
 
@@ -56,6 +58,7 @@ class drop_and_clean_temp_stuff extends backup_execution_step {
         global $CFG;
 
         backup_controller_dbops::drop_backup_ids_temp_table($this->get_backupid()); // Drop ids temp table
+        backup_helper::delete_old_backup_dirs(strtotime('-1 week'));                // Delete > 1 week old temp dirs.
         // Delete temp dir conditionally:
         // 1) If $CFG->keeptempdirectoriesonbackup is not enabled
         // 2) If backup temp dir deletion has been marked to be avoided
@@ -273,9 +276,8 @@ class backup_module_structure_step extends backup_structure_step {
             'modulename', 'sectionid', 'sectionnumber', 'idnumber',
             'added', 'score', 'indent', 'visible', 'visibleoncoursepage',
             'visibleold', 'groupmode', 'groupingid',
-            'completion', 'completiongradeitemnumber', 'completionpassgrade',
-            'completionview', 'completionexpected',
-            'availability', 'showdescription', 'downloadcontent'));
+            'completion', 'completiongradeitemnumber', 'completionview', 'completionexpected',
+            'availability', 'showdescription'));
 
         $tags = new backup_nested_element('tags');
         $tag = new backup_nested_element('tag', array('id'), array('name', 'rawname'));
@@ -392,8 +394,6 @@ class backup_course_structure_step extends backup_structure_step {
             'defaultgroupingid', 'lang', 'theme',
             'timecreated', 'timemodified',
             'requested',
-            'showactivitydates',
-            'showcompletionconditions',
             'enablecompletion', 'completionstartonenrol', 'completionnotify'));
 
         $category = new backup_nested_element('category', array('id'), array(
@@ -788,28 +788,34 @@ class backup_filters_structure_step extends backup_structure_step {
 }
 
 /**
- * Structure step in charge of constructing the comments.xml file for all the comments found in a given context.
+ * structure step in charge of constructing the comments.xml file for all the comments found
+ * in a given context
  */
 class backup_comments_structure_step extends backup_structure_step {
 
     protected function define_structure() {
-        // Define each element separated.
+
+        // Define each element separated
+
         $comments = new backup_nested_element('comments');
 
         $comment = new backup_nested_element('comment', array('id'), array(
-            'component', 'commentarea', 'itemid', 'content', 'format',
+            'commentarea', 'itemid', 'content', 'format',
             'userid', 'timecreated'));
 
-        // Build the tree.
+        // Build the tree
+
         $comments->add_child($comment);
 
-        // Define sources.
+        // Define sources
+
         $comment->set_source_table('comments', array('contextid' => backup::VAR_CONTEXTID));
 
-        // Define id annotations.
+        // Define id annotations
+
         $comment->annotate_ids('user', 'userid');
 
-        // Return the root element (comments).
+        // Return the root element (comments)
         return $comments;
     }
 }
@@ -832,6 +838,7 @@ class backup_badges_structure_step extends backup_structure_step {
         global $CFG;
 
         require_once($CFG->libdir . '/badgeslib.php');
+
         // Define each element separated.
 
         $badges = new backup_nested_element('badges');
@@ -1254,7 +1261,7 @@ class backup_groups_structure_step extends backup_structure_step {
 
         $group = new backup_nested_element('group', array('id'), array(
             'name', 'idnumber', 'description', 'descriptionformat', 'enrolmentkey',
-            'picture', 'timecreated', 'timemodified'));
+            'picture', 'hidepicture', 'timecreated', 'timemodified'));
 
         $members = new backup_nested_element('group_members');
 
@@ -1357,11 +1364,12 @@ class backup_users_structure_step extends backup_structure_step {
 
         // Then, the fields potentially needing anonymization
         $anonfields = array(
-            'username', 'idnumber', 'email', 'phone1',
+            'username', 'idnumber', 'email', 'icq', 'skype',
+            'yahoo', 'aim', 'msn', 'phone1',
             'phone2', 'institution', 'department', 'address',
             'city', 'country', 'lastip', 'picture',
-            'description', 'descriptionformat', 'imagealt', 'auth');
-        $anonfields = array_merge($anonfields, \core_user\fields::get_name_fields());
+            'url', 'description', 'descriptionformat', 'imagealt', 'auth');
+        $anonfields = array_merge($anonfields, get_all_user_name_fields());
 
         // Add anonymized fields to $userfields with custom final element
         foreach ($anonfields as $field) {
@@ -1632,55 +1640,6 @@ class backup_course_logstores_structure_step extends backup_structure_step {
         $this->add_subplugin_structure('logstore', $logstore, true, 'tool', 'log');
 
         return $logstores;
-    }
-}
-
-/**
- * Structure step in charge of constructing the loglastaccess.xml file for the course logs.
- *
- * This backup step will backup the logs of the user_lastaccess table.
- */
-class backup_course_loglastaccess_structure_step extends backup_structure_step {
-
-    /**
-     *  This function creates the structures for the loglastaccess.xml file.
-     *  Expected structure would look like this.
-     *  <loglastaccesses>
-     *      <loglastaccess id=2>
-     *          <userid>5</userid>
-     *          <timeaccess>1616887341</timeaccess>
-     *      </loglastaccess>
-     *  </loglastaccesses>
-     *
-     * @return backup_nested_element
-     */
-    protected function define_structure() {
-
-        // To know if we are including userinfo.
-        $userinfo = $this->get_setting_value('users');
-
-        // Define the structure of logstores container.
-        $lastaccesses = new backup_nested_element('lastaccesses');
-        $lastaccess = new backup_nested_element('lastaccess', array('id'), array('userid', 'timeaccess'));
-
-        // Define build tree.
-        $lastaccesses->add_child($lastaccess);
-
-        // This element should only happen if we are including user info.
-        if ($userinfo) {
-            // Define sources.
-            $lastaccess->set_source_sql('
-                SELECT id, userid, timeaccess
-                  FROM {user_lastaccess}
-                 WHERE courseid = ?',
-                array(backup::VAR_COURSEID));
-
-            // Define userid annotation to user.
-            $lastaccess->annotate_ids('user', 'userid');
-        }
-
-        // Return the root element (lastaccessess).
-        return $lastaccesses;
     }
 }
 
@@ -2351,9 +2310,6 @@ class backup_questions_structure_step extends backup_structure_step {
         // attach qtype plugin structure to $question element, only one allowed
         $this->add_plugin_structure('qtype', $question, false);
 
-        // Attach qbank plugin stucture to $question element, multiple allowed.
-        $this->add_plugin_structure('qbank', $question, true);
-
         // attach local plugin stucture to $question element, multiple allowed
         $this->add_plugin_structure('local', $question, true);
 
@@ -2804,13 +2760,12 @@ class backup_completion_defaults_structure_step extends backup_structure_step {
         $cc = new backup_nested_element('course_completion_defaults');
 
         $defaults = new backup_nested_element('course_completion_default', array('id'), array(
-            'modulename', 'completion', 'completionview', 'completionusegrade', 'completionpassgrade',
-            'completionexpected', 'customrules'
+            'modulename', 'completion', 'completionview', 'completionusegrade', 'completionexpected', 'customrules'
         ));
 
         // Use module name instead of module id so we can insert into another site later.
         $sourcesql = "SELECT d.id, m.name as modulename, d.completion, d.completionview, d.completionusegrade,
-                  d.completionpassgrade, d.completionexpected, d.customrules
+                  d.completionexpected, d.customrules
                 FROM {course_completion_defaults} d join {modules} m on d.module = m.id
                 WHERE d.course = ?";
         $defaults->set_source_sql($sourcesql, array(backup::VAR_COURSEID));

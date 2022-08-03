@@ -73,7 +73,14 @@ echo $OUTPUT->heading(get_string('bulkactivitycompletion', 'completion'));
 
 echo $renderer->navigation($course, 'bulkcompletion');
 
-$PAGE->requires->js_call_amd('core_form/changechecker', 'watchFormById', ['theform']);
+$PAGE->requires->yui_module('moodle-core-formchangechecker',
+        'M.core_formchangechecker.init',
+        array(array(
+            'formid' => 'theform'
+        ))
+);
+$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
+
 
 echo $renderer->bulkcompletion($bulkcompletiondata);
 

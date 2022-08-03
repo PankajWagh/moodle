@@ -37,10 +37,7 @@ require_capability('gradeexport/txt:view', $context);
 // If you use this method without this check, will break the direct grade exporting (without publishing).
 $key = optional_param('key', '', PARAM_RAW);
 if (!empty($CFG->gradepublishing) && !empty($key)) {
-    $actionbar = new \core_grades\output\export_publish_action_bar($context, 'txt');
-    print_grade_page_head($COURSE->id, 'export', 'txt',
-        get_string('exportto', 'grades') . ' ' . get_string('pluginname', 'gradeexport_txt'),
-        false, false, true, null, null, null, $actionbar);
+    print_grade_page_head($COURSE->id, 'export', 'txt', get_string('exportto', 'grades') . ' ' . get_string('pluginname', 'gradeexport_txt'));
 }
 
 if (groups_get_course_groupmode($COURSE) == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)) {

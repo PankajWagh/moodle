@@ -53,7 +53,6 @@ if (!empty($USER->newadminuser)) {
         require_login($course);
     }
     $PAGE->set_pagelayout('admin');
-    $PAGE->add_body_class('limitedwidth');
 }
 
 if ($course->id == SITEID) {
@@ -307,11 +306,11 @@ if ($userform->is_cancelled()) {
             // Somebody double clicked when editing admin user during install.
             redirect("$CFG->wwwroot/$CFG->admin/");
         } else {
-            redirect($returnurl, get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+            redirect($returnurl);
         }
     } else {
         \core\session\manager::gc(); // Remove stale sessions.
-        redirect("$CFG->wwwroot/$CFG->admin/user.php", get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect("$CFG->wwwroot/$CFG->admin/user.php");
     }
     // Never reached..
 }
@@ -359,3 +358,4 @@ $userform->display();
 
 // And proper footer.
 echo $OUTPUT->footer();
+

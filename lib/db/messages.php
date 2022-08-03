@@ -35,13 +35,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $messageproviders = array (
 
-    'newlogin' => array (
-        'defaults' => array(
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'airnotifier' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-        ),
-    ),
-
     // Notices that an admin might be interested in
     'notices' => array (
          'capability'  => 'moodle/site:config'
@@ -95,15 +88,6 @@ $messageproviders = array (
 
     // Course completed. Requires course completion configured at course level. It does not work with just activity progress.
     'coursecompleted' => [],
-
-    // Course content updated. New content (activities or resources) has been created or existing content updated.
-    'coursecontentupdated' => array (
-        'defaults' => array(
-            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDOFF,
-            'airnotifier' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-        ),
-    ),
 
     // Badge award notification to a badge recipient.
     'badgerecipientnotice' => array (
@@ -166,11 +150,4 @@ $messageproviders = array (
     'infected' => array(
         'capability'  => 'moodle/site:config',
     ),
-
-    // Report builder schedules.
-    'reportbuilderschedule' => [
-        'defaults' => [
-            'email' => MESSAGE_FORCED,
-        ],
-    ],
 );

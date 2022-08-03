@@ -274,7 +274,7 @@ class zipwriter {
             'courseshortname' => $exportedcourse->shortname,
             'courselink' => $courselink,
             'exportdate' => userdate(time()),
-            'maxfilesize' => display_size($this->maxfilesize, 0),
+            'maxfilesize' => display_size($this->maxfilesize),
         ];
 
         $renderer = $PAGE->get_renderer('core');

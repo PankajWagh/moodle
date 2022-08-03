@@ -35,11 +35,8 @@ if ($group !== 0) {
     $url->param('group', $group);
 }
 if ($edit !== 0) {
-    $url->param('edit', 'on');
-} else {
-    $url->param('edit', 'off');
+    $url->param('edit', $edit);
 }
-
 $PAGE->set_url($url);
 
 $forum = $DB->get_record('forum', array('id'=>$id), '*', MUST_EXIST);
@@ -100,23 +97,24 @@ if (data_submitted()) {
 }
 
 $strsubscribers = get_string("subscribers", "forum");
-$PAGE->navbar->add($strsubscribers, $url);
+$PAGE->navbar->add($strsubscribers);
 $PAGE->set_title($strsubscribers);
 $PAGE->set_heading($COURSE->fullname);
-
-// Activate the secondary nav tab.
-$PAGE->set_secondary_active_tab("forumsubscriptions");
-
-// Output starts from here.
-$actionbar = new \mod_forum\output\subscription_actionbar($id, $url, $forum);
-$PAGE->activityheader->disable();
-echo $OUTPUT->header();
-if (!$PAGE->has_secondary_navigation()) {
-    echo $OUTPUT->heading(get_string('forum', 'forum') . ' ' . $strsubscribers);
+if (has_capability('mod/forum:managesubscriptions', $context) && \mod_forum\subscriptions::is_forcesubscribed($forum) === false) {
+    if ($edit != -1) {
+        $USER->subscriptionsediting = $edit;
+    }
+    $updatesubscriptionsbutton = forum_update_subscriptions_button($course->id, $id);
+} else {
+    $updatesubscriptionsbutton = '';
+    unset($USER->subscriptionsediting);
 }
-echo $forumoutput->subscription_actionbar($actionbar);
-
-if ($edit === 0) {
+echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('forum', 'forum').' '.$strsubscribers);
+if (!empty($updatesubscriptionsbutton)) {
+    echo \html_writer::div($updatesubscriptionsbutton, 'float-right');
+}
+if (empty($USER->subscriptionsediting)) {
     $subscribers = \mod_forum\subscriptions::fetch_subscribed_users($forum, $currentgroup, $context);
     if (\mod_forum\subscriptions::is_forcesubscribed($forum)) {
         $subscribers = mod_forum_filter_hidden_users($cm, $context, $subscribers);
@@ -125,7 +123,9 @@ if ($edit === 0) {
 } else {
     echo $forumoutput->subscriber_selection_form($existingselector, $subscriberselector);
 }
-
+if (!empty($updatesubscriptionsbutton)) {
+    echo $updatesubscriptionsbutton;
+}
 echo $OUTPUT->footer();
 
 /**

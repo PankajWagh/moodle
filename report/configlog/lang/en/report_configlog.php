@@ -26,7 +26,6 @@
 $string['configlog'] = 'Config changes';
 $string['datefrom'] = 'Date from';
 $string['dateto'] = 'Date to';
-$string['entityconfigchange'] = 'Config change';
 $string['plugin'] = 'Plugin';
 $string['pluginname'] = 'Config changes';
 $string['setting'] = 'Setting';

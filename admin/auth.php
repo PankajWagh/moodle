@@ -40,15 +40,29 @@ if (!confirm_sesskey()) {
 
 switch ($action) {
     case 'disable':
-        // Remove from enabled list.
-        $class = \core_plugin_manager::resolve_plugininfo_class('auth');
-        $class::enable_plugin($auth, false);
+        // remove from enabled list
+        $key = array_search($auth, $authsenabled);
+        if ($key !== false) {
+            unset($authsenabled[$key]);
+            set_config('auth', implode(',', $authsenabled));
+        }
+
+        if ($auth == $CFG->registerauth) {
+            set_config('registerauth', '');
+        }
+        \core\session\manager::gc(); // Remove stale sessions.
+        core_plugin_manager::reset_caches();
         break;
 
     case 'enable':
-        // Add to enabled list.
-        $class = \core_plugin_manager::resolve_plugininfo_class('auth');
-        $class::enable_plugin($auth, true);
+        // add to enabled list
+        if (!in_array($auth, $authsenabled)) {
+            $authsenabled[] = $auth;
+            $authsenabled = array_unique($authsenabled);
+            set_config('auth', implode(',', $authsenabled));
+        }
+        \core\session\manager::gc(); // Remove stale sessions.
+        core_plugin_manager::reset_caches();
         break;
 
     case 'down':
@@ -62,9 +76,7 @@ switch ($action) {
             $fsave = $authsenabled[$key];
             $authsenabled[$key] = $authsenabled[$key + 1];
             $authsenabled[$key + 1] = $fsave;
-            $value = implode(',', $authsenabled);
-            add_to_config_log('auth', $CFG->auth, $value, 'core');
-            set_config('auth', $value);
+            set_config('auth', implode(',', $authsenabled));
         }
         break;
 
@@ -79,9 +91,7 @@ switch ($action) {
             $fsave = $authsenabled[$key];
             $authsenabled[$key] = $authsenabled[$key - 1];
             $authsenabled[$key - 1] = $fsave;
-            $value = implode(',', $authsenabled);
-            add_to_config_log('auth', $CFG->auth, $value, 'core');
-            set_config('auth', $value);
+            set_config('auth', implode(',', $authsenabled));
         }
         break;
 
@@ -90,3 +100,5 @@ switch ($action) {
 }
 
 redirect($returnurl);
+
+

@@ -153,27 +153,25 @@ abstract class backup_helper {
      * If supplied, progress object should be ready to receive indeterminate
      * progress reports.
      *
-     * @param int $deletebefore Delete files and directories older than this time
+     * @param int $deletefrom Time to delete from
      * @param \core\progress\base $progress Optional progress reporting object
      */
-    static public function delete_old_backup_dirs($deletebefore, \core\progress\base $progress = null) {
+    static public function delete_old_backup_dirs($deletefrom, \core\progress\base $progress = null) {
         $status = true;
-        // Get files and directories in the backup temp dir.
+        // Get files and directories in the backup temp dir without descend.
         $backuptempdir = make_backup_temp_directory('');
-        $items = new DirectoryIterator($backuptempdir);
-        foreach ($items as $item) {
-            if ($item->isDot()) {
-                continue;
-            }
-            if ($item->getMTime() < $deletebefore) {
-                if ($item->isDir()) {
-                    // The item is a directory for some backup.
-                    if (!self::delete_backup_dir($item->getFilename(), $progress)) {
-                        // Something went wrong. Finish the list of items and then throw an exception.
-                        $status = false;
-                    }
-                } else if ($item->isFile()) {
-                    unlink($item->getPathname());
+        $list = get_directory_list($backuptempdir, '', false, true, true);
+        foreach ($list as $file) {
+            $file_path = $backuptempdir . '/' . $file;
+            $moddate = filemtime($file_path);
+            if ($status && $moddate < $deletefrom) {
+                //If directory, recurse
+                if (is_dir($file_path)) {
+                    // $file is really the backupid
+                    $status = self::delete_backup_dir($file, $progress);
+                //If file
+                } else {
+                    unlink($file_path);
                 }
             }
         }

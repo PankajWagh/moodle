@@ -173,14 +173,6 @@ $content-header-footer-height: $region-header-height + $region-footer-height;
     }
 }
 
-.navbar-nav {
-    .popover-region {
-        .icon {
-            font-weight: bolder;
-        }
-    }
-}
-
 .navbar {
     .popover-region {
         &.collapsed {
@@ -202,12 +194,12 @@ $content-header-footer-height: $region-header-height + $region-footer-height;
         font-size: 11px;
         line-height: 11px;
         position: absolute;
-        top: $navbar-height / 4;
+        top: 5px;
         right: 0;
     }
 
     .popover-region-container {
-        top: $navbar-height;
+        top: $line-height-base * 1.4 * $font-size-base;
     }
 
 }

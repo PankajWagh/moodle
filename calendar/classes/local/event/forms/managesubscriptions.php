@@ -47,12 +47,15 @@ class managesubscriptions extends \moodleform {
             print_error('nopermissiontoupdatecalendar');
         }
 
+        $mform->addElement('header', 'addsubscriptionform', get_string('importcalendarheading', 'calendar'));
+
         // Name.
         $mform->addElement('text', 'name', get_string('subscriptionname', 'calendar'), array('maxsize' => '255', 'size' => '40'));
-        $mform->addRule('name', get_string('required'), 'required', null, 'client');
+        $mform->addRule('name', get_string('required'), 'required');
         $mform->setType('name', PARAM_TEXT);
 
         // Import from (url | importfile).
+        $mform->addElement('html', get_string('importfrominstructions', 'calendar'));
         $choices = array(CALENDAR_IMPORT_FROM_FILE => get_string('importfromfile', 'calendar'),
             CALENDAR_IMPORT_FROM_URL  => get_string('importfromurl',  'calendar'));
         $mform->addElement('select', 'importfrom', get_string('importcalendarfrom', 'calendar'), $choices);
@@ -83,7 +86,7 @@ class managesubscriptions extends \moodleform {
         $this->add_event_type_elements($mform, $eventtypes);
 
         // Eventtype: 0 = user, 1 = site, anything else = course ID.
-        $mform->addElement('submit', 'add', get_string('importcalendar', 'calendar'));
+        $mform->addElement('submit', 'add', get_string('add'));
 
         // Add the javascript required to enhance this mform.
         $PAGE->requires->js_call_amd('core_calendar/event_form', 'init', [$mform->getAttribute('id')]);
@@ -124,16 +127,12 @@ class managesubscriptions extends \moodleform {
                 }
             }
         } else if (($data['importfrom'] == CALENDAR_IMPORT_FROM_URL)) {
-            if (empty($data['url'])) {
-                $errors['url'] = get_string('errorrequiredurlorfile', 'calendar');
-            } else {
-                // Clean input calendar url.
-                $url = clean_param($data['url'], PARAM_URL);
-                try {
-                    calendar_get_icalendar($url);
-                } catch (\moodle_exception $e) {
-                    $errors['url'] = get_string('errorinvalidicalurl', 'calendar');
-                }
+            // Clean input calendar url.
+            $url = clean_param($data['url'], PARAM_URL);
+            try {
+                calendar_get_icalendar($url);
+            } catch (\moodle_exception $e) {
+                $errors['url']  = get_string('errorinvalidicalurl', 'calendar');
             }
         } else {
             // Shouldn't happen.

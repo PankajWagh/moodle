@@ -36,6 +36,7 @@ require_once($CFG->libdir . '/form/datetimeselector.php');
 // Used to test the user datetime profile field.
 require_once($CFG->dirroot . '/user/profile/lib.php');
 require_once($CFG->dirroot . '/user/profile/definelib.php');
+require_once($CFG->dirroot . '/user/profile/index_field_form.php');
 
 /**
  * Unit tests for the calendar type system.
@@ -272,13 +273,12 @@ class core_calendar_type_testcase extends advanced_testcase {
         $formdata['name'] = 'Name';
         $formdata['param1'] = $date['inputminyear'];
         $formdata['param2'] = $date['inputmaxyear'];
-        $formdata['datatype'] = 'datetime';
 
         // Mock submitting this.
-        \core_user\form\profile_field_form::mock_submit($formdata);
+        field_form::mock_submit($formdata);
 
         // Create the user datetime form.
-        $form = new \core_user\form\profile_field_form();
+        $form = new field_form(null, 'datetime');
 
         // Get the data from the submission.
         $submissiondata = $form->get_data();

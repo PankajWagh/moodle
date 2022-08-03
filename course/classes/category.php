@@ -25,6 +25,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// IOMAD
+require_once($CFG->dirroot.'/local/iomad/lib/iomad.php');
+
+
 /**
  * Class to store, cache, render and manage course category
  *
@@ -735,6 +739,8 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
      * @return mixed
      */
     protected static function get_tree($id) {
+
+        // IOMAD Need to filter here.
         $all = self::get_cached_cat_tree();
         if (is_null($all) || !isset($all[$id])) {
             // Could not get or rebuild the tree, or requested a non-existant ID.
@@ -756,6 +762,7 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
      * @throws moodle_exception
      */
     private static function get_cached_cat_tree() : ?array {
+        // IOMAD Need to filter here.
         $coursecattreecache = cache::make('core', 'coursecattree');
         $all = $coursecattreecache->get('all');
         if ($all !== false) {
@@ -823,7 +830,7 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
             // No categories found.
             // This may happen after upgrade of a very old moodle version.
             // In new versions the default category is created on install.
-            $defcoursecat = self::create(array('name' => get_string('defaultcategoryname')));
+            $defcoursecat = self::create(array('name' => get_string('miscellaneous')));
             set_config('defaultrequestcategory', $defcoursecat->id);
             $all[0] = array($defcoursecat->id);
             $all[$defcoursecat->id] = array();
@@ -1033,8 +1040,7 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
         list($sql2, $params2) = $DB->get_in_or_equal($managerroles, SQL_PARAMS_NAMED, 'rid');
         list($sort, $sortparams) = users_order_by_sql('u');
         $notdeleted = array('notdeleted' => 0);
-        $userfieldsapi = \core_user\fields::for_name();
-        $allnames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $allnames = get_all_user_name_fields(true, 'u');
         $sql = "SELECT ra.contextid, ra.id AS raid,
                        r.id AS roleid, r.name AS rolename, r.shortname AS roleshortname,
                        rn.name AS rolecoursealias, u.id, u.username, $allnames
@@ -1170,6 +1176,28 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
         } else {
             $fields[] = $DB->sql_substr('c.summary', 1, 1). ' as hassummary';
         }
+
+        // IOMAD - Remove courses which don't belong to your company
+        // and add in shared courses.
+        // If unit testing we generally don't know about companies
+        if (!is_siteadmin() && !PHPUNIT_TEST) {
+            if (!isloggedin()) {
+                $whereclause .= " AND c.id NOT IN (SELECT courseid FROM {company_course})";
+            } else {
+                $whereclause .= " AND (
+                                   c.id IN (
+                                    SELECT courseid FROM {company_course}
+                                    WHERE companyid = :companyid
+                                   ) OR c.id IN (
+                                    SELECT courseid FROM {iomad_courses}
+                                    WHERE shared = 1
+                                   )
+                                  )";
+                $companyid = iomad::get_my_companyid(context_system::instance());
+                $params['companyid'] = $companyid;
+            }
+        }
+
         $sql = "SELECT ". join(',', $fields). ", $ctxselect
                 FROM {course} c
                 JOIN {context} ctx ON c.id = ctx.instanceid AND ctx.contextlevel = :contextcourse
@@ -1369,6 +1397,12 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
         if ($offset || $limit) {
             $sortedids = array_slice($sortedids, $offset, $limit);
         }
+
+        // IOMAD - Do the empty check again.
+        if (empty($sortedids)) {
+            return array();
+        }
+
         if (isset($records)) {
             // Easy, we have already retrieved records.
             if ($offset || $limit) {
@@ -1580,7 +1614,8 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
         $cntcachekey = 'scnt-'. serialize($search);
 
         $ids = $coursecatcache->get($cachekey);
-        if ($ids !== false) {
+        // IOMAD: only use cache if allowed.
+        if (iomad::has_capability('block/iomad_company_admin:company_view_all', context_system::instance()) && $ids !== false) {
             // We already cached last search result.
             $ids = array_slice($ids, $offset, $limit);
             $courses = array();
@@ -1601,12 +1636,17 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
                 }
                 // Prepare the list of core_course_list_element objects.
                 foreach ($ids as $id) {
+                    // IOMAD post filtering.
+                    //if (!empty($records[$id])) {
+                        $courses[$id] = new core_course_list_element($records[$id]);
+                    //}
                     // If a course is deleted after we got the cache entry it may not exist in the database anymore.
                     if (!empty($records[$id])) {
                         $courses[$id] = new core_course_list_element($records[$id]);
                     }
                 }
             }
+
             return $courses;
         }
 
@@ -1629,6 +1669,12 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
             $courselist = get_courses_search($searchterms, 'c.sortorder ASC', 0, 9999999, $totalcount,
                 $requiredcapabilities, $searchcond, $searchcondparams);
             self::sort_records($courselist, $sortfields);
+
+            // IOMAD: strip out courses user shouldn't see.
+            if (!PHPUNIT_TEST) {
+                $courselist = iomad::iomad_filter_courses($courselist);
+            }
+
             $coursecatcache->set($cachekey, array_keys($courselist));
             $coursecatcache->set($cntcachekey, $totalcount);
             $records = array_slice($courselist, $offset, $limit, true);
@@ -1673,6 +1719,7 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
                 return array();
             }
             $courselist = self::get_course_records($where, $params, $options, true);
+
             if (!empty($requiredcapabilities)) {
                 foreach ($courselist as $key => $course) {
                     context_helper::preload_from_record($course);
@@ -1683,6 +1730,12 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
                 }
             }
             self::sort_records($courselist, $sortfields);
+
+            // IOMAD: strip out courses user shouldn't see.
+            if (!PHPUNIT_TEST) {
+                $courselist = iomad::iomad_filter_courses($courselist);
+            }
+
             $coursecatcache->set($cachekey, array_keys($courselist));
             $coursecatcache->set($cntcachekey, count($courselist));
             $records = array_slice($courselist, $offset, $limit, true);
@@ -1700,11 +1753,13 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
         if (!empty($options['idonly'])) {
             return array_keys($records);
         }
+
         // Prepare the list of core_course_list_element objects.
         $courses = array();
         foreach ($records as $record) {
             $courses[$record->id] = new core_course_list_element($record);
         }
+
         return $courses;
     }
 
@@ -1814,6 +1869,9 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
                 }
                 // Prepare the list of core_course_list_element objects.
                 foreach ($ids as $id) {
+
+                    //IOMAD strip out unwanted courses.
+
                     // If a course is deleted after we got the cache entry it may not exist in the database anymore.
                     if (!empty($records[$id])) {
                         $courses[$id] = new core_course_list_element($records[$id]);
@@ -2552,7 +2610,7 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
      * Returns ids of all parents of the category. Last element in the return array is the direct parent
      *
      * For example, if you have a tree of categories like:
-     *   Category (id = 1)
+     *   Miscellaneous (id = 1)
      *      Subcategory (id = 2)
      *         Sub-subcategory (id = 4)
      *   Other category (id = 3)
@@ -2578,14 +2636,14 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
      * List is cached for 10 minutes
      *
      * For example, if you have a tree of categories like:
-     *   Category (id = 1)
+     *   Miscellaneous (id = 1)
      *      Subcategory (id = 2)
      *         Sub-subcategory (id = 4)
      *   Other category (id = 3)
      * Then after calling this function you will have
-     * array(1 => 'Category',
-     *       2 => 'Category / Subcategory',
-     *       4 => 'Category / Subcategory / Sub-subcategory',
+     * array(1 => 'Miscellaneous',
+     *       2 => 'Miscellaneous / Subcategory',
+     *       4 => 'Miscellaneous / Subcategory / Sub-subcategory',
      *       3 => 'Other category');
      *
      * If you specify $requiredcapability, then only categories where the current
@@ -2689,6 +2747,12 @@ class core_course_category implements renderable, cacheable_object, IteratorAggr
                 $names[$id] = join($separator, $namechunks);
             }
         }
+
+        // IOMAD :  Filter the list of categories.
+        if (!is_siteadmin() and !during_initial_install()) {
+            $names = iomad::iomad_filter_categories($names);
+        }
+
         return $names;
     }
 

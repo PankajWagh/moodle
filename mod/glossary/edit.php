@@ -82,16 +82,10 @@ if (!empty($id)) {
 
 $PAGE->set_title($glossary->name);
 $PAGE->set_heading($course->fullname);
-$PAGE->set_secondary_active_tab('modulepage');
-$PAGE->activityheader->set_attrs([
-    'hidecompletion' => true,
-    'description' => ''
-]);
 echo $OUTPUT->header();
-if (!$id) {
-    echo $OUTPUT->heading(get_string('addsingleentry', 'mod_glossary'));
-} else {
-    echo $OUTPUT->heading(get_string('editentry', 'mod_glossary'));
+echo $OUTPUT->heading(format_string($glossary->name), 2);
+if ($glossary->intro) {
+    echo $OUTPUT->box(format_module_intro('glossary', $glossary, $cm->id), 'generalbox', 'intro');
 }
 
 $data = new StdClass();

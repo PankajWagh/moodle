@@ -11,20 +11,12 @@ Feature: Set the site home page and dashboard as the default home page
     And the following "users" exist:
       | username | firstname | lastname | email             |
       | user1    | User      | One      | user1@example.com |
-    And the following "course enrolments" exist:
-      | user     | course | role           |
-      | user1    | C1     | student        |
 
   Scenario: Admin sets the site page and then the dashboard as the default home page
     # This functionality does not work without the administration block.
     Given I log in as "admin"
     And I am on site homepage
     And I turn editing mode on
-    And I add the "Navigation" block if not present
-    And I configure the "Navigation" block
-    And I set the following fields to these values:
-      | Page contexts | Display throughout the entire site |
-    And I press "Save changes"
     And I add the "Administration" block if not present
     And I configure the "Administration" block
     And I set the following fields to these values:
@@ -37,15 +29,13 @@ Feature: Set the site home page and dashboard as the default home page
     And I follow "Make this my home page"
     And I should not see "Make this my home page"
     And I am on "Course 1" course homepage
-    And I should see "Home" in the "Navigation" "block"
-    And I should not see "Site home" in the "Navigation" "block"
+    And "Home" "text" should exist in the ".breadcrumb" "css_element"
     And I am on site homepage
     And I follow "Dashboard"
     And I follow "Make this my home page"
     And I should not see "Make this my home page"
     And I am on "Course 1" course homepage
-    Then I should not see "Home" in the "Navigation" "block"
-    And I should see "Site home" in the "Navigation" "block"
+    Then "Dashboard" "text" should exist in the ".breadcrumb" "css_element"
 
   Scenario: User cannot configure their preferred default home page unless allowed by admin
     Given I log in as "user1"
@@ -63,12 +53,9 @@ Feature: Set the site home page and dashboard as the default home page
     And I follow "Home page"
     And I set the field "Home page" to "<preference>"
     And I press "Save changes"
-    And I log out
-    And I log in as "user1"
-    Then I should see "<breadcrumb>" is active in navigation
+    Then "<breadcrumb>" "text" should exist in the ".breadcrumb" "css_element"
 
     Examples:
       | preference | breadcrumb |
       | Site       | Home       |
       | Dashboard  | Dashboard  |
-      | My courses | My courses |

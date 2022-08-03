@@ -37,10 +37,7 @@ require_capability('gradeexport/ods:view', $context);
 // If you use this method without this check, will break the direct grade exporting (without publishing).
 $key = optional_param('key', '', PARAM_RAW);
 if (!empty($CFG->gradepublishing) && !empty($key)) {
-    $actionbar = new \core_grades\output\export_publish_action_bar($context, 'ods');
-    print_grade_page_head($COURSE->id, 'export', 'ods',
-        get_string('exportto', 'grades') . ' ' . get_string('pluginname', 'gradeexport_ods'),
-        false, false, true, null, null, null, $actionbar);
+    print_grade_page_head($COURSE->id, 'export', 'ods', get_string('exportto', 'grades') . ' ' . get_string('pluginname', 'gradeexport_ods'));
 }
 
 if (groups_get_course_groupmode($COURSE) == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)) {

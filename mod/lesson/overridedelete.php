@@ -82,7 +82,6 @@ $title = get_string('deletecheck', null, $stroverride);
 
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('admin');
-$PAGE->add_body_class('limitedwidth');
 $PAGE->navbar->add($title);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
@@ -94,8 +93,7 @@ if ($override->groupid) {
     $group = $DB->get_record('groups', array('id' => $override->groupid), 'id, name');
     $confirmstr = get_string("overridedeletegroupsure", "lesson", $group->name);
 } else {
-    $userfieldsapi = \core_user\fields::for_name();
-    $namefields = $userfieldsapi->get_sql('', false, '', '', false)->selects;
+    $namefields = get_all_user_name_fields(true);
     $user = $DB->get_record('user', array('id' => $override->userid),
             'id, ' . $namefields);
     $confirmstr = get_string("overridedeleteusersure", "lesson", fullname($user));

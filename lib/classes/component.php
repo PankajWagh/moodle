@@ -96,6 +96,7 @@ class core_component {
         'MoodleHQ\\RTLCSS' => 'lib/rtlcss',
         'ScssPhp\\ScssPhp' => 'lib/scssphp',
         'Box\\Spout' => 'lib/spout/src/Spout',
+        'BirknerAlex\\XMPPHP' => 'lib/jabber/XMPP',
         'MatthiasMullie\\Minify' => 'lib/minify/matthiasmullie-minify/src/',
         'MatthiasMullie\\PathConverter' => 'lib/minify/matthiasmullie-pathconverter/src/',
         'IMSGlobal\LTI' => 'lib/ltiprovider/src',
@@ -443,7 +444,7 @@ $cache = '.var_export($cache, true).';
                     $path = $CFG->admin;
                 }
                 if (strpos($path, 'admin/') === 0) {
-                    $path = $CFG->admin . substr($path, 5);
+                    $path = $CFG->admin . substr($path, 0, 5);
                 }
             }
 
@@ -464,7 +465,7 @@ $cache = '.var_export($cache, true).';
         foreach (self::fetch_component_source('plugintypes') as $plugintype => $path) {
             // Replace admin/ with the config setting.
             if ($CFG->admin !== 'admin' && strpos($path, 'admin/') === 0) {
-                $path = $CFG->admin . substr($path, 5);
+                $path = $CFG->admin . substr($path, 0, 5);
             }
             $types[$plugintype] = "{$CFG->dirroot}/{$path}";
         }
